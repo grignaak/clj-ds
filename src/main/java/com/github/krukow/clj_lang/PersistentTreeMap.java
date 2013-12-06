@@ -144,7 +144,7 @@ public Comparator<K> comparator(){
 }
 
 public Object entryKey(Object entry){
-	return ((IMapEntry) entry).key();
+	return ((Map.Entry) entry).getKey();
 }
 
 public ISeq seq(boolean ascending){

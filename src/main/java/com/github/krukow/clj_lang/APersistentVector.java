@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map.Entry;
 import java.util.RandomAccess;
 
 public abstract class APersistentVector<T> implements IPersistentVector<T>, Iterable<T>,
@@ -301,7 +302,7 @@ public boolean containsKey(Object key){
 	return i >= 0 && i < count();
 }
 
-public IMapEntry<Object, T> entryAt(Object key){
+public Entry<?, T> entryAt(Object key){
 	if(Util.isInteger(key))
 		{
 		int i = ((Number) key).intValue();

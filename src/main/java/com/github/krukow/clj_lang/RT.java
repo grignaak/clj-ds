@@ -300,10 +300,10 @@ public class RT {
 		} else if (x instanceof IPersistentMap) {
 			w.write('{');
 			for (ISeq s = seq(x); s != null; s = s.next()) {
-				IMapEntry e = (IMapEntry) s.first();
-				print(e.key(), w);
+				Map.Entry e = (Map.Entry) s.first();
+				print(e.getKey(), w);
 				w.write(' ');
-				print(e.val(), w);
+				print(e.getValue(), w);
 				if (s.next() != null)
 					w.write(", ");
 			}

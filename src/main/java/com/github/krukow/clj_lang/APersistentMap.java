@@ -26,7 +26,7 @@ public String toString(){
 	return RT.printString(this);
 }
 
-public IPersistentCollection cons(IMapEntry<K,V> o){
+public IPersistentCollection cons(Map.Entry<K,V> o){
 	return assoc(o.getKey(), o.getValue());
 }
 

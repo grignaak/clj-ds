@@ -125,7 +125,7 @@ public boolean containsKey(Object key){
 	return def.keyslots.containsKey(key) || ((Map<K,V>)ext).containsKey(key);
 }
 
-public IMapEntry<K,V> entryAt(K key){
+public java.util.Map.Entry<K, V> entryAt(K key){
 	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
 	if(e != null)
 		{
@@ -183,7 +183,7 @@ public IPersistentMap<K,V> without(K key) {
 public Iterator<Map.Entry<K, V>> iterator(){
 	return new Iterator<Map.Entry<K, V>>() {
 		
-		ISeq<IMapEntry<K, V>> seq = seq();
+		ISeq<Map.Entry<K, V>> seq = seq();
 
 		public boolean hasNext() {
 			return seq != null;
@@ -259,7 +259,7 @@ public int count(){
 	return vals.length + RT.count(ext);
 }
 
-public ISeq<IMapEntry<K, V>> seq(){
+public ISeq<Map.Entry<K, V>> seq(){
 	return new Seq(def.keys, vals, 0, ext);
 }
 

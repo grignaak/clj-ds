@@ -1,5 +1,7 @@
 package com.github.krukow.clj_lang;
 
+import java.util.Map.Entry;
+
 
 /**
  * Copyright (c) Rich Hickey. All rights reserved.
@@ -11,10 +13,10 @@ package com.github.krukow.clj_lang;
  * You must not remove this notice, or any other, from this software.
  */
 @Deprecated
-public interface Associative<K, V> extends IPersistentCollection<IMapEntry<K,V>>, ILookup<K,V>{
+public interface Associative<K, V> extends IPersistentCollection<Entry<K,V>>, ILookup<K,V>{
 boolean containsKey(K key);
 
-IMapEntry<K,V> entryAt(K key);
+Entry<K, V> entryAt(K key);
 
 Associative<K,V> assoc(K key, V val);
 

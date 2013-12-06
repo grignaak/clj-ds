@@ -151,7 +151,7 @@ public boolean containsKey(Object key){
 	return indexOf(key) >= 0;
 }
 
-public IMapEntry<K,V> entryAt(K key){
+public java.util.Map.Entry<K, V> entryAt(K key){
 	int i = indexOf(key);
 	if(i >= 0)
 		return new MapEntry<K,V>((K) array[i],(V)array[i+1]);

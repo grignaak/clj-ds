@@ -12,21 +12,23 @@
 
 package com.github.krukow.clj_lang;
 
+import java.util.Map;
 
-public abstract class AMapEntry<K, V> extends APersistentVector implements IMapEntry<K, V> {
+@Deprecated
+public abstract class AMapEntry<K, V> extends APersistentVector implements Map.Entry<K, V> {
 
     @Override
     public Object nth(int i) {
         if (i == 0)
-            return key();
+            return getKey();
         else if (i == 1)
-            return val();
+            return getValue();
         else
             throw new IndexOutOfBoundsException();
     }
 
     private IPersistentVector asVector() {
-        return LazilyPersistentVector.createOwning(key(), val());
+        return LazilyPersistentVector.createOwning(getKey(), getValue());
     }
 
     @Override
@@ -56,7 +58,7 @@ public abstract class AMapEntry<K, V> extends APersistentVector implements IMapE
 
     @Override
     public IPersistentStack pop() {
-        return LazilyPersistentVector.createOwning(key());
+        return LazilyPersistentVector.createOwning(getKey());
     }
 
     @Override

@@ -123,7 +123,7 @@ public boolean containsKey(Object key){
 	return (root != null) ? root.find(0, hash(key), key, NOT_FOUND) != NOT_FOUND : false;
 }
 
-public IMapEntry<K,V> entryAt(K key){
+public java.util.Map.Entry<K, V> entryAt(K key){
 	if(key == null)
 		return hasNull ? new MapEntry<K,V>(null, nullValue) : null;
 	return (root != null) ? root.find(0, hash(key), key) : null;
@@ -172,7 +172,7 @@ public IPersistentMap<K,V> without(K key){
 
 public Iterator<Map.Entry<K, V>> iterator2(){
 	return new Iterator<Map.Entry<K, V>>() {
-		ISeq<IMapEntry<K, V>> seq = seq();
+		ISeq<Map.Entry<K, V>> seq = seq();
 
 		public boolean hasNext() {
 			return seq != null;
@@ -277,9 +277,9 @@ public int count(){
 	return count;
 }
 
-public ISeq<IMapEntry<K, V>> seq(){
-	ISeq<IMapEntry<K, V>> s = root != null ? root.nodeSeq() : null; 
-	return hasNull ? new Cons<IMapEntry<K, V>>(new MapEntry<K,V>(null, nullValue), s) : s;
+public ISeq<Map.Entry<K, V>> seq(){
+	ISeq<Map.Entry<K, V>> s = root != null ? root.nodeSeq() : null; 
+	return hasNull ? new Cons<Map.Entry<K, V>>(new MapEntry<K,V>(null, nullValue), s) : s;
 }
 
 public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
@@ -420,7 +420,7 @@ static interface INode extends Serializable {
 
 	INode without(int shift, int hash, Object key);
 
-	IMapEntry find(int shift, int hash, Object key);
+	java.util.Map.Entry find(int shift, int hash, Object key);
 
 	Object find(int shift, int hash, Object key, Object notFound);
 
@@ -568,7 +568,7 @@ final static class ArrayNode implements INode{
 			return new ArrayNode(null, count, cloneAndSet(array, idx, n));
 	}
 
-	public IMapEntry find(int shift, int hash, Object key){
+	public Map.Entry find(int shift, int hash, Object key){
 		int idx = mask(hash, shift);
 		INode node = array[idx];
 		if(node == null)
@@ -999,7 +999,7 @@ final static class BitmapIndexedNode implements INode{
 		return this;
 	}
 	
-	public IMapEntry find(int shift, int hash, Object key){
+	public Map.Entry find(int shift, int hash, Object key){
 		int bit = bitpos(hash, shift);
 		if((bitmap & bit) == 0)
 			return null;
@@ -1268,7 +1268,7 @@ final static class HashCollisionNode implements INode{
 		return new HashCollisionNode(null, hash, count - 1, removePair(array, idx/2));
 	}
 
-	public IMapEntry find(int shift, int hash, Object key){
+	public Map.Entry find(int shift, int hash, Object key){
 		int idx = findIndex(key);
 		if(idx < 0)
 			return null;
