@@ -31,7 +31,7 @@ import com.github.krukow.clj_ds.TransientMap;
  Any errors are my own
  */
 
-public class PersistentHashMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, PersistentMap<K, V> {
+public class PersistentHashMap<K,V> extends APersistentMap<K,V> implements PersistentMap<K, V> {
 
 final int count;
 final INode root;

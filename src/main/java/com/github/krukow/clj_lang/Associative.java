@@ -10,6 +10,7 @@ package com.github.krukow.clj_lang;
  * the terms of this license.
  * You must not remove this notice, or any other, from this software.
  */
+@Deprecated
 public interface Associative<K, V> extends IPersistentCollection<IMapEntry<K,V>>, ILookup<K,V>{
 boolean containsKey(K key);
 

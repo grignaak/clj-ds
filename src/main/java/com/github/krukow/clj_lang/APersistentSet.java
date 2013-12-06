@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class APersistentSet<T> extends AFn implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable, IHashEq {
+public abstract class APersistentSet<T> implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable, IHashEq {
 int _hash = -1;
 int _hasheq = -1;
 final IPersistentMap impl;

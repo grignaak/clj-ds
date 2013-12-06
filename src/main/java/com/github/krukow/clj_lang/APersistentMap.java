@@ -18,7 +18,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class APersistentMap<K,V> extends AFn implements IPersistentMap<K,V>, Map<K,V>, Iterable<Map.Entry<K, V>>, Serializable, IHashEq {
+public abstract class APersistentMap<K,V> implements IPersistentMap<K,V>, Map<K,V>, Iterable<Map.Entry<K, V>>, Serializable {
 int _hash = -1;
 int _hasheq = -1;
 

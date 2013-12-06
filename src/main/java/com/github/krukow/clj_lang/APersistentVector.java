@@ -21,8 +21,7 @@ import java.util.RandomAccess;
 
 public abstract class APersistentVector<T> implements IPersistentVector<T>, Iterable<T>,
                                                                List<T>,
-                                                               RandomAccess, Comparable<T>,
-                                                               Serializable, IHashEq {
+                                                               RandomAccess {
 int _hash = -1;
 int _hasheq = -1;
 
@@ -397,21 +396,6 @@ public boolean contains(Object o){
 
 public int length(){
 	return count();
-}
-
-public int compareTo(Object o){
-	IPersistentVector v = (IPersistentVector) o;
-	if(count() < v.count())
-		return -1;
-	else if(count() > v.count())
-		return 1;
-	for(int i = 0; i < count(); i++)
-		{
-		int c = Util.compare(nth(i),v.nth(i));
-		if(c != 0)
-			return c;
-		}
-	return 0;
 }
 
     static class Seq<T> extends ASeq<T> implements IndexedSeq<T> {

@@ -27,7 +27,7 @@ import com.github.krukow.clj_ds.PersistentSortedMap;
  * See Okasaki, Kahrs, Larsen et al
  */
 
-public class PersistentTreeMap<K,V> extends APersistentMap<K,V> implements Reversible<Map.Entry<K, V>>, Sorted<K>, PersistentSortedMap<K, V>{
+public class PersistentTreeMap<K,V> extends APersistentMap<K,V> implements PersistentSortedMap<K, V>{
 
 public final Comparator<K> comp;
 public final Node tree;

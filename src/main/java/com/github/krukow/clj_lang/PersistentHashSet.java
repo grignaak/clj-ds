@@ -19,7 +19,7 @@ import java.util.Map;
 import com.github.krukow.clj_ds.PersistentSet;
 import com.github.krukow.clj_ds.TransientSet;
 
-public class PersistentHashSet<T> extends APersistentSet<T> implements IEditableCollection<T>, PersistentSet<T> {
+public class PersistentHashSet<T> extends APersistentSet<T> implements PersistentSet<T> {
 
 static public final PersistentHashSet EMPTY = new PersistentHashSet(PersistentHashMap.EMPTY);
 

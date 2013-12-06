@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-public class PersistentList<T> extends ASeq<T> implements IPersistentList<T>, IReduce, List<T>, Counted, com.github.krukow.clj_ds.PersistentList<T> {
+public class PersistentList<T> extends ASeq<T> implements IPersistentList<T>, List<T>, com.github.krukow.clj_ds.PersistentList<T> {
 
 private final T _first;
 private final PersistentList<T> _rest;

@@ -17,7 +17,7 @@ import java.util.Comparator;
 import com.github.krukow.clj_ds.PersistentSortedSet;
 import com.github.krukow.clj_ds.TransientCollection;
 
-public class PersistentTreeSet<T> extends APersistentSet<T> implements Reversible<T>, Sorted<T>, PersistentSortedSet<T>{
+public class PersistentTreeSet<T> extends APersistentSet<T> implements PersistentSortedSet<T>{
 static public final PersistentTreeSet EMPTY = new PersistentTreeSet(PersistentTreeMap.EMPTY);
 
 

@@ -17,7 +17,7 @@ import java.util.Iterator;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class PersistentVector<T> extends APersistentVector<T> implements IEditableCollection<T>, com.github.krukow.clj_ds.PersistentVector<T>{
+public class PersistentVector<T> extends APersistentVector<T> implements com.github.krukow.clj_ds.PersistentVector<T>{
 
 static class Node implements Serializable {
 	transient final AtomicReference<Thread> edit;
@@ -499,7 +499,7 @@ private Node popTail(int level, Node node){
 		}
 }
 
-static final class TransientVector<T> extends AFn implements ITransientVector<T>, Counted, com.github.krukow.clj_ds.TransientVector<T> {
+static final class TransientVector<T> implements ITransientVector<T>, Counted, com.github.krukow.clj_ds.TransientVector<T> {
 	int cnt;
 	int shift;
 	Node root;

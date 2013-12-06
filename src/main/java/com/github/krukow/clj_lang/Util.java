@@ -38,20 +38,6 @@ static public Class classOf(Object x){
 	return null;
 }
 
-static public int compare(Object k1, Object k2){
-	if(k1 == k2)
-		return 0;
-	if(k1 != null)
-		{
-		if(k2 == null)
-			return 1;
-		if(k1 instanceof Number)
-			return Numbers.compare((Number) k1, (Number) k2);
-		return ((Comparable) k1).compareTo(k2);
-		}
-	return -1;
-}
-
 static public int hash(Object o){
 	if(o == null)
 		return 0;
@@ -85,7 +71,6 @@ static public boolean isPrimitive(Class c){
 static public boolean isInteger(Object x){
 	return x instanceof Integer
 			|| x instanceof Long
-	        || x instanceof BigInt
 			|| x instanceof BigInteger;
 }
 

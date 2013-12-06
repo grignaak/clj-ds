@@ -13,7 +13,7 @@
 package com.github.krukow.clj_lang;
 
 
-public abstract class ATransientSet<T> extends AFn implements ITransientSet<T> {
+public abstract class ATransientSet<T> implements ITransientSet<T> {
 	ITransientMap impl;
 
 	ATransientSet(ITransientMap impl) {

@@ -27,7 +27,7 @@ import com.github.krukow.clj_ds.TransientMap;
  * null keys and values are ok, but you won't be able to distinguish a null value via valAt - use contains/entryAt
  */
 
-public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, PersistentMap<K,V> {
+public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements PersistentMap<K,V> {
 
 final Object[] array;
 static final int HASHTABLE_THRESHOLD = 16;

@@ -13,7 +13,7 @@ package com.github.krukow.clj_lang;
 import java.util.Map;
 
 
-abstract class ATransientMap<K,V> extends AFn implements ITransientMap<K,V> {
+abstract class ATransientMap<K,V> implements ITransientMap<K,V> {
 	abstract void ensureEditable();
 	abstract ITransientMap<K,V> doAssoc(K key, V val);
 	abstract ITransientMap<K,V> doWithout(K key);

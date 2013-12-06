@@ -86,22 +86,22 @@ static public <K,V> PersistentStructMap<K,V> construct(Def def, ISeq<V> valseq){
 	return new PersistentStructMap<K,V>(def, vals, ext);
 }
 
-static public <K,V> IFn getAccessor(final Def def, K key){
-	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
-	if(e != null)
-		{
-		final int i = e.getValue();
-		return new AFn(){
-			public Object invoke(Object arg1) {
-				PersistentStructMap<K,V> m = (PersistentStructMap<K,V>) arg1;
-				if(m.def != def)
-					throw Util.runtimeException("Accessor/struct mismatch");
-				return m.vals[i];
-			}
-		};
-		}
-	throw new IllegalArgumentException("Not a key of struct");
-}
+//static public <K,V> IFn getAccessor(final Def def, K key){
+//	Map.Entry<K,Integer> e = def.keyslots.entryAt(key);
+//	if(e != null)
+//		{
+//		final int i = e.getValue();
+//		return new AFn(){
+//			public Object invoke(Object arg1) {
+//				PersistentStructMap<K,V> m = (PersistentStructMap<K,V>) arg1;
+//				if(m.def != def)
+//					throw Util.runtimeException("Accessor/struct mismatch");
+//				return m.vals[i];
+//			}
+//		};
+//		}
+//	throw new IllegalArgumentException("Not a key of struct");
+//}
 
 protected PersistentStructMap(Def def, Object[] vals, IPersistentMap<K,V> ext){
 	this.ext = ext;
