@@ -13,6 +13,7 @@ package com.github.krukow.clj_lang;
 /* A class that implements Counted promises that it is a collection
  * that implement a constant-time count() */
 
+@Deprecated
 public interface Counted {
     int count();
 }

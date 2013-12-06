@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface Indexed<T> extends Counted{
 T nth(int i);
 

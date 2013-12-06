@@ -43,7 +43,7 @@ public boolean equiv(Object obj){
 	ISeq ms = RT.seq(obj);
 	for(ISeq s = seq(); s != null; s = s.next(), ms = ms.next())
 		{
-		if(ms == null || !Util.equiv(s.first(), ms.first()))
+		if(ms == null || !Util.equals(s.first(), ms.first()))
 			return false;
 		}
 	return ms == null;
@@ -196,7 +196,7 @@ public boolean isEmpty(){
 public boolean contains(Object o){
 	for(ISeq s = seq(); s != null; s = s.next())
 		{
-		if(Util.equiv(s.first(), o))
+		if(Util.equals(s.first(), o))
 			return true;
 		}
 	return false;
@@ -230,7 +230,7 @@ public int indexOf(Object o){
 	ISeq s = seq();
 	for(int i = 0; s != null; s = s.next(), i++)
 		{
-		if(Util.equiv(s.first(), o))
+		if(Util.equals(s.first(), o))
 			return i;
 		}
 	return -1;

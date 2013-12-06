@@ -4,9 +4,9 @@ import java.util.Set;
 
 public interface PersistentSet<E> extends PersistentCollection<E>, Set<E>, EditableCollection<E> {
 
-	PersistentSet<E> zero();
+	@Override PersistentSet<E> zero();
 
-	PersistentSet<E> plus(E val);
+	@Override PersistentSet<E> plus(E val);
 
 	/**
 	 * @return A new {@link PersistentSet} that consists of the elements of the

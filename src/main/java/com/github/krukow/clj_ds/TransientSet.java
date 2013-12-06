@@ -2,7 +2,7 @@ package com.github.krukow.clj_ds;
 
 public interface TransientSet<E> extends TransientCollection<E> {
 
-	TransientSet<E> plus(E val);
+    @Override TransientSet<E> plus(E val);
 
 	/**
 	 * @return A new {@link TransientSet} consisting of all the elements of the
@@ -11,6 +11,6 @@ public interface TransientSet<E> extends TransientCollection<E> {
 	 */
 	TransientSet<E> minus(E val);
 
-	PersistentSet<E> persist();
+	@Override PersistentSet<E> persist();
 
 }

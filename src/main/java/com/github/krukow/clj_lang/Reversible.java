@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface Reversible<T>{
 ISeq<T> rseq() ;
 }

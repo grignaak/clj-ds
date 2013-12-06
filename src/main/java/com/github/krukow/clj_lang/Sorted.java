@@ -14,6 +14,7 @@ package com.github.krukow.clj_lang;
 
 import java.util.Comparator;
 
+@Deprecated
 public interface Sorted<K>{
 Comparator<K> comparator();
 

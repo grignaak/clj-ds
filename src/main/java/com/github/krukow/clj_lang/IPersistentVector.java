@@ -9,7 +9,7 @@ package com.github.krukow.clj_lang;
  * the terms of this license.
  * You must not remove this notice, or any other, from this software.
  */
-
+@Deprecated
 public interface IPersistentVector<T> extends Sequential, IPersistentStack<T>, Reversible<T>, Indexed<T>{
 int length();
 

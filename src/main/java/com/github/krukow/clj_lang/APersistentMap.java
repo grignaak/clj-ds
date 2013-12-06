@@ -64,7 +64,7 @@ public boolean equiv(Object obj){
 		Map.Entry e = (Map.Entry) s.first();
 		boolean found = m.containsKey(e.getKey());
 
-		if(!found || !Util.equiv(e.getValue(), m.get(e.getKey())))
+		if(!found || !Util.equals(e.getValue(), m.get(e.getKey())))
 			return false;
 		}
 

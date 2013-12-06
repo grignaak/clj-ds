@@ -194,7 +194,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 		public HATTrieNode<T> add(String s, int i, T t) {
 			String ss = s.substring(i);
 			T et = strings.get(ss);
-			if (Util.equiv(et, t)) {
+			if (Util.equals(et, t)) {
 				return this;
 			}
 		    if (shouldBurst()) {

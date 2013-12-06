@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface IPersistentSet<T> extends IPersistentCollection<T>, Counted{
 	public IPersistentSet<T> disjoin(T key);
 	public boolean contains(T key);

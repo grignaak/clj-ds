@@ -10,6 +10,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface IndexedSeq<T> extends ISeq<T>, Sequential, Counted{
 
 public int index();

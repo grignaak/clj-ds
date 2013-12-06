@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface ILookup<K,V>{
 V valAt(K key);
 

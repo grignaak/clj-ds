@@ -13,17 +13,18 @@ package com.github.krukow.clj_lang;
 /**
  * A persistent, functional, sequence interface
  * <p/>
- * ISeqs are immutable values, i.e. neither first(), nor rest() changes
- * or invalidates the ISeq
+ * ISeqs are immutable values, i.e. neither first(), nor rest() changes or
+ * invalidates the ISeq
  */
+@Deprecated
 public interface ISeq<T> extends IPersistentCollection<T> {
 
-T first();
+    T first();
 
-ISeq<T> next();
+    ISeq<T> next();
 
-ISeq<T> more();
+    ISeq<T> more();
 
-ISeq<T> cons(T o);
+    ISeq<T> cons(T o);
 
 }

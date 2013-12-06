@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface ITransientSet<T> extends ITransientCollection<T>, Counted{
 	public ITransientSet<T> disjoin(T key) ;
 	public boolean contains(T key);

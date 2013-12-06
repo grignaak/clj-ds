@@ -8,13 +8,13 @@ import java.util.List;
  */
 public interface PersistentVector<E> extends PersistentStack<E>, List<E>, Indexed<E>, Comparable<E>, EditableCollection<E> {
 
-	PersistentVector<E> zero();
+    @Override PersistentVector<E> zero();
 
 	/**
 	 * @return A new {@link PersistentVector} consisting of the elements of the
 	 *         current {@link PersistentVector} followed by the value val.
 	 */
-	PersistentVector<E> plus(E val);
+    @Override PersistentVector<E> plus(E val);
 
 	/**
 	 * @return A new {@link PersistentVector} consisting of the elements of
@@ -29,8 +29,8 @@ public interface PersistentVector<E> extends PersistentStack<E>, List<E>, Indexe
 	 * @return A new {@link PersistentVector} consisting of the elements of
 	 *         the current {@link PersistentVector} without its last element.
 	 */
-	PersistentVector<E> minus();
+	@Override PersistentVector<E> minus();
 
-	TransientVector<E> asTransient();
+	@Override TransientVector<E> asTransient();
 
 }

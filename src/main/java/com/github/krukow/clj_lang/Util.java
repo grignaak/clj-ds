@@ -13,120 +13,14 @@
 package com.github.krukow.clj_lang;
 
 import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.math.BigInteger;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.github.krukow.clj_lang.PersistentVector.Node;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.lang.ref.SoftReference;
-import java.lang.ref.ReferenceQueue;
-
 public class Util{
-static public boolean equiv(Object k1, Object k2){
-	if(k1 == k2)
-		return true;
-	if(k1 != null)
-		{
-		if(k1 instanceof Number && k2 instanceof Number)
-			return Numbers.equal((Number)k1, (Number)k2);
-		else if(k1 instanceof IPersistentCollection || k2 instanceof IPersistentCollection)
-			return pcequiv(k1,k2);
-		return k1.equals(k2);
-		}
-	return false;
-}
-
-public interface EquivPred{
-    boolean equiv(Object k1, Object k2);
-}
-
-static EquivPred equivNull = new EquivPred() {
-        public boolean equiv(Object k1, Object k2) {
-            return k2 == null;
-        }
-    };
-
-static EquivPred equivEquals = new EquivPred(){
-        public boolean equiv(Object k1, Object k2) {
-            return k1.equals(k2);
-        }
-    };
-
-static EquivPred equivNumber = new EquivPred(){
-        public boolean equiv(Object k1, Object k2) {
-            if(k2 instanceof Number)
-                return Numbers.equal((Number) k1, (Number) k2);
-            return false;
-        }
-    };
-
-static EquivPred equivColl = new EquivPred(){
-        public boolean equiv(Object k1, Object k2) {
-            if(k1 instanceof IPersistentCollection || k2 instanceof IPersistentCollection)
-                return pcequiv(k1, k2);
-            return k1.equals(k2);
-        }
-    };
-
-static public EquivPred equivPred(Object k1){
-    if(k1 == null)
-        return equivNull;
-    else if (k1 instanceof Number)
-        return equivNumber;
-    else if (k1 instanceof String)
-        return equivEquals;
-    else if (k1 instanceof Collection || k1 instanceof Map)
-        return equivColl;
-    return equivEquals;
-}
-
-static public boolean equiv(long k1, long k2){
-	return k1 == k2;
-}
-
-static public boolean equiv(Object k1, long k2){
-	return equiv(k1, (Object)k2);
-}
-
-static public boolean equiv(long k1, Object k2){
-	return equiv((Object)k1, k2);
-}
-
-static public boolean equiv(double k1, double k2){
-	return k1 == k2;
-}
-
-static public boolean equiv(Object k1, double k2){
-	return equiv(k1, (Object)k2);
-}
-
-static public boolean equiv(double k1, Object k2){
-	return equiv((Object)k1, k2);
-}
-
-static public boolean equiv(boolean k1, boolean k2){
-	return k1 == k2;
-}
-
-static public boolean equiv(Object k1, boolean k2){
-	return equiv(k1, (Object)k2);
-}
-
-static public boolean equiv(boolean k1, Object k2){
-	return equiv((Object)k1, k2);
-}
-
-static public boolean equiv(char c1, char c2) {
-    return c1 == c2;
-}
-
-static public boolean pcequiv(Object k1, Object k2){
-	if(k1 instanceof IPersistentCollection)
-		return ((IPersistentCollection)k1).equiv(k2);
-	return ((IPersistentCollection)k2).equiv(k1);
-}
 
 static public boolean equals(Object k1, Object k2){
 	if(k1 == k2)

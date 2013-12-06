@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface ITransientCollection<T>{
 
 ITransientCollection<T> conj(T val);

@@ -13,7 +13,7 @@ package com.github.krukow.clj_lang;
 import java.util.Iterator;
 import java.util.Map;
 
-
+@Deprecated
 public interface IPersistentMap<K,V> extends Iterable<Map.Entry<K, V>>, Associative<K,V>, Counted{
 
 

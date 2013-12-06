@@ -7,7 +7,7 @@ public interface TransientVector<E> extends TransientCollection<E>, Indexed<E> {
 	 *         current {@link TransientVector} followed by the value val. (no
 	 *         guarantees are made on the current collection).
 	 */
-	TransientVector<E> plus(E val);
+    @Override TransientVector<E> plus(E val);
 
 	/**
 	 * @return A new {@link TransientVector} consisting of the elements of
@@ -28,6 +28,6 @@ public interface TransientVector<E> extends TransientCollection<E>, Indexed<E> {
 
 	TransientVector<E> pop();
 
-	PersistentVector<E> persist();
+	@Override PersistentVector<E> persist();
 
 }

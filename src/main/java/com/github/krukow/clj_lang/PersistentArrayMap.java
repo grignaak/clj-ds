@@ -244,10 +244,9 @@ public int capacity(){
 }
 
 private int indexOfObject(Object key){
-    Util.EquivPred ep = Util.equivPred(key);
     for(int i = 0; i < array.length; i += 2)
         {
-        if(ep.equiv(key, array[i]))
+        if(Util.equals(key, array[i]))
             return i;
         }
 	return -1;
@@ -257,8 +256,8 @@ private int indexOf(Object key){
     return indexOfObject(key);
 }
 
-static boolean equalKey(Object k1, Object k2){
-	return Util.equiv(k1, k2);
+private static boolean equalKey(Object k1, Object k2){
+	return Util.equals(k1, k2);
 }
 
 public Iterator<Map.Entry<K, V>> iterator(){

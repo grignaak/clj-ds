@@ -38,7 +38,7 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 	 * in Practise of String Hashing Functions"</em>, Jobel & Ramakrishna, 1997;
 	 * and is implemented as efficiently as possible.
 	 */
-	public static int getHashCode(String inputString) {
+	private static int getHashCode(String inputString) {
 		int result = InlineArrayPersistentHATTrie.seed;
 		int length = inputString.length();
 		for (int i = 0; i < length; i++) {
@@ -47,7 +47,7 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 		return ((result & 0x7fffffff) & 0x1ff);
 	}
 	
-	public static final InlineArrayPersistentHATTrie EMPTY = new InlineArrayPersistentHATTrie(null, 0);
+	private static final InlineArrayPersistentHATTrie EMPTY = new InlineArrayPersistentHATTrie(null, 0);
 	
 	public InlineArrayPersistentHATTrie(HATTrieNode root, int count) {
 		this.root = root;
@@ -632,7 +632,7 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 	}
 
 	@Override
-	public IPersistentTrie<T> addMember(String s, T t) {
+	public InlineArrayPersistentHATTrie<T> addMember(String s, T t) {
 		if (root == null) {
 			return new InlineArrayPersistentHATTrie(singletonContainer(new StringRandomAccessChars(s), 0,s.length(), t),1);
 		}

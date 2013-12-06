@@ -11,13 +11,13 @@ package com.github.krukow.clj_lang;
  */
 
 
+@Deprecated
 public interface IPersistentCollection<T> extends Seqable<T> {
 
 int count();
 
 IPersistentCollection<T> cons(T o);
 
+@Deprecated
 IPersistentCollection<T> empty();
-
-boolean equiv(Object o);
 }

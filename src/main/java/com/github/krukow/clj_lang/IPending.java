@@ -10,6 +10,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface IPending{
     boolean isRealized();
 }

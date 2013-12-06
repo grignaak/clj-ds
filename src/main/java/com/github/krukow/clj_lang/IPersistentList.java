@@ -10,7 +10,7 @@
 
 package com.github.krukow.clj_lang;
 
-
+@Deprecated
 public interface IPersistentList<T> extends Sequential, IPersistentStack<T>{
 
 }

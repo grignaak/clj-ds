@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface IChunkedSeq<T> extends ISeq<T>, Sequential{
 
 IChunk<T> chunkedFirst() ;

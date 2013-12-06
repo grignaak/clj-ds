@@ -10,6 +10,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public class Reduced implements IDeref{
 Object val;
 

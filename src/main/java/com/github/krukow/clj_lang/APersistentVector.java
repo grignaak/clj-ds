@@ -95,7 +95,7 @@ static boolean doEquiv(IPersistentVector v, Object obj){
 		for(Iterator i1 = ((List) v).iterator(), i2 = ma.iterator();
 		    i1.hasNext();)
 			{
-			if(!Util.equiv(i1.next(), i2.next()))
+			if(!Util.equals(i1.next(), i2.next()))
 				return false;
 			}
 		return true;
@@ -118,7 +118,7 @@ static boolean doEquiv(IPersistentVector v, Object obj){
 		ISeq ms = RT.seq(obj);
 		for(int i = 0; i < v.count(); i++, ms = ms.next())
 			{
-			if(ms == null || !Util.equiv(v.nth(i), ms.first()))
+			if(ms == null || !Util.equals(v.nth(i), ms.first()))
 				return false;
 			}
 		if(ms != null)
@@ -187,14 +187,14 @@ public T remove(int i){
 
 public int indexOf(Object o){
 	for(int i = 0; i < count(); i++)
-		if(Util.equiv(nth(i), o))
+		if(Util.equals(nth(i), o))
 			return i;
 	return -1;
 }
 
 public int lastIndexOf(Object o){
 	for(int i = count() - 1; i >= 0; i--)
-		if(Util.equiv(nth(i), o))
+		if(Util.equals(nth(i), o))
 			return i;
 	return -1;
 }
@@ -389,7 +389,7 @@ public boolean isEmpty(){
 public boolean contains(Object o){
 	for(ISeq s = seq(); s != null; s = s.next())
 		{
-		if(Util.equiv(s.first(), o))
+		if(Util.equals(s.first(), o))
 			return true;
 		}
 	return false;

@@ -4,10 +4,10 @@ import com.github.krukow.clj_lang.Sorted;
 
 public interface PersistentSortedSet<E> extends PersistentSet<E>, Sorted<E> /*, SortedSet<E> */ {
 
-	PersistentSortedSet<E> zero();
+    @Override PersistentSortedSet<E> zero();
 	
-	PersistentSortedSet<E> plus(E o);
+	@Override PersistentSortedSet<E> plus(E o);
 
-	PersistentSortedSet<E> minus(E key);
+	@Override PersistentSortedSet<E> minus(E key);
 
 }

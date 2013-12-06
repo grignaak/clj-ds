@@ -38,20 +38,6 @@ PersistentQueue(int cnt, ISeq f, PersistentVector r){
 	this.r = r;
 }
 
-public boolean equiv(Object obj){
-
-	if(!(obj instanceof Sequential))
-		return false;
-	ISeq ms = RT.seq(obj);
-	for(ISeq s = seq(); s != null; s = s.next(), ms = ms.next())
-		{
-		if(ms == null || !Util.equiv(s.first(), ms.first()))
-			return false;
-		}
-	return ms == null;
-
-}
-
 public boolean equals(Object obj){
 
 	if(!(obj instanceof Sequential))
@@ -216,7 +202,7 @@ public boolean isEmpty(){
 public boolean contains(Object o){
 	for(ISeq<T> s = seq(); s != null; s = s.next())
 		{
-		if(Util.equiv(s.first(), o))
+		if (Util.equals(s.first(), o))
 			return true;
 		}
 	return false;

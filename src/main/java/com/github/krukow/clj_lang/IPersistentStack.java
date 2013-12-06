@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface IPersistentStack<T> extends IPersistentCollection<T>{
 T peek();
 

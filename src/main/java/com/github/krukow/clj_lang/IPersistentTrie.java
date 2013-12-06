@@ -10,7 +10,7 @@ package com.github.krukow.clj_lang;
  * You must not remove this notice, or any other, from this software.
  */
 
-
+@Deprecated
 public interface IPersistentTrie<T> /*extends IPersistentSet<String>, Seqable<String>*/ {
 	public T getMember(String s);
 	public IPersistentTrie<T> addMember(String s, T t);

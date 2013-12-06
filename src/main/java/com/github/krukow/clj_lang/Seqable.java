@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface Seqable<T> {
     ISeq<T> seq();
 }

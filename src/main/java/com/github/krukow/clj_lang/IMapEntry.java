@@ -12,6 +12,7 @@ package com.github.krukow.clj_lang;
 
 import java.util.Map;
 
+@Deprecated
 public interface IMapEntry<K,V> extends Map.Entry<K,V>{
 K key();
 

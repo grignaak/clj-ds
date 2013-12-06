@@ -253,7 +253,7 @@ public Object reduce(IFn f, Object start) {
 		ISeq s = seq();
 		for(int i = 0; s != null; s = s.next(), i++)
 			{
-			if(Util.equiv(s.first(), o))
+			if (Util.equals(s.first(), o))
 				return i;
 			}
 		return -1;

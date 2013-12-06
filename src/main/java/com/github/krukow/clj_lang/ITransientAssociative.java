@@ -14,6 +14,7 @@ package com.github.krukow.clj_lang;
 
 import java.util.Map;
 
+@Deprecated
 public interface ITransientAssociative<K,V> extends ITransientCollection<Map.Entry<K, V>>, ILookup<K,V>{
 
 ITransientAssociative<K,V> assoc(K key, V val);

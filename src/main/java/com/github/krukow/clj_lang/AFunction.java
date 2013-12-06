@@ -18,6 +18,7 @@ import java.util.Comparator;
 @Deprecated
 public abstract class AFunction extends AFn implements Comparator, Fn, Serializable {
 
+@Override
 public int compare(Object o1, Object o2){
 	try
 		{

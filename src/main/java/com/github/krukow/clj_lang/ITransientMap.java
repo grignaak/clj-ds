@@ -12,7 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
-
+@Deprecated
 public interface ITransientMap<K,V> extends ITransientAssociative<K, V>, Counted{
 	
 ITransientMap<K,V> assoc(K key, V val);

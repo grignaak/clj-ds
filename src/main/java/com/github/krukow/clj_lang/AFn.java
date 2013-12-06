@@ -15,10 +15,12 @@ package com.github.krukow.clj_lang;
 @Deprecated
 public abstract class AFn implements IFn {
 
+@Override
 public Object call() {
 	return invoke();
 }
 
+@Override
 public void run(){
 	try
 		{
@@ -32,49 +34,60 @@ public void run(){
 
 
 
+@Override
 public Object invoke() {
 	return throwArity(0);
 }
 
+@Override
 public Object invoke(Object arg1) {
 	return throwArity(1);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2) {
 	return throwArity(2);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3) {
 	return throwArity(3);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3, Object arg4) {
 	return throwArity(4);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5) {
 	return throwArity(5);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6) {
 	return throwArity(6);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7)
 		{
 	return throwArity(7);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7,
                      Object arg8) {
 	return throwArity(8);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7,
                      Object arg8, Object arg9) {
 	return throwArity(9);
 }
 
+@Override
 public Object invoke(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6, Object arg7,
                      Object arg8, Object arg9, Object arg10) {
 	return throwArity(10);

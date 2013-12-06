@@ -1,7 +1,7 @@
 /**
  *   Copyright (c) Rich Hickey. All rights reserved.
  *   The use and distribution terms for this software are covered by the
- *   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+ *   Eclipse private License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
  *   which can be found in the file epl-v10.html at the root of this distribution.
  *   By using this software in any fashion, you are agreeing to be bound by
  * 	 the terms of this license.
@@ -19,11 +19,11 @@ import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings({ "rawtypes", "serial" })
-public abstract class APersistentTrie<T> extends AFn implements IPersistentTrie<T>, 
+public abstract class APersistentTrie<T> implements IPersistentTrie<T>, 
 									IPersistentSet, Collection<Map.Entry<String, T>>, Set<Map.Entry<String, T>>, Serializable {
 int _hash = -1;
 
-public Object invoke(Object arg1) {
+private Object invoke(Object arg1) {
 	return get((String) arg1);
 }
 
@@ -50,7 +50,7 @@ public boolean equals(Object obj){
 	return true;
 }
 
-public boolean equiv(Object o){
+private boolean equiv(Object o){
 	return equals(o);
 }
 
