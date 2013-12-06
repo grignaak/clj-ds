@@ -99,21 +99,6 @@ public EmptyList<T> empty(){
 	return EMPTY;
 }
 
-public Object reduce(IFn f) {
-	Object ret = first();
-	for(ISeq s = next(); s != null; s = s.next())
-		ret = f.invoke(ret, s.first());
-	return ret;
-}
-
-public Object reduce(IFn f, Object start) {
-	Object ret = f.invoke(start, first());
-	for(ISeq s = next(); s != null; s = s.next())
-		ret = f.invoke(ret, s.first());
-	return ret;
-}
-
-
     static class EmptyList<T> implements IPersistentList<T>, List<T>, ISeq<T>, Counted, com.github.krukow.clj_ds.PersistentList<T>{
 
 	public int hashCode(){

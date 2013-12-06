@@ -69,21 +69,6 @@ public int index(){
 	return i;
 }
 
-public Object reduce(IFn f) {
-	if(oa != null)
-		{
-		Object ret = oa[i];
-		for(int x = i + 1; x < oa.length; x++)
-			ret = f.invoke(ret, oa[x]);
-		return ret;
-		}
-
-	Object ret = Reflector.prepRet(ct, Array.get(array, i));
-	for(int x = i + 1; x < Array.getLength(array); x++)
-		ret = f.invoke(ret, Reflector.prepRet(ct, Array.get(array, x)));
-	return ret;
-}
-
 public int lastIndexOf(Object o) {
 	if (oa != null) {
 		if (o == null) {

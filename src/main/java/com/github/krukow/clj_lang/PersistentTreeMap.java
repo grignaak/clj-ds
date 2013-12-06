@@ -201,14 +201,6 @@ public Iterator<Map.Entry<K, V>> iteratorFrom(K key) {
 	return new SeqIterator<Map.Entry<K, V>>(seqFrom(key, true));
 }
 
-public Object kvreduce(IFn f, Object init){
-    if(tree != null)
-        init = tree.kvreduce(f,init);
-    if(RT.isReduced(init))
-        init = ((IDeref)init).deref();
-    return init;
-}
-
 public NodeIterator reverseIterator(){
 	return new NodeIterator(tree, false);
 }
@@ -521,23 +513,6 @@ static abstract class Node extends AMapEntry{
 	}
 
 	abstract Node replace(Object key, Object val, Node left, Node right);
-
-    public Object kvreduce(IFn f, Object init){
-	    if(left() != null){
-            init = left().kvreduce(f, init);
-	        if(RT.isReduced(init))
-		        return init;
-	        }
-	    init = f.invoke(init, key(), val());
-	    if(RT.isReduced(init))
-		    return init;
-
-	    if(right() != null){
-            init = right().kvreduce(f, init);
-	        }
-	    return init;
-    }
-
 }
 
 static class Black extends Node{

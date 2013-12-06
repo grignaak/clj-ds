@@ -247,32 +247,6 @@ public Iterator<Map.Entry<K, V>> reverseIterator(){
 	} : s;
 }
 
-public Object kvreduce(IFn f, Object init){
-    init = hasNull?f.invoke(init,null,nullValue):init;
-	if(RT.isReduced(init))
-		return ((IDeref)init).deref();
-	if(root != null){
-        return root.kvreduce(f,init);
-    }
-    return init;
-}
-
-public Object fold(long n, final IFn combinef, final IFn reducef,
-                   IFn fjinvoke, final IFn fjtask, final IFn fjfork, final IFn fjjoin){
-	//we are ignoring n for now
-	Callable top = new Callable(){
-		public Object call() throws Exception{
-			Object ret = combinef.invoke();
-			if(root != null)
-				ret = combinef.invoke(ret, root.fold(combinef,reducef,fjtask,fjfork,fjjoin));
-			return hasNull?
-			       combinef.invoke(ret,reducef.invoke(combinef.invoke(),null,nullValue))
-			       :ret;
-		}
-	};
-	return fjinvoke.invoke(top);
-}
-
 public int count(){
 	return count;
 }
@@ -429,10 +403,6 @@ static interface INode extends Serializable {
 	INode assoc(AtomicReference<Thread> edit, int shift, int hash, Object key, Object val, Box addedLeaf);
 
 	INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf);
-	
-    public Object kvreduce(IFn f, Object init);
-
-	Object fold(IFn combinef, IFn reducef, IFn fjtask, IFn fjfork, IFn fjjoin);
 }
 
 final static class ArrayNode implements INode{
@@ -586,63 +556,6 @@ final static class ArrayNode implements INode{
 	
 	public ISeq nodeSeq(){
 		return Seq.create(array);
-	}
-
-    public Object kvreduce(IFn f, Object init){
-        for(INode node : array){
-            if(node != null){
-                init = node.kvreduce(f,init);
-	            if(RT.isReduced(init))
-		            return ((IDeref)init).deref();
-	            }
-	        }
-        return init;
-    }
-
-	public Object fold(final IFn combinef, final IFn reducef,
-	                   final IFn fjtask, final IFn fjfork, final IFn fjjoin){
-		List<Callable> tasks = new ArrayList();
-		for(final INode node : array){
-			if(node != null){
-				tasks.add(new Callable(){
-					public Object call() throws Exception{
-						return node.fold(combinef, reducef, fjtask, fjfork, fjjoin);
-					}
-				});
-				}
-			}
-
-		return foldTasks(tasks,combinef,fjtask,fjfork,fjjoin);
-		}
-
-	static public Object foldTasks(List<Callable> tasks, final IFn combinef,
-	                          final IFn fjtask, final IFn fjfork, final IFn fjjoin){
-
-		if(tasks.isEmpty())
-			return combinef.invoke();
-
-		if(tasks.size() == 1){
-			Object ret = null;
-			try
-				{
-				return tasks.get(0).call();
-				}
-			catch(Exception e)
-				{
-				//aargh
-				}
-			}
-
-		List<Callable> t1 = tasks.subList(0,tasks.size()/2);
-		final List<Callable> t2 = tasks.subList(tasks.size()/2, tasks.size());
-
-		Object forked = fjfork.invoke(fjtask.invoke(new Callable() {
-			public Object call() throws Exception{
-				return foldTasks(t2,combinef,fjtask,fjfork,fjjoin);
-			}
-		}));
-
-		return combinef.invoke(foldTasks(t1,combinef,fjtask,fjfork,fjjoin),fjjoin.invoke(forked));
 	}
 
 	private ArrayNode ensureEditable(AtomicReference<Thread> edit){
@@ -1031,14 +944,6 @@ final static class BitmapIndexedNode implements INode{
 		return NodeSeq.create(array);
 	}
 
-   public Object kvreduce(IFn f, Object init){
-        return NodeSeq.kvreduce(array,f,init);
-   }
-
-	public Object fold(IFn combinef, IFn reducef, IFn fjtask, IFn fjfork, IFn fjjoin){
-		return NodeSeq.kvreduce(array, reducef, combinef.invoke());
-	}
-
 	private BitmapIndexedNode ensureEditable(AtomicReference<Thread> edit){
 		if(this.edit == edit)
 			return this;
@@ -1290,14 +1195,6 @@ final static class HashCollisionNode implements INode{
 		return NodeSeq.create(array);
 	}
 
-   public Object kvreduce(IFn f, Object init){
-        return NodeSeq.kvreduce(array,f,init);
-   }
-
-	public Object fold(IFn combinef, IFn reducef, IFn fjtask, IFn fjfork, IFn fjjoin){
-		return NodeSeq.kvreduce(array, reducef, combinef.invoke());
-	}
-
 	public int findIndex(Object key){
 		for(int i = 0; i < 2*count; i+=2)
 			{
@@ -1530,23 +1427,6 @@ static final class NodeSeq extends ASeq {
 	static ISeq create(Object[] array) {
 		return create(array, 0, null);
 	}
-
-    static public Object kvreduce(Object[] array, IFn f, Object init){
-        for(int i=0;i<array.length;i+=2)
-            {
-            if(array[i] != null)
-                init = f.invoke(init, array[i], array[i+1]);
-            else
-                {
-                INode node = (INode) array[i+1];
-                if(node != null)
-                    init = node.kvreduce(f,init);
-                }
-            if(RT.isReduced(init))
-	             return ((IDeref)init).deref();
-            }
-       return init;
-   }
 
 	private static ISeq create(Object[] array, int i, ISeq s) {
 		if(s != null)
