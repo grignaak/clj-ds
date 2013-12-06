@@ -17,20 +17,9 @@ final public class ChunkedCons extends ASeq implements IChunkedSeq{
 final IChunk chunk;
 final ISeq _more;
 
-ChunkedCons(IPersistentMap meta, IChunk chunk, ISeq more){
-	super(meta);
+ChunkedCons(IChunk chunk, ISeq more){
 	this.chunk = chunk;
 	this._more = more;
-}
-
-public ChunkedCons(IChunk chunk, ISeq more){
-	this(null,chunk, more);
-}
-
-public Obj withMeta(IPersistentMap meta){
-	if(meta != _meta)
-		return new ChunkedCons(meta, chunk, _more);
-	return this;
 }
 
 public Object first(){

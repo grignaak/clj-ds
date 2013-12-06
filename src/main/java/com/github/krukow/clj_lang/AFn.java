@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public abstract class AFn implements IFn {
 
 public Object call() {

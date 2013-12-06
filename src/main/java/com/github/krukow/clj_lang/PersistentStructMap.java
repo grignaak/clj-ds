@@ -16,7 +16,7 @@ import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Map;
 
-public class PersistentStructMap<K,V> extends APersistentMap<K,V> implements IObj{
+public class PersistentStructMap<K,V> extends APersistentMap<K,V> {
 
 public static class Def implements Serializable{
 	final ISeq keys;
@@ -31,7 +31,6 @@ public static class Def implements Serializable{
 final Def def;
 final Object[] vals;
 final IPersistentMap<K,V> ext;
-final IPersistentMap _meta;
 
 
 static public Def createSlotMap(ISeq keys){
@@ -72,7 +71,7 @@ static public <K,V> PersistentStructMap<K,V> create(Def def, ISeq keyvals){
 		else
 			ext = ext.assoc(k, v);
 		}
-	return new PersistentStructMap<K,V>(null, def, vals, ext);
+	return new PersistentStructMap<K,V>(def, vals, ext);
 }
 
 static public <K,V> PersistentStructMap<K,V> construct(Def def, ISeq<V> valseq){
@@ -84,7 +83,7 @@ static public <K,V> PersistentStructMap<K,V> construct(Def def, ISeq<V> valseq){
 		}
 	if(valseq != null)
 		throw new IllegalArgumentException("Too many arguments to struct constructor");
-	return new PersistentStructMap<K,V>(null, def, vals, ext);
+	return new PersistentStructMap<K,V>(def, vals, ext);
 }
 
 static public <K,V> IFn getAccessor(final Def def, K key){
@@ -104,8 +103,7 @@ static public <K,V> IFn getAccessor(final Def def, K key){
 	throw new IllegalArgumentException("Not a key of struct");
 }
 
-protected PersistentStructMap(IPersistentMap meta, Def def, Object[] vals, IPersistentMap<K,V> ext){
-	this._meta = meta;
+protected PersistentStructMap(Def def, Object[] vals, IPersistentMap<K,V> ext){
 	this.ext = ext;
 	this.def = def;
 	this.vals = vals;
@@ -118,18 +116,8 @@ protected PersistentStructMap(IPersistentMap meta, Def def, Object[] vals, IPers
  * allow subclasses to return instances of their class from all
  * PersistentStructMap methods.
  */
-protected PersistentStructMap<K,V> makeNew(IPersistentMap meta, Def def, Object[] vals, IPersistentMap<K,V> ext){
-	return new PersistentStructMap<K,V>(meta, def, vals, ext);
-}
-
-public IObj withMeta(IPersistentMap meta){
-	if(meta == _meta)
-		return this;
-	return makeNew(meta, def, vals, ext);
-}
-
-public IPersistentMap meta(){
-	return _meta;
+protected PersistentStructMap<K,V> makeNew(Def def, Object[] vals, IPersistentMap<K,V> ext){
+	return new PersistentStructMap<K,V>(def, vals, ext);
 }
 
 
@@ -153,9 +141,9 @@ public IPersistentMap<K,V> assoc(K key, V val){
 		int i = e.getValue();
 		Object[] newVals = vals.clone();
 		newVals[i] = val;
-		return makeNew(_meta, def, newVals, ext);
+		return makeNew(def, newVals, ext);
 		}
-	return makeNew(_meta, def, vals, ext.assoc(key, val));
+	return makeNew(def, vals, ext.assoc(key, val));
 }
 
 public V valAt(K key){
@@ -189,7 +177,7 @@ public IPersistentMap<K,V> without(K key) {
 	IPersistentMap<K,V> newExt = ext.without(key);
 	if(newExt == ext)
 		return this;
-	return makeNew(_meta, def, vals, newExt);
+	return makeNew(def, vals, newExt);
 }
 
 public Iterator<Map.Entry<K, V>> iterator(){
@@ -272,7 +260,7 @@ public int count(){
 }
 
 public ISeq<IMapEntry<K, V>> seq(){
-	return new Seq(null, def.keys, vals, 0, ext);
+	return new Seq(def.keys, vals, 0, ext);
 }
 
 public IPersistentCollection empty(){
@@ -286,18 +274,11 @@ static class Seq extends ASeq{
 	final IPersistentMap ext;
 
 
-	public Seq(IPersistentMap meta, ISeq keys, Object[] vals, int i, IPersistentMap ext){
-		super(meta);
+	public Seq(ISeq keys, Object[] vals, int i, IPersistentMap ext){
 		this.i = i;
 		this.keys = keys;
 		this.vals = vals;
 		this.ext = ext;
-	}
-
-	public Obj withMeta(IPersistentMap meta){
-		if(meta != _meta)
-			return new Seq(meta, keys, vals, i, ext);
-		return this;
 	}
 
 	public Object first(){
@@ -306,7 +287,7 @@ static class Seq extends ASeq{
 
 	public ISeq next(){
 		if(i + 1 < vals.length)
-			return new Seq(_meta, keys.next(), vals, i + 1, ext);
+			return new Seq(keys.next(), vals, i + 1, ext);
 		return ext.seq();
 	}
 }

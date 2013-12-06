@@ -17,9 +17,8 @@ import java.util.Comparator;
 import com.github.krukow.clj_ds.PersistentSortedSet;
 import com.github.krukow.clj_ds.TransientCollection;
 
-public class PersistentTreeSet<T> extends APersistentSet<T> implements IObj, Reversible<T>, Sorted<T>, PersistentSortedSet<T>{
-static public final PersistentTreeSet EMPTY = new PersistentTreeSet(null, PersistentTreeMap.EMPTY);
-final IPersistentMap _meta;
+public class PersistentTreeSet<T> extends APersistentSet<T> implements Reversible<T>, Sorted<T>, PersistentSortedSet<T>{
+static public final PersistentTreeSet EMPTY = new PersistentTreeSet(PersistentTreeMap.EMPTY);
 
 
 static public <T> PersistentTreeSet<T> create(ISeq<? extends T> items){
@@ -32,7 +31,7 @@ static public <T> PersistentTreeSet<T> create(ISeq<? extends T> items){
 }
 
 static public <T> PersistentTreeSet<T> create(Comparator<T> comp, ISeq<? extends T> items){
-	PersistentTreeSet<T> ret = new PersistentTreeSet<T>(null, new PersistentTreeMap(null, comp));
+	PersistentTreeSet<T> ret = new PersistentTreeSet<T>(new PersistentTreeMap(comp));
 	for(; items != null; items = items.next())
 		{
 		ret = (PersistentTreeSet<T>) ret.cons(items.first());
@@ -40,33 +39,28 @@ static public <T> PersistentTreeSet<T> create(Comparator<T> comp, ISeq<? extends
 	return ret;
 }
 
-PersistentTreeSet(IPersistentMap meta, IPersistentMap impl){
+PersistentTreeSet(IPersistentMap impl){
 	super(impl);
-	this._meta = meta;
 }
 
 public PersistentTreeSet<T> disjoin(T key) {
 	if(contains(key))
-		return new PersistentTreeSet<T>(meta(),impl.without(key));
+		return new PersistentTreeSet<T>(impl.without(key));
 	return this;
 }
 
 public PersistentTreeSet<T> cons(T o){
 	if(contains(o))
 		return this;
-	return new PersistentTreeSet<T>(meta(),impl.assoc(o,o));
+	return new PersistentTreeSet<T>(impl.assoc(o,o));
 }
 
 public PersistentTreeSet<T> empty(){
-	return new PersistentTreeSet<T>(meta(),(PersistentTreeMap)impl.empty());
+	return new PersistentTreeSet<T>((PersistentTreeMap)impl.empty());
 }
 
 public ISeq<T> rseq() {
 	return APersistentMap.KeySeq.create(((Reversible) impl).rseq());
-}
-
-public PersistentTreeSet<T> withMeta(IPersistentMap meta){
-	return new PersistentTreeSet<T>(meta, impl);
 }
 
 public Comparator<T> comparator(){
@@ -85,10 +79,6 @@ public ISeq<T> seq(boolean ascending){
 public ISeq<T> seqFrom(T key, boolean ascending){
 	PersistentTreeMap m = (PersistentTreeMap) impl;
 	return RT.keys(m.seqFrom(key,ascending));
-}
-
-public IPersistentMap meta(){
-	return _meta;
 }
 	
 	@Override

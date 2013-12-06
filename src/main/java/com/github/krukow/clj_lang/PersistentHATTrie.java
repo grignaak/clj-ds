@@ -21,22 +21,16 @@ import java.util.Map.Entry;
  Any errors are my own
 */
 @SuppressWarnings({"rawtypes","unchecked"})
-public class PersistentHATTrie<T> extends APersistentTrie<T> implements IObj {
+public class PersistentHATTrie<T> extends APersistentTrie<T> {
 	private static final long serialVersionUID = -7068824281866890730L;
-	final IPersistentMap meta;
 	final HATTrieNode<T> root;
 	final int count;
 	
-	public static final PersistentHATTrie EMPTY = new PersistentHATTrie(null, null, 0);
+	public static final PersistentHATTrie EMPTY = new PersistentHATTrie(null, 0);
 	
-	public PersistentHATTrie(HATTrieNode root, IPersistentMap meta, int count) {
+	public PersistentHATTrie(HATTrieNode root, int count) {
 		this.root = root;
-		this.meta = meta;
 		this.count = count;
-	}
-
-	public IPersistentMap meta() {
-		return meta;
 	}
 
 	private static interface HATTrieNode<T> {
@@ -286,13 +280,13 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> implements IObj {
 	@Override
 	public IPersistentTrie<T> addMember(String s, T t) {
 		if (root == null) {
-			return new PersistentHATTrie(new ContainerNode(PersistentTreeMap.EMPTY.assoc(s, t)),null,1);
+			return new PersistentHATTrie(new ContainerNode(PersistentTreeMap.EMPTY.assoc(s, t)),1);
 		}
 		HATTrieNode<T> newRoot = root.add(s, 0,t);
 		if (root == newRoot) {
 			return this;
 		}
-		return new PersistentHATTrie(newRoot,meta,count+1);
+		return new PersistentHATTrie(newRoot,count+1);
 	}
 
 	@Override
@@ -370,11 +364,6 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> implements IObj {
 	@Override
 	public void clear() {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public IObj withMeta(IPersistentMap meta) {
-		return new PersistentHATTrie(root,meta,count);
 	}
 	
 	@Override

@@ -15,10 +15,9 @@ package com.github.krukow.clj_lang;
 import java.io.Serializable;
 import java.util.Iterator;
 import java.util.Stack;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class PersistentVector<T> extends APersistentVector<T> implements IObj, IEditableCollection<T>, com.github.krukow.clj_ds.PersistentVector<T>{
+public class PersistentVector<T> extends APersistentVector<T> implements IEditableCollection<T>, com.github.krukow.clj_ds.PersistentVector<T>{
 
 static class Node implements Serializable {
 	transient final AtomicReference<Thread> edit;
@@ -42,7 +41,6 @@ final int cnt;
 final int shift;
 final Node root;
 final Object[] tail;
-final IPersistentMap _meta;
 
 
 @SuppressWarnings("unchecked")
@@ -78,24 +76,13 @@ static public <T> PersistentVector<T> create(T ... items){
 }
 
 PersistentVector(int cnt, int shift, Node root, Object[] tail){
-	this._meta = null;
 	this.cnt = cnt;
 	this.shift = shift;
 	this.root = root;
 	this.tail = tail;
 }
 
-
-PersistentVector(IPersistentMap meta, int cnt, int shift, Node root, Object[] tail){
-	this._meta = meta;
-	this.cnt = cnt;
-	this.shift = shift;
-	this.root = root;
-	this.tail = tail;
-}
-
-public PersistentVector(IPersistentMap meta, int cnt, int shift, Node root, Object[] tail, IFn f) {
-	this._meta = meta();
+public PersistentVector(int cnt, int shift, Node root, Object[] tail, IFn f) {
 	this.cnt = cnt;
 	this.shift = shift;
 	this.tail = mapArray(f,Util.ret1(tail,tail=null));
@@ -146,10 +133,10 @@ public PersistentVector<T> assocN(int i, T val){
 			System.arraycopy(tail, 0, newTail, 0, tail.length);
 			newTail[i & 0x01f] = val;
 
-			return new PersistentVector<T>(meta(), cnt, shift, root, newTail);
+			return new PersistentVector<T>(cnt, shift, root, newTail);
 			}
 
-		return new PersistentVector<T>(meta(), cnt, shift, doAssoc(shift, root, i, val), tail);
+		return new PersistentVector<T>(cnt, shift, doAssoc(shift, root, i, val), tail);
 		}
 	if(i == cnt)
 		return cons(val);	
@@ -174,15 +161,6 @@ public int count(){
 	return cnt;
 }
 
-public PersistentVector<T> withMeta(IPersistentMap meta){
-	return new PersistentVector<T>(meta, cnt, shift, root, tail);
-}
-
-public IPersistentMap meta(){
-	return _meta;
-}
-
-
 public PersistentVector<T> cons(T val){
 	int i = cnt;
 	//room in tail?
@@ -192,7 +170,7 @@ public PersistentVector<T> cons(T val){
 		Object[] newTail = new Object[tail.length + 1];
 		System.arraycopy(tail, 0, newTail, 0, tail.length);
 		newTail[tail.length] = val;
-		return new PersistentVector<T>(meta(), cnt + 1, shift, root, newTail);
+		return new PersistentVector<T>(cnt + 1, shift, root, newTail);
 		}
 	//full tail, push into tree
 	Node newroot;
@@ -208,7 +186,7 @@ public PersistentVector<T> cons(T val){
 		}
 	else
 		newroot = pushTail(shift, root, tailnode);
-	return new PersistentVector<T>(meta(), cnt + 1, newshift, newroot, new Object[]{val});
+	return new PersistentVector<T>(cnt + 1, newshift, newroot, new Object[]{val});
 }
 
 private Node pushTail(int level, Node parent, Node tailnode){
@@ -395,14 +373,6 @@ static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T
 		this.node = vec.arrayFor(i);
 	}
 
-	ChunkedSeq(IPersistentMap meta, PersistentVector<T> vec, Object[] node, int i, int offset){
-		super(meta);
-		this.vec = vec;
-		this.node = node;
-		this.i = i;
-		this.offset = offset;
-	}
-
 	ChunkedSeq(PersistentVector<T> vec, Object[] node, int i, int offset){
 		this.vec = vec;
 		this.node = node;
@@ -427,12 +397,6 @@ static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T
 		return s;
 	}
 
-	public Obj withMeta(IPersistentMap meta){
-		if(meta == this._meta)
-			return this;
-		return new ChunkedSeq(meta, vec, node, i, offset);
-	}
-
 	public T first(){
 		return (T) node[offset];
 	}
@@ -449,7 +413,7 @@ static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T
 }
 
 public PersistentVector<T> empty(){
-	return EMPTY.withMeta(meta());
+	return EMPTY;
 }
 
 //private Node pushTail(int level, Node node, Object[] tailNode, Box expansion){
@@ -487,13 +451,13 @@ public PersistentVector<T> pop(){
 	if(cnt == 0)
 		throw new IllegalStateException("Can't pop empty vector");
 	if(cnt == 1)
-		return EMPTY.withMeta(meta());
+		return EMPTY;
 	//if(tail.length > 1)
 	if(cnt-tailoff() > 1)
 		{
 		Object[] newTail = new Object[tail.length - 1];
 		System.arraycopy(tail, 0, newTail, 0, newTail.length);
-		return new PersistentVector<T>(meta(), cnt - 1, shift, root, newTail);
+		return new PersistentVector<T>(cnt - 1, shift, root, newTail);
 		}
 	Object[] newtail = arrayFor(cnt - 2);
 
@@ -508,7 +472,7 @@ public PersistentVector<T> pop(){
 		newroot = (Node) newroot.array[0];
 		newshift -= 5;
 		}
-	return new PersistentVector<T>(meta(), cnt - 1, newshift, newroot, newtail);
+	return new PersistentVector<T>(cnt - 1, newshift, newroot, newtail);
 }
 
 private Node popTail(int level, Node node){
@@ -875,7 +839,7 @@ static final class TransientVector<T> extends AFn implements ITransientVector<T>
 	}
 
 public static IPersistentVector vectormap(IFn f, PersistentVector v) {
-	return new PersistentVector(v._meta,v.cnt,v.shift,v.root,Util.ret1(v.tail,v=null),f);
+	return new PersistentVector(v.cnt,v.shift,v.root,Util.ret1(v.tail,v=null),f);
 }
 
 private static Object[] mapArray(IFn f, Object[] arr) {

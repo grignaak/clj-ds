@@ -24,7 +24,7 @@ private final T _first;
 private final PersistentList<T> _rest;
 private final int _count;
 
-final public static EmptyList EMPTY = new EmptyList(null);
+final public static EmptyList EMPTY = new EmptyList();
 
 public static final <T> EmptyList<T> emptyList() {
 return EMPTY;
@@ -37,11 +37,10 @@ public PersistentList(T first){
 	this._count = 1;
 }
 
-PersistentList(IPersistentMap meta, T _first, PersistentList<T> _rest, int _count){
-	super(meta);
-	this._first = _first;
-	this._rest = _rest;
-	this._count = _count;
+PersistentList(T _first, PersistentList<T> _rest, int _count) {
+       this._first = _first;
+       this._rest = _rest;
+       this._count = _count;
 }
 
 public static <T> com.github.krukow.clj_ds.PersistentList<T> create(T... init){
@@ -83,7 +82,7 @@ public T peek(){
 
 public IPersistentList<T> pop(){
 	if(_rest == null)
-		return EMPTY.withMeta(_meta);
+		return EMPTY;
 	return _rest;
 }
 
@@ -92,18 +91,12 @@ public int count(){
 }
 
 public PersistentList<T> cons(T o){
-	return new PersistentList<T>(meta(), o, this, _count + 1);
+	return new PersistentList<T>(o, this, _count + 1);
 }
 
 
 public EmptyList<T> empty(){
-	return EMPTY.withMeta(meta());
-}
-
-public PersistentList<T> withMeta(IPersistentMap meta){
-	if(meta != _meta)
-		return new PersistentList<T>(meta, _first, _rest, _count);
-	return this;
+	return EMPTY;
 }
 
 public Object reduce(IFn f) {
@@ -121,7 +114,7 @@ public Object reduce(IFn f, Object start) {
 }
 
 
-    static class EmptyList<T> extends Obj implements IPersistentList<T>, List<T>, ISeq<T>, Counted, com.github.krukow.clj_ds.PersistentList<T>{
+    static class EmptyList<T> implements IPersistentList<T>, List<T>, ISeq<T>, Counted, com.github.krukow.clj_ds.PersistentList<T>{
 
 	public int hashCode(){
 		return 1;
@@ -133,10 +126,6 @@ public Object reduce(IFn f, Object start) {
 
 	public boolean equiv(Object o){
 		return equals(o);
-	}
-	
-    EmptyList(IPersistentMap meta){
-		super(meta);
 	}
 
         public T first() {
@@ -152,16 +141,10 @@ public Object reduce(IFn f, Object start) {
         }
 
         public PersistentList<T> cons(T o){
-		return new PersistentList<T>(meta(), o, null, 1);
+		return new PersistentList<T>(o, null, 1);
 	}
 
 	public EmptyList<T> empty(){
-		return this;
-	}
-
-	public EmptyList<T> withMeta(IPersistentMap meta){
-		if(meta != meta())
-			return new EmptyList<T>(meta);
 		return this;
 	}
 

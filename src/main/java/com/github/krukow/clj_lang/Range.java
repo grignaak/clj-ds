@@ -21,25 +21,13 @@ public Range(int start, int end){
 	this.n = start;
 }
 
-public Range(IPersistentMap meta, int start, int end){
-	super(meta);
-	this.end = end;
-	this.n = start;
-}
-
-public Obj withMeta(IPersistentMap meta){
-	if(meta == meta())
-		return this;
-	return new Range(meta(), end, n);
-}
-
 public Object first(){
 	return n;
 }
 
 public ISeq next(){
 	if(n < end-1)
-		return new Range(_meta, n + 1, end);
+		return new Range(n + 1, end);
 	return null;
 }
 

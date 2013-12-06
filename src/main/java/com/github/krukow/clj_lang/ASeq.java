@@ -11,9 +11,14 @@
 package com.github.krukow.clj_lang;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
-public abstract class ASeq<T> extends Obj implements ISeq<T>, Sequential, List<T>, Serializable, IHashEq {
+public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializable, IHashEq {
 transient int _hash = -1;
 transient int _hasheq = -1;
 
@@ -26,10 +31,6 @@ public IPersistentCollection<T> empty() {
 	return PersistentList.emptyList();
 }
 
-
-protected ASeq(IPersistentMap meta){
-	super(meta);
-}
 
 
 protected ASeq(){

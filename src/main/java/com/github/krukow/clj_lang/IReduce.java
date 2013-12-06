@@ -12,6 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated(/* until we replace the function type */)
 public interface IReduce{
 Object reduce(IFn f) ;
 

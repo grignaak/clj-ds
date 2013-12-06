@@ -12,9 +12,8 @@
 
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public interface IChunk<T> extends Indexed<T>{
 
 IChunk<T> dropFirst();
-
-Object reduce(IFn f, Object start);
 }

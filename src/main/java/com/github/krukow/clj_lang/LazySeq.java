@@ -12,9 +12,13 @@
 
 package com.github.krukow.clj_lang;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 
-public final class LazySeq extends Obj implements ISeq, Sequential, List, IPending, IHashEq{
+public final class LazySeq implements ISeq, Sequential, List, IPending, IHashEq{
 
 private IFn fn;
 private Object sv;
@@ -24,14 +28,9 @@ public LazySeq(IFn fn){
 	this.fn = fn;
 }
 
-private LazySeq(IPersistentMap meta, ISeq s){
-	super(meta);
+private LazySeq(ISeq s){
 	this.fn = null;
 	this.s = s;
-}
-
-public Obj withMeta(IPersistentMap meta){
-	return new LazySeq(meta, seq());
 }
 
 final synchronized Object sval(){

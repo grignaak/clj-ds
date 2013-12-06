@@ -36,8 +36,7 @@ IteratorSeq(Iterator iter){
 	this.state._rest = state;
 }
 
-IteratorSeq(IPersistentMap meta, Iterator iter, State state){
-	super(meta);
+IteratorSeq(Iterator iter, State state) {
 	this.iter = iter;
 	this.state = state;
 }
@@ -63,10 +62,6 @@ public ISeq next(){
 				}
 			}
 	return (ISeq) state._rest;
-}
-
-public IteratorSeq withMeta(IPersistentMap meta){
-	return new IteratorSeq(meta, iter, state);
 }
 
 private void writeObject (java.io.ObjectOutputStream out) throws IOException {

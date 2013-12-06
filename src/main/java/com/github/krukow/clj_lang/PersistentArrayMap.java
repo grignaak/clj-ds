@@ -27,13 +27,12 @@ import com.github.krukow.clj_ds.TransientMap;
  * null keys and values are ok, but you won't be able to distinguish a null value via valAt - use contains/entryAt
  */
 
-public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements IObj, IEditableCollection<MapEntry<K, V>>, PersistentMap<K,V> {
+public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, PersistentMap<K,V> {
 
 final Object[] array;
 static final int HASHTABLE_THRESHOLD = 16;
 
 public static final PersistentArrayMap EMPTY = new PersistentArrayMap();
-private final IPersistentMap _meta;
 
 @SuppressWarnings("unchecked")
 static public <K,V> PersistentMap<K,V> create(Map<? extends K, ? extends V> other){
@@ -47,20 +46,15 @@ static public <K,V> PersistentMap<K,V> create(Map<? extends K, ? extends V> othe
 
 protected PersistentArrayMap(){
 	this.array = new Object[]{};
-	this._meta = null;
-}
-
-public PersistentArrayMap<K,V> withMeta(IPersistentMap meta){
-	return new PersistentArrayMap<K,V>(meta, array);
 }
 
 PersistentArrayMap<K,V> create(Object... init){
-	return new PersistentArrayMap<K,V>(meta(), init);
+	return new PersistentArrayMap<K,V>(init);
 }
 
 
 PersistentHashMap<K,V> createHT(Object[] init){
-	return PersistentHashMap.create(meta(), init);
+	return PersistentHashMap.create(init);
 }
 
 static public <K,V> PersistentArrayMap<K,V> createWithCheck(Object[] init){
@@ -147,13 +141,6 @@ static public <K, V> PersistentArrayMap<K, V> createAsIfByAssoc(Object[] init){
  */
 public PersistentArrayMap(Object[] init){
 	this.array = init;
-	this._meta = null;
-}
-
-
-public PersistentArrayMap(IPersistentMap meta, Object[] init){
-	this._meta = meta;
-	this.array = init;
 }
 
 public int count(){
@@ -238,7 +225,7 @@ public PersistentArrayMap<K,V> without(K key){
 }
 
 public PersistentArrayMap<K,V> empty(){
-	return (PersistentArrayMap<K,V>) EMPTY.withMeta(meta());
+	return (PersistentArrayMap<K,V>) EMPTY;
 }
 
 final public V valAt(K key, V notFound){
@@ -293,21 +280,11 @@ public ISeq seq(){
 	return null;
 }
 
-public IPersistentMap meta(){
-	return _meta;
-}
-
 static class Seq extends ASeq implements Counted{
 	final Object[] array;
 	final int i;
 
 	Seq(Object[] array, int i){
-		this.array = array;
-		this.i = i;
-	}
-
-	public Seq(IPersistentMap meta, Object[] array, int i){
-		super(meta);
 		this.array = array;
 		this.i = i;
 	}
@@ -324,10 +301,6 @@ static class Seq extends ASeq implements Counted{
 
 	public int count(){
 		return (array.length - i) / 2;
-	}
-
-	public Obj withMeta(IPersistentMap meta){
-		return new Seq(meta, array, i);
 	}
 }
 

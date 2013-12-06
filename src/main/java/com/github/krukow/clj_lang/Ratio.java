@@ -16,6 +16,7 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.math.MathContext;
 
+@Deprecated
 public class Ratio extends Number implements Comparable{
 final public BigInteger numerator;
 final public BigInteger denominator;

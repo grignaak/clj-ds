@@ -31,13 +31,12 @@ import com.github.krukow.clj_ds.TransientMap;
  Any errors are my own
  */
 
-public class PersistentHashMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, IObj, PersistentMap<K, V> {
+public class PersistentHashMap<K,V> extends APersistentMap<K,V> implements IEditableCollection<MapEntry<K, V>>, PersistentMap<K, V> {
 
 final int count;
 final INode root;
 final boolean hasNull;
 final V nullValue;
-final IPersistentMap _meta;
 
 final public static PersistentHashMap EMPTY = new PersistentHashMap(0, null, false, null);
 final private static Object NOT_FOUND = new Object();
@@ -107,24 +106,7 @@ static public <K, V> PersistentHashMap<K, V> createWithCheck(ISeq items){
 	return (PersistentHashMap<K, V>) ret.persistentMap();
 }
 
-/*
- * @param init {key1,val1,key2,val2,...}
- */
-@SuppressWarnings("unchecked")
-public static <K,V> PersistentHashMap<K,V> create(IPersistentMap meta, Object... init){
-	return create(init).withMeta(meta);
-}
-
 PersistentHashMap(int count, INode root, boolean hasNull, V nullValue){
-	this.count = count;
-	this.root = root;
-	this.hasNull = hasNull;
-	this.nullValue = nullValue;
-	this._meta = null;
-}
-
-public PersistentHashMap(IPersistentMap meta, int count, INode root, boolean hasNull, V nullValue){
-	this._meta = meta;
 	this.count = count;
 	this.root = root;
 	this.hasNull = hasNull;
@@ -151,14 +133,14 @@ public IPersistentMap<K,V> assoc(K key, V val){
 	if(key == null) {
 		if(hasNull && val == nullValue)
 			return this;
-		return new PersistentHashMap<K,V>(meta(), hasNull ? count : count + 1, root, true, val);
+		return new PersistentHashMap<K,V>(hasNull ? count : count + 1, root, true, val);
 	}
 	Box addedLeaf = new Box(null);
 	INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root) 
 			.assoc(0, hash(key), key, val, addedLeaf);
 	if(newroot == root)
 		return this;
-	return new PersistentHashMap<K,V>(meta(), addedLeaf.val == null ? count : count + 1, newroot, hasNull, nullValue);
+	return new PersistentHashMap<K,V>(addedLeaf.val == null ? count : count + 1, newroot, hasNull, nullValue);
 }
 
 public V valAt(K key, V notFound){
@@ -179,13 +161,13 @@ public IPersistentMap<K,V> assocEx(K key, V val) {
 
 public IPersistentMap<K,V> without(K key){
 	if(key == null)
-		return hasNull ? new PersistentHashMap<K,V>(meta(), count - 1, root, false, null) : this;
+		return hasNull ? new PersistentHashMap<K,V>(count - 1, root, false, null) : this;
 	if(root == null)
 		return this;
 	INode newroot = root.without(0, hash(key), key);
 	if(newroot == root)
 		return this;
-	return new PersistentHashMap<K,V>(meta(), count - 1, newroot, hasNull, nullValue); 
+	return new PersistentHashMap<K,V>(count - 1, newroot, hasNull, nullValue); 
 }
 
 public Iterator<Map.Entry<K, V>> iterator2(){
@@ -307,7 +289,7 @@ public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
 }
 
 public IPersistentCollection empty(){
-	return EMPTY.withMeta(meta());	
+	return EMPTY;
 }
 
 static int mask(int hash, int shift){
@@ -315,16 +297,8 @@ static int mask(int hash, int shift){
 	return (hash >>> shift) & 0x01f;
 }
 
-public PersistentHashMap withMeta(IPersistentMap meta){
-	return new PersistentHashMap(meta, count, root, hasNull, nullValue);
-}
-
 public TransientHashMap asTransient() {
 	return new TransientHashMap(this);
-}
-
-public IPersistentMap meta(){
-	return _meta;
 }
 
 static final class TransientHashMap<K,V> extends ATransientMap<K,V> implements TransientMap<K, V> {
@@ -741,30 +715,25 @@ final static class ArrayNode implements INode{
 		final ISeq s; 
 		
 		static ISeq create(INode[] nodes) {
-			return create(null, nodes, 0, null);
+			return create(nodes, 0, null);
 		}
 		
-		private static ISeq create(IPersistentMap meta, INode[] nodes, int i, ISeq s) {
+		private static ISeq create(INode[] nodes, int i, ISeq s) {
 			if (s != null)
-				return new Seq(meta, nodes, i, s);
+				return new Seq(nodes, i, s);
 			for(int j = i; j < nodes.length; j++)
 				if (nodes[j] != null) {
 					ISeq ns = nodes[j].nodeSeq();
 					if (ns != null)
-						return new Seq(meta, nodes, j + 1, ns);
+						return new Seq(nodes, j + 1, ns);
 				}
 			return null;
 		}
 		
-		private Seq(IPersistentMap meta, INode[] nodes, int i, ISeq s) {
-			super(meta);
+		private Seq(INode[] nodes, int i, ISeq s) {
 			this.nodes = nodes;
 			this.i = i;
 			this.s = s;
-		}
-
-		public Obj withMeta(IPersistentMap meta) {
-			return new Seq(meta, nodes, i, s);
 		}
 
 		public Object first() {
@@ -772,7 +741,7 @@ final static class ArrayNode implements INode{
 		}
 
 		public ISeq next() {
-			return create(null, nodes, i, s.next());
+			return create(nodes, i, s.next());
 		}
 		
 	}
@@ -1555,7 +1524,7 @@ static final class NodeSeq extends ASeq {
 	final ISeq s;
 	
 	NodeSeq(Object[] array, int i) {
-		this(null, array, i, null);
+		this(array, i, null);
 	}
 
 	static ISeq create(Object[] array) {
@@ -1581,29 +1550,24 @@ static final class NodeSeq extends ASeq {
 
 	private static ISeq create(Object[] array, int i, ISeq s) {
 		if(s != null)
-			return new NodeSeq(null, array, i, s);
+			return new NodeSeq(array, i, s);
 		for(int j = i; j < array.length; j+=2) {
 			if(array[j] != null)
-				return new NodeSeq(null, array, j, null);
+				return new NodeSeq(array, j, null);
 			INode node = (INode) array[j+1];
 			if (node != null) {
 				ISeq nodeSeq = node.nodeSeq();
 				if(nodeSeq != null)
-					return new NodeSeq(null, array, j + 2, nodeSeq);
+					return new NodeSeq(array, j + 2, nodeSeq);
 			}
 		}
 		return null;
 	}
 	
-	NodeSeq(IPersistentMap meta, Object[] array, int i, ISeq s) {
-		super(meta);
+	NodeSeq(Object[] array, int i, ISeq s) {
 		this.array = array;
 		this.i = i;
 		this.s = s;
-	}
-
-	public Obj withMeta(IPersistentMap meta) {
-		return new NodeSeq(meta, array, i, s);
 	}
 
 	public Object first() {

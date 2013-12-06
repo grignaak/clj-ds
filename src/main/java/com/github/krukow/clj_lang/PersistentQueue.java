@@ -20,9 +20,9 @@ import java.util.Iterator;
  * so no reversing or suspensions required for persistent use
  */
 
-public class PersistentQueue<T> extends Obj implements IPersistentList<T>, Collection<T>, Counted, IHashEq{
+public class PersistentQueue<T> implements IPersistentList<T>, Collection<T>, Counted, IHashEq{
 
-final public static PersistentQueue EMPTY = new PersistentQueue(null, 0, null, null);
+final public static PersistentQueue EMPTY = new PersistentQueue(0, null, null);
 
 //*
 final int cnt;
@@ -32,8 +32,7 @@ final PersistentVector r;
 int _hash = -1;
 int _hasheq = -1;
 
-PersistentQueue(IPersistentMap meta, int cnt, ISeq f, PersistentVector r){
-	super(meta);
+PersistentQueue(int cnt, ISeq f, PersistentVector r){
 	this.cnt = cnt;
 	this.f = f;
 	this.r = r;
@@ -108,7 +107,7 @@ public PersistentQueue<T> pop(){
 		f1 = RT.seq(r);
 		r1 = null;
 		}
-	return new PersistentQueue<T>(meta(), cnt - 1, f1, r1);
+	return new PersistentQueue<T>(cnt - 1, f1, r1);
 }
 
 public int count(){
@@ -123,17 +122,13 @@ public ISeq<T> seq(){
 
 public PersistentQueue<T> cons(T o){
 	if(f == null)     //empty
-		return new PersistentQueue<T>(meta(), cnt + 1, RT.list(o), null);
+		return new PersistentQueue<T>(cnt + 1, RT.list(o), null);
 	else
-		return new PersistentQueue<T>(meta(), cnt + 1, f, (r != null ? r : PersistentVector.EMPTY).cons(o));
+		return new PersistentQueue<T>(cnt + 1, f, (r != null ? r : PersistentVector.EMPTY).cons(o));
 }
 
 public IPersistentCollection<T> empty(){
-	return EMPTY.withMeta(meta());	
-}
-
-public PersistentQueue<T> withMeta(IPersistentMap meta){
-	return new PersistentQueue<T>(meta, cnt, f, r);
+	return EMPTY;	
 }
 
 static class Seq<T> extends ASeq<T>{
@@ -141,12 +136,6 @@ static class Seq<T> extends ASeq<T>{
 	final ISeq<T> rseq;
 
 	Seq(ISeq<T> f, ISeq<T> rseq){
-		this.f = f;
-		this.rseq = rseq;
-	}
-
-	Seq(IPersistentMap meta, ISeq<T> f, ISeq<T> rseq){
-		super(meta);
 		this.f = f;
 		this.rseq = rseq;
 	}
@@ -170,10 +159,6 @@ static class Seq<T> extends ASeq<T>{
 
 	public int count(){
 		return RT.count(f) + RT.count(rseq);
-	}
-
-	public Seq<T> withMeta(IPersistentMap meta){
-		return new Seq<T>(meta, f, rseq);
 	}
 }
 

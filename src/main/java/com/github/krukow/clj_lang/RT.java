@@ -41,7 +41,6 @@ public class RT {
 	static public Charset UTF8 = Charset.forName("UTF-8");
 
 	static volatile boolean readably = true;
-	static volatile boolean print_meta = true;
 
 	static public final Object[] EMPTY_ARRAY = new Object[] {};
 	static public final Comparator DEFAULT_COMPARATOR = new DefaultComparator();
@@ -76,8 +75,6 @@ public class RT {
 			return null;
 		else if (coll instanceof Iterable)
 			return IteratorSeq.create(((Iterable) coll).iterator());
-		else if (coll.getClass().isArray())
-			return ArraySeq.createFromObject(coll);
 		else if (coll instanceof Map)
 			return seq(((Map) coll).entrySet());
 		else {
@@ -97,12 +94,6 @@ public class RT {
 
 	static public ISeq vals(Object coll) {
 		return APersistentMap.ValSeq.create(seq(coll));
-	}
-
-	static public IPersistentMap meta(Object x) {
-		if (x instanceof IMeta)
-			return ((IMeta) x).meta();
-		return null;
 	}
 
 	public static int count(Object o) {
@@ -812,7 +803,7 @@ public class RT {
 			throw new IndexOutOfBoundsException();
 		if (start == end)
 			return PersistentVector.EMPTY;
-		return new APersistentVector.SubVector(null, v, start, end);
+		return new APersistentVector.SubVector(v, start, end);
 	}
 
 	/**
@@ -1031,16 +1022,6 @@ public class RT {
 	}
 
 	static public void print(Object x, Writer w) throws IOException {
-
-		if (x instanceof Obj) {
-			Obj o = (Obj) x;
-			if (RT.count(o.meta()) > 0) {
-				IPersistentMap meta = o.meta();
-				w.write("#^");
-				print(meta, w);
-				w.write(' ');
-			}
-		}
 		if (x == null)
 			w.write("null");
 		else if (x instanceof ISeq || x instanceof IPersistentList) {

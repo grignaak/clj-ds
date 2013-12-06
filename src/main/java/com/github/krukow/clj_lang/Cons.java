@@ -24,13 +24,6 @@ public Cons(T first, ISeq<T> _more){
 	this._more = _more;
 }
 
-
-public Cons(IPersistentMap meta, T _first, ISeq<T> _more){
-	super(meta);
-	this._first = _first;
-	this._more = _more;
-}
-
 public T first(){
 	return _first;
 }
@@ -48,10 +41,5 @@ public ISeq<T> more(){
 public int count(){
 	return 1 + RT.count(_more);
 }
-
-public Cons<T> withMeta(IPersistentMap meta){
-	return new Cons<T>(meta, _first, _more);
-}
-
 
 }

@@ -9,6 +9,7 @@
  **/
 package com.github.krukow.clj_lang;
 
+@Deprecated
 public abstract class RestFn extends AFunction{
 abstract public int getRequiredArity();
 

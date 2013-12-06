@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 
-public abstract class APersistentVector<T> extends AFn implements IPersistentVector<T>, Iterable<T>,
+public abstract class APersistentVector<T> implements IPersistentVector<T>, Iterable<T>,
                                                                List<T>,
                                                                RandomAccess, Comparable<T>,
                                                                Serializable, IHashEq {
@@ -414,19 +414,13 @@ public int compareTo(Object o){
 	return 0;
 }
 
-    static class Seq<T> extends ASeq<T> implements IndexedSeq<T>, IReduce{
+    static class Seq<T> extends ASeq<T> implements IndexedSeq<T> {
 	//todo - something more efficient
 	final IPersistentVector<T> v;
 	final int i;
 
 
 	public Seq(IPersistentVector<T> v, int i){
-		this.v = v;
-		this.i = i;
-	}
-
-	Seq(IPersistentMap meta, IPersistentVector<T> v, int i){
-		super(meta);
 		this.v = v;
 		this.i = i;
 	}
@@ -448,24 +442,6 @@ public int compareTo(Object o){
 	public int count(){
 		return v.count() - i;
 	}
-
-	public APersistentVector.Seq<T> withMeta(IPersistentMap meta){
-		return new APersistentVector.Seq<T>(meta, v, i);
-	}
-
-	public Object reduce(IFn f) {
-		Object ret = v.nth(i);
-		for(int x = i + 1; x < v.count(); x++)
-			ret = f.invoke(ret, v.nth(x));
-		return ret;
-	}
-
-	public Object reduce(IFn f, Object start) {
-		Object ret = f.invoke(start, v.nth(i));
-		for(int x = i + 1; x < v.count(); x++)
-			ret = f.invoke(ret, v.nth(x));
-		return ret;
-	}
     }
 
 public static class RSeq<T> extends ASeq<T> implements IndexedSeq<T>, Counted{
@@ -474,12 +450,6 @@ public static class RSeq<T> extends ASeq<T> implements IndexedSeq<T>, Counted{
 
 	public RSeq(IPersistentVector<T> vector, int i){
 		this.v = vector;
-		this.i = i;
-	}
-
-	RSeq(IPersistentMap meta, IPersistentVector<T> v, int i){
-		super(meta);
-		this.v = v;
 		this.i = i;
 	}
 
@@ -500,23 +470,17 @@ public static class RSeq<T> extends ASeq<T> implements IndexedSeq<T>, Counted{
 	public int count(){
 		return i + 1;
 	}
-
-	public APersistentVector.RSeq<T> withMeta(IPersistentMap meta){
-		return new APersistentVector.RSeq<T>(meta, v, i);
-	}
 }
 
-static class SubVector<T> extends APersistentVector<T> implements IObj{
+static class SubVector<T> extends APersistentVector<T> {
 	public final IPersistentVector<T> v;
 	public final int start;
 	public final int end;
-	final IPersistentMap _meta;
 
 
 
 	@SuppressWarnings("unchecked")
-	public SubVector(IPersistentMap meta, IPersistentVector<T> v, int start, int end){
-		this._meta = meta;
+	public SubVector(IPersistentVector<T> v, int start, int end){
 
 		if(v instanceof APersistentVector.SubVector)
 			{
@@ -543,7 +507,7 @@ static class SubVector<T> extends APersistentVector<T> implements IObj{
 			throw new IndexOutOfBoundsException();
 		else if(start + i == end)
 			return cons(val);
-		return new SubVector<T>(_meta, v.assocN(start + i, val), start, end);
+		return new SubVector<T>(v.assocN(start + i, val), start, end);
 	}
 
 	public int count(){
@@ -551,12 +515,12 @@ static class SubVector<T> extends APersistentVector<T> implements IObj{
 	}
 
 	public IPersistentVector<T> cons(T o){
-		return new SubVector<T>(_meta, v.assocN(end, o), start, end + 1);
+		return new SubVector<T>(v.assocN(end, o), start, end + 1);
 	}
 
 	@SuppressWarnings("unchecked")
 	public IPersistentCollection<T> empty(){
-		return PersistentVector.EMPTY.withMeta(meta());
+		return PersistentVector.EMPTY;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -565,18 +529,7 @@ static class SubVector<T> extends APersistentVector<T> implements IObj{
 			{
 			return PersistentVector.EMPTY;
 			}
-		return new SubVector<T>(_meta, v, start, end - 1);
+		return new SubVector<T>(v, start, end - 1);
 	}
-
-	public SubVector<T> withMeta(IPersistentMap meta){
-		if(meta == _meta)
-			return this;
-		return new SubVector<T>(meta, v, start, end);
-	}
-
-	public IPersistentMap meta(){
-		return _meta;
-	}
-	
 }
 }

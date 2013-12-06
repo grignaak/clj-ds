@@ -19,15 +19,14 @@ import java.util.Map;
 import com.github.krukow.clj_ds.PersistentSet;
 import com.github.krukow.clj_ds.TransientSet;
 
-public class PersistentHashSet<T> extends APersistentSet<T> implements IObj, IEditableCollection<T>, PersistentSet<T> {
+public class PersistentHashSet<T> extends APersistentSet<T> implements IEditableCollection<T>, PersistentSet<T> {
 
-static public final PersistentHashSet EMPTY = new PersistentHashSet(null, PersistentHashMap.EMPTY);
+static public final PersistentHashSet EMPTY = new PersistentHashSet(PersistentHashMap.EMPTY);
 
 @SuppressWarnings("unchecked")
 static public final <T> PersistentHashSet<T> emptySet() {
 	return EMPTY;
 }
-final IPersistentMap _meta;
 
 public static <T> PersistentHashSet<T> create(T... init){
 	PersistentHashSet<T> ret = EMPTY;
@@ -91,9 +90,8 @@ static public <T> PersistentHashSet<T> createWithCheck(ISeq<? extends T> items){
 	return ret;
 }
 
-PersistentHashSet(IPersistentMap meta, IPersistentMap impl){
+PersistentHashSet(IPersistentMap impl){
 	super(impl);
-	this._meta = meta;
 }
 
 public Iterator<T> iterator(){
@@ -120,30 +118,22 @@ public Iterator<T> iterator(){
 
 public PersistentHashSet<T> disjoin(T key) {
 	if(contains(key))
-		return new PersistentHashSet<T>(meta(),impl.without(key));
+		return new PersistentHashSet<T>(impl.without(key));
 	return this;
 }
 
 public PersistentHashSet<T> cons(T o){
 	if(contains(o))
 		return this;
-	return new PersistentHashSet<T>(meta(),impl.assoc(o,o));
+	return new PersistentHashSet<T>(impl.assoc(o,o));
 }
 
 public IPersistentSet<T> empty(){
-	return EMPTY.withMeta(meta());	
-}
-
-public PersistentHashSet<T> withMeta(IPersistentMap meta){
-	return new PersistentHashSet<T>(meta, impl);
+	return EMPTY;	
 }
 
 public TransientHashSet<T> asTransient() {
 	return new TransientHashSet<T>(((PersistentHashMap) impl).asTransient());
-}
-
-public IPersistentMap meta(){
-	return _meta;
 }
 
 static final class TransientHashSet<T> extends ATransientSet<T> implements TransientSet<T> {
@@ -152,7 +142,7 @@ static final class TransientHashSet<T> extends ATransientSet<T> implements Trans
 	}
 
 	public PersistentHashSet<T> persistent() {
-		return new PersistentHashSet<T>(null, impl.persistentMap());
+		return new PersistentHashSet<T>(impl.persistentMap());
 	}
 	
 	@Override

@@ -27,12 +27,11 @@ import com.github.krukow.clj_ds.PersistentSortedMap;
  * See Okasaki, Kahrs, Larsen et al
  */
 
-public class PersistentTreeMap<K,V> extends APersistentMap<K,V> implements IObj, Reversible<Map.Entry<K, V>>, Sorted<K>, PersistentSortedMap<K, V>{
+public class PersistentTreeMap<K,V> extends APersistentMap<K,V> implements Reversible<Map.Entry<K, V>>, Sorted<K>, PersistentSortedMap<K, V>{
 
 public final Comparator<K> comp;
 public final Node tree;
 public final int _count;
-final IPersistentMap _meta;
 
 final static public PersistentTreeMap EMPTY = new PersistentTreeMap();
 
@@ -49,24 +48,13 @@ public PersistentTreeMap(){
 	this(RT.DEFAULT_COMPARATOR);
 }
 
-public PersistentTreeMap<K,V> withMeta(IPersistentMap meta){
-	return new PersistentTreeMap<K,V>(meta, comp, tree, _count);
-}
-
-private PersistentTreeMap(Comparator<K> comp){
-	this(null, comp);
-}
-
-
-public PersistentTreeMap(IPersistentMap meta, Comparator<K> comp){
+public PersistentTreeMap(Comparator<K> comp){
 	this.comp = comp;
-	this._meta = meta;
 	tree = null;
 	_count = 0;
 }
 
-PersistentTreeMap(IPersistentMap meta, Comparator<K> comp, Node tree, int _count){
-	this._meta = meta;
+PersistentTreeMap(Comparator<K> comp, Node tree, int _count){
 	this.comp = comp;
 	this.tree = tree;
 	this._count = _count;
@@ -105,7 +93,7 @@ public PersistentTreeMap<K,V> assocEx(K key, V val) {
 		{
 		throw Util.runtimeException("Key already present");
 		}
-	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1, meta());
+	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1);
 }
 
 public PersistentTreeMap<K,V> assoc(K key, V val){
@@ -116,9 +104,9 @@ public PersistentTreeMap<K,V> assoc(K key, V val){
 		Node foundNode = (Node) found.val;
 		if(foundNode.val() == val)  //note only get same collection on identity of val, not equals()
 			return this;
-		return new PersistentTreeMap<K,V>(comp, replace(tree, key, val), _count, meta());
+		return new PersistentTreeMap<K,V>(comp, replace(tree, key, val), _count);
 		}
-	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1, meta());
+	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count + 1);
 }
 
 
@@ -130,9 +118,9 @@ public PersistentTreeMap<K,V> without(K key){
 		if(found.val == null)//null == doesn't contain key
 			return this;
 		//empty
-		return new PersistentTreeMap<K,V>(meta(), comp);
+		return new PersistentTreeMap<K,V>(comp);
 		}
-	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count - 1, meta());
+	return new PersistentTreeMap<K,V>(comp, t.blacken(), _count - 1);
 }
 
 public ISeq seq(){
@@ -142,7 +130,7 @@ public ISeq seq(){
 }
 
 public IPersistentCollection empty(){
-	return new PersistentTreeMap(meta(), comp);	
+	return new PersistentTreeMap(comp);	
 }
 
 public ISeq rseq() {
@@ -457,13 +445,6 @@ Node replace(Node t, K key, Object val){
 	                 c > 0 ? replace(t.right(), key, val) : t.right());
 }
 
-PersistentTreeMap(Comparator comp, Node tree, int count, IPersistentMap meta){
-	this._meta = meta;
-	this.comp = comp;
-	this.tree = tree;
-	this._count = count;
-}
-
 static Red red(Object key, Object val, Node left, Node right){
 	if(left == null && right == null)
 		{
@@ -486,10 +467,6 @@ static Black black(Object key, Object val, Node left, Node right){
 	if(val == null)
 		return new BlackBranch(key, left, right);
 	return new BlackBranchVal(key, val, left, right);
-}
-
-public IPersistentMap meta(){
-	return _meta;
 }
 
 static abstract class Node extends AMapEntry{
@@ -794,13 +771,6 @@ static public class Seq extends ASeq{
 		this.cnt = cnt;
 	}
 
-	Seq(IPersistentMap meta, ISeq stack, boolean asc, int cnt){
-		super(meta);
-		this.stack = stack;
-		this.asc = asc;
-		this.cnt = cnt;
-	}
-
 	static Seq create(Node t, boolean asc, int cnt){
 		return new Seq(push(t, null, asc), asc, cnt);
 	}
@@ -832,10 +802,6 @@ static public class Seq extends ASeq{
 		if(cnt < 0)
 			return super.count();
 		return cnt;
-	}
-
-	public Obj withMeta(IPersistentMap meta){
-		return new Seq(meta, stack, asc, cnt);
 	}
 }
 

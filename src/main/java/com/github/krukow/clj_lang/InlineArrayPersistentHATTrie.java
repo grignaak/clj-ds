@@ -22,12 +22,11 @@ import java.util.Random;
  Any errors are my own
 */
 @SuppressWarnings({"rawtypes","unchecked"})
-public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> implements IObj {
+public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 6864541653381702688L;
-	final IPersistentMap meta;
 	final HATTrieNode<T> root;
 	final int count;
 	private static final int seed = new Random().nextInt();
@@ -48,16 +47,11 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> implemen
 		return ((result & 0x7fffffff) & 0x1ff);
 	}
 	
-	public static final InlineArrayPersistentHATTrie EMPTY = new InlineArrayPersistentHATTrie(null, null, 0);
+	public static final InlineArrayPersistentHATTrie EMPTY = new InlineArrayPersistentHATTrie(null, 0);
 	
-	public InlineArrayPersistentHATTrie(HATTrieNode root, IPersistentMap meta, int count) {
+	public InlineArrayPersistentHATTrie(HATTrieNode root, int count) {
 		this.root = root;
-		this.meta = meta;
 		this.count = count;
-	}
-
-	public IPersistentMap meta() {
-		return meta;
 	}
 
 	private static interface HATTrieNode<T> {
@@ -640,13 +634,13 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> implemen
 	@Override
 	public IPersistentTrie<T> addMember(String s, T t) {
 		if (root == null) {
-			return new InlineArrayPersistentHATTrie(singletonContainer(new StringRandomAccessChars(s), 0,s.length(), t),null,1);
+			return new InlineArrayPersistentHATTrie(singletonContainer(new StringRandomAccessChars(s), 0,s.length(), t),1);
 		}
 		HATTrieNode<T> newRoot = root.add(new StringRandomAccessChars(s), 0,s.length(),t);
 		if (root == newRoot) {
 			return this;
 		}
-		return new InlineArrayPersistentHATTrie(newRoot,meta,count+1);
+		return new InlineArrayPersistentHATTrie(newRoot,count+1);
 	}
 
 	@Override
@@ -724,11 +718,6 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> implemen
 	@Override
 	public void clear() {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public IObj withMeta(IPersistentMap meta) {
-		return new InlineArrayPersistentHATTrie(root,meta,count);
 	}
 	
 	@Override
