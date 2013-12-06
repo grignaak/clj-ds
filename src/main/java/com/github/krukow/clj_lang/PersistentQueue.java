@@ -20,7 +20,7 @@ import java.util.Iterator;
  * so no reversing or suspensions required for persistent use
  */
 
-public class PersistentQueue<T> implements IPersistentList<T>, Collection<T>, Counted, IHashEq{
+public class PersistentQueue<T> implements IPersistentList<T>, Collection<T>, Counted {
 
 final public static PersistentQueue EMPTY = new PersistentQueue(0, null, null);
 
@@ -30,7 +30,6 @@ final ISeq f;
 final PersistentVector r;
 //static final int INITIAL_REAR_SIZE = 4;
 int _hash = -1;
-int _hasheq = -1;
 
 PersistentQueue(int cnt, ISeq f, PersistentVector r){
 	this.cnt = cnt;
@@ -63,19 +62,6 @@ public int hashCode(){
 		this._hash = hash;
 		}
 	return _hash;
-}
-
-public int hasheq() {
-	if(_hasheq == -1)
-		{
-		int hash = 1;
-		for(ISeq s = seq(); s != null; s = s.next())
-			{
-			hash = 31 * hash + Util.hasheq(s.first());
-			}
-		this._hasheq = hash;
-		}
-    return _hasheq;
 }
 
 public T peek(){
@@ -151,7 +137,7 @@ static class Seq<T> extends ASeq<T>{
 // java.util.Collection implementation
 
 public Object[] toArray(){
-	return RT.seqToArray(seq());
+	return RT.seqToArray(this);
 }
 
 public boolean add(Object o){
@@ -188,7 +174,7 @@ public boolean containsAll(Collection<?> c){
 }
 
 public Object[] toArray(Object[] a){
-	return RT.seqToPassedArray(seq(), a);
+	return RT.seqToPassedArray(this, a);
 }
 
 public int size(){

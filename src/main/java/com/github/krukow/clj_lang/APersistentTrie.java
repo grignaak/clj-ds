@@ -14,7 +14,6 @@ package com.github.krukow.clj_lang;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,26 +40,15 @@ public boolean equals(Object obj){
 		if(!contains(aM))
 			return false;
 		}
-//	for(ISeq s = seq(); s != null; s = s.rest())
-//		{
-//		if(!m.contains(s.first()))
-//			return false;
-//		}
 
 	return true;
-}
-
-private boolean equiv(Object o){
-	return equals(o);
 }
 
 public int hashCode(){
 	if(_hash == -1)
 		{
 		int hash = 0;
-		for(ISeq s = seq(); s != null; s = s.next())
-			{
-			Object e = s.first();
+		for (Object e : this) {
 			hash +=  Util.hash(e);
 			}
 		this._hash = hash;
@@ -69,23 +57,11 @@ public int hashCode(){
 }
 
 public Object[] toArray(){
-	return RT.seqToArray(seq());
+	return RT.seqToArray(this);
 }
 
 public Object[] toArray(Object[] a){
-	if(a.length >= count())
-		{
-		ISeq s = seq();
-		for(int i = 0; s != null; ++i, s = s.next())
-			{
-			a[i] = s.first();
-			}
-		if(a.length > count())
-			a[count()] = null;
-		return a;
-		}
-	else
-		return toArray();
+    return RT.seqToPassedArray(this, a);
 }
 
 public int size(){

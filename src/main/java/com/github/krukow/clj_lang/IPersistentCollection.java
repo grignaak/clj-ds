@@ -12,7 +12,7 @@ package com.github.krukow.clj_lang;
 
 
 @Deprecated
-public interface IPersistentCollection<T> extends Seqable<T> {
+public interface IPersistentCollection<T> {
 
 int count();
 

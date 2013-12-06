@@ -17,7 +17,7 @@ package com.github.krukow.clj_lang;
  * invalidates the ISeq
  */
 @Deprecated
-public interface ISeq<T> extends IPersistentCollection<T> {
+public interface ISeq<T> extends IPersistentCollection<T>, Seqable<T> {
 
     T first();
 

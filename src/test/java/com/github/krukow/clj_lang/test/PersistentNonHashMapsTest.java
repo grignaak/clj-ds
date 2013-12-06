@@ -10,11 +10,7 @@ import java.util.Map.Entry;
 
 import org.junit.Test;
 
-import com.github.krukow.clj_lang.Cons;
-import com.github.krukow.clj_lang.MapEntry;
 import com.github.krukow.clj_lang.PersistentArrayMap;
-import com.github.krukow.clj_lang.PersistentStructMap;
-import com.github.krukow.clj_lang.PersistentStructMap.Def;
 
 public class PersistentNonHashMapsTest {
 
@@ -50,32 +46,5 @@ PersistentTreeMap.java
 		}
 		assertEquals(0,i);
 		
-	}
-	
-	@Test
-	public final void testStructMap() {
-		 Def def = PersistentStructMap.createSlotMap(
-				new Cons("1", new Cons("2", new Cons("3",null))));
-		 PersistentStructMap<String, Integer> sm = PersistentStructMap.construct(def, 
-				 new Cons(1,new Cons(2,new Cons(3,null))));
-		 
-		for (int i=4;i<10000;i++) {
-			sm = (PersistentStructMap<String, Integer>) sm.assoc(i+"", i);
-		}
-		List<Map.Entry<String, Integer>> l = new ArrayList<Map.Entry<String,Integer>>();
-		for (Map.Entry<String, Integer> e: sm) {l.add(e);}
-		assertEquals(new MapEntry("1",1),l.get(0));
-		assertEquals(new MapEntry("2",2),l.get(1));
-		assertEquals(new MapEntry("3",3),l.get(2));
-		
-		assertEquals(9999,l.size());
-		
-		int i=9999;
-		for (Iterator<Entry<String, Integer>> rit = sm.reverseIterator();rit.hasNext();) {
-			assertEquals(l.get(--i),rit.next());
-		}
-		assertEquals(0,i);
-		
-				
 	}
 }

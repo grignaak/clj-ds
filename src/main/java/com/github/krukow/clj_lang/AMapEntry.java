@@ -42,11 +42,6 @@ public abstract class AMapEntry<K, V> extends APersistentVector implements Map.E
     }
 
     @Override
-    public ISeq seq() {
-        return asVector().seq();
-    }
-
-    @Override
     public IPersistentVector cons(Object o) {
         return asVector().cons(o);
     }

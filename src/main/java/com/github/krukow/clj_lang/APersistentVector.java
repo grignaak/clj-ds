@@ -24,16 +24,9 @@ public abstract class APersistentVector<T> implements IPersistentVector<T>, Iter
                                                                List<T>,
                                                                RandomAccess {
 int _hash = -1;
-int _hasheq = -1;
 
 public String toString(){
 	return RT.printString(this);
-}
-
-public ISeq<T> seq(){
-	if(count() > 0)
-		return new Seq<T>(this, 0);
-	return null;
 }
 
 public ISeq<T> rseq(){
@@ -57,17 +50,6 @@ static boolean doEquals(IPersistentVector v, Object obj){
 			}
 		return true;
 		}
-//	if(obj instanceof IPersistentVector)
-//		{
-//		IPersistentVector ma = (IPersistentVector) obj;
-//		if(ma.count() != v.count() || ma.hashCode() != v.hashCode())
-//			return false;
-//		for(int i = 0; i < v.count(); i++)
-//			{
-//			if(!Util.equal(v.nth(i), ma.nth(i)))
-//				return false;
-//			}
-//		}
 	else
 		{
 		if(!(obj instanceof Sequential))
@@ -100,17 +82,6 @@ static boolean doEquiv(IPersistentVector v, Object obj){
 			}
 		return true;
 		}
-//	if(obj instanceof IPersistentVector)
-//		{
-//		IPersistentVector ma = (IPersistentVector) obj;
-//		if(ma.count() != v.count() || ma.hashCode() != v.hashCode())
-//			return false;
-//		for(int i = 0; i < v.count(); i++)
-//			{
-//			if(!Util.equal(v.nth(i), ma.nth(i)))
-//				return false;
-//			}
-//		}
 	else
 		{
 		if(!(obj instanceof Sequential))
@@ -147,28 +118,9 @@ public int hashCode(){
 			Object obj = i.next();
 			hash = 31 * hash + (obj == null ? 0 : obj.hashCode());
 			}
-//		int hash = 0;
-//		for(int i = 0; i < count(); i++)
-//			{
-//			hash = Util.hashCombine(hash, Util.hash(nth(i)));
-//			}
 		this._hash = hash;
 		}
 	return _hash;
-}
-
-public int hasheq(){
-	if(_hasheq == -1) {
-	int hash = 1;
-	Iterator i = iterator();
-	while(i.hasNext())
-		{
-		Object obj = i.next();
-		hash = 31 * hash + Util.hasheq(obj);
-		}
-	_hasheq = hash;
-	}
-	return _hasheq;
 }
 
 public T get(int index){
@@ -338,7 +290,7 @@ public T valAt(Object key){
 // java.util.Collection implementation
 
 public Object[] toArray(){
-	return RT.seqToArray(seq());
+	return RT.seqToArray(this);
 }
 
 public boolean add(T o){
@@ -375,7 +327,7 @@ public boolean containsAll(Collection c){
 }
 
 public Object[] toArray(Object[] a){
-	return RT.seqToPassedArray(seq(), a);
+	return RT.seqToPassedArray(this, a);
 }
 
 public int size(){
@@ -387,11 +339,10 @@ public boolean isEmpty(){
 }
 
 public boolean contains(Object o){
-	for(ISeq s = seq(); s != null; s = s.next())
-		{
-		if(Util.equals(s.first(), o))
-			return true;
-		}
+    for (Object e : this) {
+    	if(Util.equals(e, o))
+    		return true;
+	}
 	return false;
 }
 

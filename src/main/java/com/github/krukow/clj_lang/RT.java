@@ -22,21 +22,15 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.RandomAccess;
 import java.util.regex.Matcher;
 
 public class RT {
-//
-//	static final public Boolean T = Boolean.TRUE;// Keyword.intern(Symbol.create(null, "t"));
-//	static final public Boolean F = Boolean.FALSE;// Keyword.intern(Symbol.create(null, "t"));
-//	// single instance of UTF-8 Charset, so as to avoid catching
-//	// UnsupportedCharsetExceptions everywhere
-//	static public Charset UTF8 = Charset.forName("UTF-8");
-//
 	static volatile boolean readably = true;
-//
+
 	static public final Object[] EMPTY_ARRAY = new Object[] {};
 	static public final Comparator DEFAULT_COMPARATOR = new DefaultComparator();
 
@@ -207,33 +201,37 @@ public class RT {
 	static public ISeq list(Object arg1) {
 		return new PersistentList(arg1);
 	}
-
-	static public Object[] seqToArray(ISeq seq) {
+	
+	static public Object[] seqToArray(Iterable<?> seq) {
 		int len = length(seq);
 		Object[] ret = new Object[len];
-		for (int i = 0; seq != null; ++i, seq = seq.next())
-			ret[i] = seq.first();
+		fillArray(seq, ret);
 		return ret;
+	}
+	static private void fillArray(Iterable<?> list, Object[] array) {
+	    Iterator<?> iter = list.iterator();
+	    for (int i = 0; iter.hasNext(); i++) {
+	        array[i] = iter.next();
+	    }
 	}
 
     // supports java Collection.toArray(T[])
-    static public Object[] seqToPassedArray(ISeq seq, Object[] passed){
+    static public Object[] seqToPassedArray(Iterable<?> seq, Object[] passed){
         Object[] dest = passed;
         int len = count(seq);
         if (len > dest.length) {
             dest = (Object[]) Array.newInstance(passed.getClass().getComponentType(), len);
         }
-        for(int i = 0; seq != null; ++i, seq = seq.next())
-            dest[i] = seq.first();
+        fillArray(seq, dest);
         if (len < passed.length) {
             dest[len] = null;
         }
         return dest;
     }
 
-	static public int length(ISeq list) {
+	static public int length(Iterable<?> list) {
 		int i = 0;
-		for (ISeq c = list; c != null; c = c.next()) {
+		for (Object _ : list) {
 			i++;
 		}
 		return i;

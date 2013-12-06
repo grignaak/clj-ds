@@ -18,9 +18,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializable, IHashEq {
+public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializable {
 transient int _hash = -1;
-transient int _hasheq = -1;
 
 public String toString(){
 	return RT.printString(this);
@@ -77,41 +76,6 @@ public int hashCode(){
 	return _hash;
 }
 
-public int hasheq(){
-	if(_hasheq == -1)
-		{
-		int hash = 1;
-		for(ISeq s = seq(); s != null; s = s.next())
-			{
-			hash = 31 * hash + Util.hasheq(s.first());
-			}
-		this._hasheq = hash;
-		}
-	return _hasheq;
-}
-
-//public Object reduce(IFn f) {
-//	Object ret = first();
-//	for(ISeq s = rest(); s != null; s = s.rest())
-//		ret = f.invoke(ret, s.first());
-//	return ret;
-//}
-//
-//public Object reduce(IFn f, Object start) {
-//	Object ret = f.invoke(start, first());
-//	for(ISeq s = rest(); s != null; s = s.rest())
-//		ret = f.invoke(ret, s.first());
-//	return ret;
-//}
-
-//public Object peek(){
-//	return first();
-//}
-//
-//public IPersistentList pop(){
-//	return rest();
-//}
-
 public int count(){
 	int i = 1;
 	for(ISeq s = next(); s != null; s = s.next(), i++)
@@ -145,7 +109,7 @@ public ISeq<T> more(){
 // java.util.Collection implementation
 
 public Object[] toArray(){
-	return RT.seqToArray(seq());
+	return RT.seqToArray(this);
 }
 
 public boolean add(T o){
@@ -182,7 +146,7 @@ public boolean containsAll(Collection c){
 }
 
 public Object[] toArray(Object[] a){
-	return RT.seqToPassedArray(seq(), a);
+	return RT.seqToPassedArray(this, a);
 }
 
 public int size(){

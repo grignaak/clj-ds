@@ -17,141 +17,128 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class APersistentSet<T> implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable, IHashEq {
-int _hash = -1;
-int _hasheq = -1;
-final IPersistentMap impl;
+public abstract class APersistentSet<T> implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable {
+    int _hash = -1;
 
-protected APersistentSet(IPersistentMap<T, Boolean> impl){
-	this.impl = impl;
-}
+    final IPersistentMap impl;
 
-public String toString(){
-	return RT.printString(this);
-}
+    protected APersistentSet(IPersistentMap<T, Boolean> impl) {
+        this.impl = impl;
+    }
 
-public boolean contains(Object key){
-	return impl.containsKey(key);
-}
+    public String toString() {
+        return RT.printString(this);
+    }
 
-public Boolean get(T key){
-	return (Boolean) impl.valAt(key);
-}
+    public boolean contains(Object key) {
+        return impl.containsKey(key);
+    }
 
-public int count(){
-	return impl.count();
-}
+    public Boolean get(T key) {
+        return (Boolean) impl.valAt(key);
+    }
 
-public ISeq<T> seq(){
-	return RT.keys(impl);
-}
+    public int count() {
+        return impl.count();
+    }
 
-public Object invoke(Object arg1) {
-	return get((T) arg1);
-}
+    public ISeq<T> seq() {
+        return RT.keys(impl);
+    }
 
-public boolean equals(Object obj){
-	if(this == obj) return true;
-	if(!(obj instanceof Set))
-		return false;
-	Set m = (Set) obj;
+    public Object invoke(Object arg1) {
+        return get((T) arg1);
+    }
 
-	if(m.size() != count())
-		return false;
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (!(obj instanceof Set))
+            return false;
+        Set m = (Set) obj;
 
-	for(Object aM : m)
-		{
-		if(!contains(aM))
-			return false;
-		}
+        if (m.size() != count())
+            return false;
 
-	return true;
-}
+        for (Object aM : m)
+        {
+            if (!contains(aM))
+                return false;
+        }
 
-public boolean equiv(Object o){
-	return equals(o);
-}
+        return true;
+    }
 
-public int hashCode(){
-	if(_hash == -1)
-		{
-		//int hash = count();
-		int hash = 0;
-		for(ISeq s = seq(); s != null; s = s.next())
-			{
-			Object e = s.first();
-//			hash = Util.hashCombine(hash, Util.hash(e));
-			hash +=  Util.hash(e);
-			}
-		this._hash = hash;
-		}
-	return _hash;
-}
+    public boolean equiv(Object o) {
+        return equals(o);
+    }
 
-public int hasheq(){
-	if(_hasheq == -1){
-		int hash = 0;
-		for(ISeq s = seq(); s != null; s = s.next())
-			{
-			Object e = s.first();
-			hash +=  Util.hasheq(e);
-			}
-		this._hasheq = hash;		
-	}
-	return _hasheq;		
-}
+    public int hashCode() {
+        if (_hash == -1)
+        {
+            // int hash = count();
+            int hash = 0;
+            for (ISeq s = seq(); s != null; s = s.next())
+            {
+                Object e = s.first();
+                // hash = Util.hashCombine(hash, Util.hash(e));
+                hash += Util.hash(e);
+            }
+            this._hash = hash;
+        }
+        return _hash;
+    }
 
-public Object[] toArray(){
-	return RT.seqToArray(seq());
-}
+    public Object[] toArray() {
+        return RT.seqToArray(this);
+    }
 
-public boolean add(Object o){
-	throw new UnsupportedOperationException();
-}
+    public boolean add(Object o) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean remove(Object o){
-	throw new UnsupportedOperationException();
-}
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean addAll(Collection c){
-	throw new UnsupportedOperationException();
-}
+    public boolean addAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
 
-public void clear(){
-	throw new UnsupportedOperationException();
-}
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean retainAll(Collection c){
-	throw new UnsupportedOperationException();
-}
+    public boolean retainAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean removeAll(Collection c){
-	throw new UnsupportedOperationException();
-}
+    public boolean removeAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean containsAll(Collection c){
-	for(Object o : c)
-		{
-		if(!contains(o))
-			return false;
-		}
-	return true;
-}
+    public boolean containsAll(Collection c) {
+        for (Object o : c)
+        {
+            if (!contains(o))
+                return false;
+        }
+        return true;
+    }
 
-public Object[] toArray(Object[] a){
-	return RT.seqToPassedArray(seq(), a);
-}
+    public Object[] toArray(Object[] a) {
+        return RT.seqToPassedArray(this, a);
+    }
 
-public int size(){
-	return count();
-}
+    public int size() {
+        return count();
+    }
 
-public boolean isEmpty(){
-	return count() == 0;
-}
+    public boolean isEmpty() {
+        return count() == 0;
+    }
 
-public Iterator<T> iterator(){
-	return new SeqIterator<T>(seq());
-}
+    public Iterator<T> iterator() {
+        return new SeqIterator<T>(seq());
+    }
 
 }

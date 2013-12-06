@@ -63,41 +63,41 @@ public class PersistentHashMapTest {
 		 assertEquals(2, count);
 		 assertTrue(nullKey);
 	}
-
-	
-	@Test
-	public final void testIteratorFrom() {
-		final int N = 20;
-		IPersistentMap<Integer, Integer> genMap = PersistentHashMap.emptyMap();
-		for (int i=0;i<N;i++) {
-			Integer random = (int) Math.ceil(1000*Math.random());
-			while (genMap.containsKey(random)) {
-				random = (int) Math.ceil(1000*Math.random());
-			}
-			genMap = genMap.assoc(random, random);
-			
-		}
-		
-		List<Integer> l = new ArrayList<Integer>(20);
-		for (Map.Entry<Integer, Integer> e: genMap) {
-			l.add(e.getKey());
-		}
-		
-		assertEquals(20, l.size());
-		
-		
-		int index = 10;
-		int count = 0;
-		for (Iterator<Map.Entry<Integer, Integer>> iterator = genMap.iteratorFrom(l.get(index)); iterator.hasNext();) {
-			Entry<Integer, Integer> next = iterator.next();
-			assertEquals(l.get(index), next.getKey());
-			index++;
-			count++;
-		}
-		assertEquals(10, count);
-		
-		
-	}
+//
+//	
+//	@Test
+//	public final void testIteratorFrom() {
+//		final int N = 20;
+//		IPersistentMap<Integer, Integer> genMap = PersistentHashMap.emptyMap();
+//		for (int i=0;i<N;i++) {
+//			Integer random = (int) Math.ceil(1000*Math.random());
+//			while (genMap.containsKey(random)) {
+//				random = (int) Math.ceil(1000*Math.random());
+//			}
+//			genMap = genMap.assoc(random, random);
+//			
+//		}
+//		
+//		List<Integer> l = new ArrayList<Integer>(20);
+//		for (Map.Entry<Integer, Integer> e: genMap) {
+//			l.add(e.getKey());
+//		}
+//		
+//		assertEquals(20, l.size());
+//		
+//		
+//		int index = 10;
+//		int count = 0;
+//		for (Iterator<Map.Entry<Integer, Integer>> iterator = genMap.iteratorFrom(l.get(index)); iterator.hasNext();) {
+//			Entry<Integer, Integer> next = iterator.next();
+//			assertEquals(l.get(index), next.getKey());
+//			index++;
+//			count++;
+//		}
+//		assertEquals(10, count);
+//		
+//		
+//	}
 
 	/**
 	 * Test method for {@link com.github.krukow.clj_lang.PersistentHashMap#create(java.util.Map)}.

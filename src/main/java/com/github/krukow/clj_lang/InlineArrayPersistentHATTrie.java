@@ -681,11 +681,6 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 	public Iterator<Map.Entry<String, T>> iterator() {
 		return root != null ? root.nodeIt("") : new EmptyIterator(); 
 	}
-	
-	@Override
-	public ISeq<String> seq() {
-		throw new UnsupportedOperationException();
-	}
 		
 		
 		

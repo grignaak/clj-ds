@@ -114,7 +114,7 @@ PersistentHashMap(int count, INode root, boolean hasNull, V nullValue){
 }
 
 static int hash(Object k){
-	return Util.hasheq(k);
+	return Util.hash(k);
 }
 
 public boolean containsKey(Object key){
