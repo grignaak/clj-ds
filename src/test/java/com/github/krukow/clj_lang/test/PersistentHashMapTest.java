@@ -12,12 +12,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.junit.Test;
 
-import com.github.krukow.clj_lang.IPersistentMap;
+import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_lang.PersistentHashMap;
 
 /**
@@ -150,17 +150,17 @@ public class PersistentHashMapTest {
 	 */
 	@Test
 	public final void testIterator() {
-		IPersistentMap<Integer, Integer> dsMap = PersistentHashMap.emptyMap();
+		PersistentMap<Integer, Integer> dsMap = PersistentHashMap.emptyMap();
 		HashSet<Integer> hs = null;
 		for (int i = 0; i < 33000; i++) {
 			hs = new HashSet<Integer>();
-			for (Map.Entry<Integer, Integer> o : dsMap) {
+			for (Map.Entry<Integer, Integer> o : dsMap.entrySet()) {
 				hs.add(o.getKey());
 				assertEquals(o.getKey(), o.getValue());
 			}
 			assertEquals(i, hs.size());
 			Integer o = new Integer(i);
-			dsMap = dsMap.assoc(o, o);
+			dsMap = dsMap.plus(o, o);
 		}
 		
 	}
@@ -168,14 +168,14 @@ public class PersistentHashMapTest {
 	@Test
 	public final void testRandomIterator() {
 		final int N = 33000;
-		IPersistentMap<Double, Double> genMap = PersistentHashMap.emptyMap();
+		PersistentMap<Double, Double> genMap = PersistentHashMap.emptyMap();
 		for (int i=0;i<N;i++) {
 			double random = Math.random();
-			genMap = genMap.assoc(random, random);
+			genMap = genMap.plus(random, random);
 			
 		}
 		HashSet<Double> hs = new HashSet<Double>();
-		for (Map.Entry<Double, Double> e: genMap) {
+		for (Map.Entry<Double, Double> e: genMap.entrySet()) {
 			hs.add(e.getKey());
 		}
 		assertEquals(N, hs.size());
@@ -185,14 +185,14 @@ public class PersistentHashMapTest {
 	@Test
 	public final void testRandomReverseIterator() {
 		final int N = 33000;
-		IPersistentMap<Double, String> genMap = PersistentHashMap.emptyMap();
+		PersistentMap<Double, String> genMap = PersistentHashMap.emptyMap();
 		for (int i=0;i<N;i++) {
 			double random = Math.random();
-			genMap = genMap.assoc(random, ""+random);
+			genMap = genMap.plus(random, ""+random);
 			
 		}
 		List lst = new ArrayList();
-		for (Map.Entry<Double, String> e: genMap) {
+		for (Map.Entry<Double, String> e: genMap.entrySet()) {
 			lst.add(e.getKey());
 		}
 		for (Iterator<Map.Entry<Double, Double>> it = ((PersistentHashMap) genMap).reverseIterator();it.hasNext();) {

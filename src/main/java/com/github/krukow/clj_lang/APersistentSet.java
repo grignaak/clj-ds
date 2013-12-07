@@ -17,12 +17,15 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-public abstract class APersistentSet<T> implements IPersistentSet<T>, Collection<T>, Set<T>, Serializable {
+import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.PersistentSet;
+
+public abstract class APersistentSet<T> implements PersistentSet<T>, Collection<T>, Set<T>, Serializable {
     int _hash = -1;
 
-    final IPersistentMap impl;
+    final PersistentMap<T, Boolean> impl;
 
-    protected APersistentSet(IPersistentMap<T, Boolean> impl) {
+    protected APersistentSet(PersistentMap<T, Boolean> impl) {
         this.impl = impl;
     }
 
@@ -35,11 +38,11 @@ public abstract class APersistentSet<T> implements IPersistentSet<T>, Collection
     }
 
     public Boolean get(T key) {
-        return (Boolean) impl.valAt(key);
+        return (Boolean) impl.get(key);
     }
 
     public int count() {
-        return impl.count();
+        return impl.size();
     }
 
     public ISeq<T> seq() {
@@ -77,10 +80,8 @@ public abstract class APersistentSet<T> implements IPersistentSet<T>, Collection
         {
             // int hash = count();
             int hash = 0;
-            for (ISeq s = seq(); s != null; s = s.next())
+            for (Object e : this)
             {
-                Object e = s.first();
-                // hash = Util.hashCombine(hash, Util.hash(e));
                 hash += Util.hash(e);
             }
             this._hash = hash;

@@ -14,6 +14,7 @@ package com.github.krukow.clj_lang;
 
 import java.util.Comparator;
 
+import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.PersistentSortedSet;
 import com.github.krukow.clj_ds.TransientCollection;
 
@@ -21,50 +22,46 @@ public class PersistentTreeSet<T> extends APersistentSet<T> implements Persisten
 static public final PersistentTreeSet EMPTY = new PersistentTreeSet(PersistentTreeMap.EMPTY);
 
 
-static public <T> PersistentTreeSet<T> create(ISeq<? extends T> items){
+static public <T> PersistentTreeSet<T> create(Iterable<? extends T> items){
 	PersistentTreeSet<T> ret = EMPTY;
-	for(; items != null; items = items.next())
+	for (T item : items)
 		{
-		ret = (PersistentTreeSet<T>) ret.cons(items.first());
+		ret = (PersistentTreeSet<T>) ret.cons(item);
 		}
 	return ret;
 }
 
-static public <T> PersistentTreeSet<T> create(Comparator<T> comp, ISeq<? extends T> items){
+static public <T> PersistentTreeSet<T> create(Comparator<T> comp, Iterable<? extends T> items){
 	PersistentTreeSet<T> ret = new PersistentTreeSet<T>(new PersistentTreeMap(comp));
-	for(; items != null; items = items.next())
+	for (T item : items)
 		{
-		ret = (PersistentTreeSet<T>) ret.cons(items.first());
+		ret = (PersistentTreeSet<T>) ret.cons(item);
 		}
 	return ret;
 }
 
-PersistentTreeSet(IPersistentMap impl){
+PersistentTreeSet(PersistentMap<T, Boolean> impl){
 	super(impl);
 }
 
 public PersistentTreeSet<T> disjoin(T key) {
 	if(contains(key))
-		return new PersistentTreeSet<T>(impl.without(key));
+		return new PersistentTreeSet<T>(impl.minus(key));
 	return this;
 }
 
 public PersistentTreeSet<T> cons(T o){
 	if(contains(o))
 		return this;
-	return new PersistentTreeSet<T>(impl.assoc(o,o));
+	return new PersistentTreeSet<T>(impl.plus(o,Boolean.TRUE));
 }
 
 public PersistentTreeSet<T> empty(){
-	return new PersistentTreeSet<T>((PersistentTreeMap)impl.empty());
-}
-
-public ISeq<T> rseq() {
-	return APersistentMap.KeySeq.create(((Reversible) impl).rseq());
+	return new PersistentTreeSet<T>((PersistentTreeMap)impl.zero());
 }
 
 public Comparator<T> comparator(){
-	return ((Sorted<T>)impl).comparator();
+	return ((PersistentTreeMap<T, ?>)impl).comparator();
 }
 
 public Object entryKey(Object entry){

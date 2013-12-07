@@ -14,9 +14,10 @@ package com.github.krukow.clj_lang;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
+import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.PersistentSet;
+import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_ds.TransientSet;
 
 public class PersistentHashSet<T> extends APersistentSet<T> implements PersistentSet<T> {
@@ -90,45 +91,28 @@ static public <T> PersistentHashSet<T> createWithCheck(ISeq<? extends T> items){
 	return ret;
 }
 
-PersistentHashSet(IPersistentMap impl){
+PersistentHashSet(PersistentMap<T, Boolean> impl){
 	super(impl);
 }
 
 public Iterator<T> iterator(){
-	return new Iterator<T>() {
-		final Iterator<Map.Entry> iterator = impl.iterator();
-		
-		public boolean hasNext() {
-			return iterator.hasNext();
-		}
-
-		public T next() {
-			Map.Entry n = iterator.next();
-			return (T) n.getKey();
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		} 
-		
-	};
+    return impl.keySet().iterator();
 }
 
 
 public PersistentHashSet<T> disjoin(T key) {
 	if(contains(key))
-		return new PersistentHashSet<T>(impl.without(key));
+		return new PersistentHashSet<T>(impl.minus(key));
 	return this;
 }
 
 public PersistentHashSet<T> cons(T o){
 	if(contains(o))
 		return this;
-	return new PersistentHashSet<T>(impl.assoc(o,o));
+	return new PersistentHashSet<T>(impl.plus(o,Boolean.TRUE));
 }
 
-public IPersistentSet<T> empty(){
+public PersistentSet<T> empty(){
 	return EMPTY;	
 }
 
@@ -137,12 +121,12 @@ public TransientHashSet<T> asTransient() {
 }
 
 static final class TransientHashSet<T> extends ATransientSet<T> implements TransientSet<T> {
-	TransientHashSet(ITransientMap impl) {
+	TransientHashSet(TransientMap impl) {
 		super(impl);
 	}
 
 	public PersistentHashSet<T> persistent() {
-		return new PersistentHashSet<T>(impl.persistentMap());
+		return new PersistentHashSet<T>(impl.persist());
 	}
 	
 	@Override

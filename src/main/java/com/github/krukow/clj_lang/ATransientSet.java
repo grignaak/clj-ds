@@ -12,44 +12,34 @@
 
 package com.github.krukow.clj_lang;
 
+import com.github.krukow.clj_ds.TransientMap;
+import com.github.krukow.clj_ds.TransientSet;
 
-public abstract class ATransientSet<T> implements ITransientSet<T> {
-	ITransientMap impl;
 
-	ATransientSet(ITransientMap impl) {
+public abstract class ATransientSet<T> implements TransientSet<T> {
+	TransientMap<T, Boolean> impl;
+
+	ATransientSet(TransientMap<T, Boolean> impl) {
 		this.impl = impl;
 	}
 	
 	public int count() {
-		return impl.count();
+		return impl.size();
 	}
 
-	public ITransientSet<T> conj(T val) {
-		ITransientMap m = impl.assoc(val, val);
+	public TransientSet<T> conj(T val) {
+		TransientMap m = impl.plus(val, Boolean.TRUE);
 		if (m != impl) this.impl = m;
 		return this;
 	}
 
 	public boolean contains(T key) {
-		return this != impl.valAt(key, this);
+		return impl.containsKey(key);
 	}
 
-	public ITransientSet<T> disjoin(T key)  {
-		ITransientMap m = impl.without(key);
+	public TransientSet<T> disjoin(T key)  {
+		TransientMap m = impl.minus(key);
 		if (m != impl) this.impl = m;
 		return this;
 	}
-
-	public Boolean get(T key) {
-		return (Boolean) impl.valAt(key);
-	}
-
-	public Object invoke(Object key, Object notFound)  {
-		return impl.valAt(key, notFound);
-	}
-
-	public Object invoke(Object key)  {
-		return impl.valAt(key);	
-	}
-	
 }

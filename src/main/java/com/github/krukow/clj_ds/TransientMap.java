@@ -1,6 +1,8 @@
 package com.github.krukow.clj_ds;
 
-public interface TransientMap<K, V> {
+import java.util.Map;
+
+public interface TransientMap<K, V> extends Map<K, V> {
 
 	/**
 	 * @return A new {@link PersistentMap} consisting of the content of the

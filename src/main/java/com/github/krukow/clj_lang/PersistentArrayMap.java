@@ -10,8 +10,10 @@
 
 package com.github.krukow.clj_lang;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.TransientMap;
@@ -36,12 +38,12 @@ public static final PersistentArrayMap EMPTY = new PersistentArrayMap();
 
 @SuppressWarnings("unchecked")
 static public <K,V> PersistentMap<K,V> create(Map<? extends K, ? extends V> other){
-	ITransientMap<K,V> ret = EMPTY.asTransient();
+	TransientMap<K,V> ret = EMPTY.asTransient();
 	for(Map.Entry<? extends K, ? extends V> e : other.entrySet())
 		{
-		ret = ret.assoc(e.getKey(), e.getValue());
+		ret = ret.plus(e.getKey(), e.getValue());
 		}
-	return (PersistentMap<K, V>) ret.persistentMap();
+	return (PersistentMap<K, V>) ret.persist();
 }
 
 protected PersistentArrayMap(){
@@ -158,7 +160,7 @@ public java.util.Map.Entry<K, V> entryAt(K key){
 	return null;
 }
 
-public IPersistentMap<K,V> assocEx(K key, V val) {
+public PersistentMap<K,V> assocEx(K key, V val) {
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0)
@@ -178,7 +180,7 @@ public IPersistentMap<K,V> assocEx(K key, V val) {
 	return create(newArray);
 }
 
-public IPersistentMap<K,V> assoc(K key, V val){
+public PersistentMap<K,V> assoc(K key, V val){
 	int i = indexOf(key);
 	Object[] newArray;
 	if(i >= 0) //already have key, same-sized replacement
@@ -228,15 +230,11 @@ public PersistentArrayMap<K,V> empty(){
 	return (PersistentArrayMap<K,V>) EMPTY;
 }
 
-final public V valAt(K key, V notFound){
-	int i = indexOf(key);
-	if(i >= 0)
-		return (V) array[i + 1];
-	return notFound;
-}
-
-public V valAt(K key){
-	return valAt(key, null);
+public V get(Object key){
+	int i = indexOf((K)key);
+    if(i >= 0)
+    	return (V) array[i + 1];
+    return null;
 }
 
 public int capacity(){
@@ -389,7 +387,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> implements 
 		return -1;
 	}
 
-	ITransientMap<K,V> doAssoc(K key, V val){
+	TransientMap<K,V> doAssoc(K key, V val){
 		int i = indexOf(key);
 		if(i >= 0) //already have key,
 			{
@@ -447,8 +445,7 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> implements 
 		throw new IllegalAccessError("Transient used after persistent! call");
 	}
 
-	@Override
-	public IPersistentCollection persistent() {
+	public PersistentMap<K, V> persistent() {
 		return persistentMap();
 	}
 	
@@ -466,6 +463,25 @@ static final class TransientArrayMap<K,V> extends ATransientMap<K,V> implements 
 	public TransientMap<K, V> minus(K key) {
 		return (TransientMap<K, V>) without(key);
 	}
+
+
+    @Override
+    public Set<K> keySet() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: Map<K,V>.keySet");
+    }
+
+    @Override
+    public Collection<V> values() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: Map<K,V>.values");
+    }
+
+    @Override
+    public Set<java.util.Map.Entry<K, V>> entrySet() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: Map<K,V>.entrySet");
+    }
 	
 }
 	@Override

@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 
+import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.PersistentSortedMap;
 
 /**
@@ -61,23 +62,23 @@ PersistentTreeMap(Comparator<K> comp, Node tree, int _count){
 }
 
 static public <K,V> PersistentTreeMap<K,V> create(ISeq items){
-	IPersistentMap<K,V> ret = EMPTY;
+	PersistentMap<K,V> ret = EMPTY;
 	for(; items != null; items = items.next().next())
 		{
 		if(items.next() == null)
 			throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-		ret = ret.assoc((K) items.first(), (V) RT.second(items));
+		ret = ret.plus((K) items.first(), (V) RT.second(items));
 		}
 	return (PersistentTreeMap<K,V>) ret;
 }
 
 static public <K,V> PersistentTreeMap<K,V> create(Comparator<K> comp, ISeq items){
-	IPersistentMap<K,V> ret = new PersistentTreeMap(comp);
+	PersistentMap<K,V> ret = new PersistentTreeMap(comp);
 	for(; items != null; items = items.next().next())
 		{
 		if(items.next() == null)
 			throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-		ret = ret.assoc((K) items.first(), (V) RT.second(items));
+		ret = ret.plus((K) items.first(), (V) RT.second(items));
 		}
 	return (PersistentTreeMap<K,V>) ret;
 }
@@ -129,7 +130,7 @@ public ISeq seq(){
 	return null;
 }
 
-public IPersistentCollection empty(){
+public PersistentTreeMap empty(){
 	return new PersistentTreeMap(comp);	
 }
 
@@ -871,6 +872,11 @@ static class ValIterator<T> implements Iterator<T>{
 	public PersistentSortedMap<K, V> minus(K key) {
 		return without(key);
 	}
+
+    @Override
+    public V get(Object key) {
+        return valAt((K)key);
+    }
 
 /*
 static public void main(String args[]){

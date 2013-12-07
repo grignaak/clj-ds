@@ -18,16 +18,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class APersistentMap<K, V> implements IPersistentMap<K, V>, Map<K, V>, Iterable<Map.Entry<K, V>>,
-        Serializable {
+import com.github.krukow.clj_ds.PersistentMap;
+
+public abstract class APersistentMap<K, V> implements PersistentMap<K, V>, Map<K, V>, Iterable<Map.Entry<K, V>>,
+        Counted, Serializable {
     int _hash = -1;
     
     public String toString() {
         return RT.printString(this);
-    }
-
-    public IPersistentCollection cons(Map.Entry<K, V> o) {
-        return assoc(o.getKey(), o.getValue());
     }
 
     public boolean equals(Object obj) {
@@ -105,14 +103,6 @@ public abstract class APersistentMap<K, V> implements IPersistentMap<K, V>, Map<
         }
     }
 
-    public Object invoke(Object arg1) {
-        return valAt((K) arg1);
-    }
-
-    public Object invoke(Object arg1, Object notFound) {
-        return valAt((K) arg1, (V) notFound);
-    }
-
     // java.util.Map implementation
 
     public void clear() {
@@ -150,10 +140,8 @@ public abstract class APersistentMap<K, V> implements IPersistentMap<K, V>, Map<
             }
         };
     }
-
-    public V get(Object key) {
-        return valAt((K) key);
-    }
+    
+    protected abstract Entry entryAt(K key);
 
     public boolean isEmpty() {
         return count() == 0;
@@ -196,7 +184,7 @@ public abstract class APersistentMap<K, V> implements IPersistentMap<K, V>, Map<
         throw new UnsupportedOperationException();
     }
 
-    public void putAll(Map t) {
+    public void putAll(Map<? extends K, ? extends V> t) {
         throw new UnsupportedOperationException();
     }
 
@@ -235,41 +223,4 @@ public abstract class APersistentMap<K, V> implements IPersistentMap<K, V>, Map<
             }
         };
     }
-
-    /*// java.util.Collection implementation
-     * 
-     * public Object[] toArray(){ return RT.seqToArray(seq()); }
-     * 
-     * public boolean add(Object o){ throw new UnsupportedOperationException();
-     * }
-     * 
-     * public boolean remove(Object o){ throw new
-     * UnsupportedOperationException(); }
-     * 
-     * public boolean addAll(Collection c){ throw new
-     * UnsupportedOperationException(); }
-     * 
-     * public void clear(){ throw new UnsupportedOperationException(); }
-     * 
-     * public boolean retainAll(Collection c){ throw new
-     * UnsupportedOperationException(); }
-     * 
-     * public boolean removeAll(Collection c){ throw new
-     * UnsupportedOperationException(); }
-     * 
-     * public boolean containsAll(Collection c){ for(Object o : c) {
-     * if(!contains(o)) return false; } return true; }
-     * 
-     * public Object[] toArray(Object[] a){ if(a.length >= count()) { ISeq s =
-     * seq(); for(int i = 0; s != null; ++i, s = s.rest()) { a[i] = s.first(); }
-     * if(a.length > count()) a[count()] = null; return a; } else return
-     * toArray(); }
-     * 
-     * public int size(){ return count(); }
-     * 
-     * public boolean isEmpty(){ return count() == 0; }
-     * 
-     * public boolean contains(Object o){ if(o instanceof Map.Entry) { Map.Entry
-     * e = (Map.Entry) o; Map.Entry v = entryAt(e.getKey()); return (v != null
-     * && Util.equal(v.getValue(), e.getValue())); } return false; } */
 }
