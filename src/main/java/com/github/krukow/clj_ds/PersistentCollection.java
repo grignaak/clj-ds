@@ -12,7 +12,7 @@ import java.util.Collection;
  * @param <E>
  *            The type of objects held in the collection.
  */
-public interface PersistentCollection<E> extends Collection<E> {
+public interface PersistentCollection<E> extends Collection<E>, ThouShaltNotMutateThisCollection<E> {
 
 	/**
 	 * @return An empty instance of this kind of collection.

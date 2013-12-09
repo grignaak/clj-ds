@@ -10,114 +10,154 @@
 
 package com.github.krukow.clj_lang;
 
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.TransientMap;
 
 
-abstract class ATransientMap<K,V> implements TransientMap<K, V> {
-	abstract void ensureEditable();
-	abstract TransientMap<K,V> doAssoc(K key, V val);
-	abstract TransientMap<K,V> doWithout(K key);
-	abstract V doValAt(K key, V notFound);
-	abstract int doCount();
-	abstract PersistentMap<K,V> doPersistent();
+abstract class ATransientMap<K, V> extends AbstractMap<K,V> implements TransientMap<K, V> {
+    protected final AtomicReference<Thread> owner = new AtomicReference<>(Thread.currentThread());
 
-	public TransientMap<K,V> conj(Map.Entry<K, V> o) {
-		ensureEditable();
-		return plus(o.getKey(), o.getValue());
-	}
-
-	public final Object invoke(Object arg1) {
-		return valAt((K) arg1);
-	}
-
-	public final Object invoke(Object arg1, Object notFound) {
-		return valAt((K)arg1, (V) notFound);
-	}
-
-	public final V valAt(K key) {
-		return valAt(key, null);
-	}
-
-	public final TransientMap<K,V> assoc(K key, V val) {
-		ensureEditable();
-		return doAssoc(key, val);
-	}
-
-	public final TransientMap<K,V> without(K key) {
-		ensureEditable();
-		return doWithout(key);
-	}
-
-	public final PersistentMap<K,V> persistentMap() {
-		ensureEditable();
-		return doPersistent();
-	}
-
-	public final V valAt(K key, V notFound) {
-		ensureEditable();
-		return doValAt(key, notFound);
-	}
-
-	public final int count() {
-		ensureEditable();
-		return doCount();
-	}
-    @Override
-    public boolean isEmpty() {
-        return size() == 0;
-    }
-    @Override
-    public V put(K key, V value) {
-        throw new UnsupportedOperationException();
-    }
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException();
+    private final void ensureEditable() {
+        final Thread thread = owner.get();
+        if (thread == Thread.currentThread())
+            return;
+        if (thread != null)
+            throw new IllegalAccessError("Transient used by non-owner thread");
+        throw new IllegalAccessError("Transient used after persistent! call");
     }
 
     @Override
-    public V remove(Object key) {
-        throw new UnsupportedOperationException();
+    public final boolean containsValue(Object value) {
+        ensureEditable();
+        return doContainsValue(value);
     }
-
-    @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
-        throw new UnsupportedOperationException();
-    }
-    
-
-    @Override
-    public int size() {
-        return count();
-    }
+    protected boolean doContainsValue(Object value) { return super.containsValue(value); }
 
     @Override
     public boolean containsKey(Object key) {
-        V fake = (V)new Object();
-        return valAt((K) key, fake) != fake;
+        ensureEditable();
+        return doContainsKey(key);
     }
-
-    @Override
-    public boolean containsValue(Object value) {
-        if (value != null) {
-            for (V v : values()) {
-                if (value.equals(v))
-                    return true;
-            }
-        } else {
-            for (V v : values()) {
-                if (v == null)
-                    return true;
-            }
-        }
-        return false;
-    }
+    protected boolean doContainsKey(Object key) { return super.containsKey(key); }
 
     @Override
     public V get(Object key) {
-        return valAt((K)key);
+        ensureEditable();
+        return doValAt((K)key);
     }
+    protected V doValAt(K key) { return super.get(key); }
+
+    @Override
+    public Set<K> keySet() {
+        ensureEditable();
+        return super.keySet();
+    }
+
+    @Override
+    public Collection<V> values() {
+        ensureEditable();
+        return super.values();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        ensureEditable();
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        ensureEditable();
+        return super.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        ensureEditable();
+        return super.toString();
+    }
+    
+
+    
+
+    public final TransientMap<K, V> plus(K key, V val) {
+        ensureEditable();
+        return doAssoc(key, val);
+    }
+    protected abstract TransientMap<K, V> doAssoc(K key, V val);
+
+    public final TransientMap<K, V> minus(K key) {
+        ensureEditable();
+        return doWithout(key);
+    }
+    protected abstract TransientMap<K, V> doWithout(K key);
+
+    public final PersistentMap<K, V> persist() {
+        ensureEditable();
+        owner.set(null);
+        return doPersistent();
+    }
+    protected abstract PersistentMap<K, V> doPersistent();
+
+    public final int size() {
+        ensureEditable();
+        return doCount();
+    }
+    protected int doCount() { return super.size(); }
+    
+
+    @Override
+    public boolean isEmpty() {
+        ensureEditable();
+        return doIsEmpty();
+    }
+    protected boolean doIsEmpty() { return doCount() == 0; }
+
+    @Override
+    public final Set<Map.Entry<K, V>> entrySet() {
+        return new AbstractSet<Map.Entry<K,V>>() {
+            private final Set<Map.Entry<K, V>> actual = doEntrySet();
+            
+            @Override
+            public final Iterator<Map.Entry<K, V>> iterator() {
+                return new Iterator<Map.Entry<K, V>>() {
+                    private final Iterator<Map.Entry<K, V>> it = actual.iterator();
+                    
+                    @Override
+                    public boolean hasNext() {
+                        ensureEditable();
+                        return it.hasNext();
+                    }
+
+                    @Override
+                    public Map.Entry<K, V> next() {
+                        ensureEditable();
+                        return it.next();
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+            
+            // TODO ensure editable all the other methods too
+
+            @Override
+            public int size() {
+                ensureEditable();
+                return actual.size();
+            }
+        };
+    }
+    protected abstract Set<Map.Entry<K, V>> doEntrySet();
 }

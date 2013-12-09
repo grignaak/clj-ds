@@ -13,7 +13,6 @@
 package com.github.krukow.clj_lang;
 
 import java.util.Iterator;
-import java.util.List;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.PersistentSet;
@@ -22,7 +21,7 @@ import com.github.krukow.clj_ds.TransientSet;
 
 public class PersistentHashSet<T> extends APersistentSet<T> implements PersistentSet<T> {
 
-static public final PersistentHashSet EMPTY = new PersistentHashSet(PersistentHashMap.EMPTY);
+static private final PersistentHashSet EMPTY = new PersistentHashSet(PersistentHashMap.EMPTY);
 
 @SuppressWarnings("unchecked")
 static public final <T> PersistentHashSet<T> emptySet() {
@@ -47,51 +46,7 @@ public static <T> PersistentHashSet<T> create(Iterable<? extends T> init){
 	return ret;
 }
 
-static public <T> PersistentHashSet<T> create(ISeq<? extends T> items){
-	PersistentHashSet<T> ret = EMPTY;
-	for(; items != null; items = items.next())
-		{
-		ret = (PersistentHashSet<T>) ret.cons(items.first());
-		}
-	return ret;
-}
-
-public static <T> PersistentHashSet<T> createWithCheck(T ... init){
-	PersistentHashSet<T> ret = EMPTY;
-	for(int i = 0; i < init.length; i++)
-		{
-		ret = (PersistentHashSet<T>) ret.cons(init[i]);
-		if(ret.count() != i + 1)
-			throw new IllegalArgumentException("Duplicate key: " + init[i]);
-		}
-	return ret;
-}
-
-public static <T> PersistentHashSet<T> createWithCheck(List<? extends T> init){
-	PersistentHashSet<T> ret = EMPTY;
-	int i=0;
-	for(T key : init)
-		{
-		ret = (PersistentHashSet<T>) ret.cons(key);
-		if(ret.count() != i + 1)
-			throw new IllegalArgumentException("Duplicate key: " + key);		
-		++i;
-		}
-	return ret;
-}
-
-static public <T> PersistentHashSet<T> createWithCheck(ISeq<? extends T> items){
-	PersistentHashSet<T> ret = EMPTY;
-	for(int i=0; items != null; items = items.next(), ++i)
-		{
-		ret = (PersistentHashSet<T>) ret.cons(items.first());
-		if(ret.count() != i + 1)
-			throw new IllegalArgumentException("Duplicate key: " + items.first());
-		}
-	return ret;
-}
-
-PersistentHashSet(PersistentMap<T, Boolean> impl){
+private PersistentHashSet(PersistentMap<T, Boolean> impl){
 	super(impl);
 }
 

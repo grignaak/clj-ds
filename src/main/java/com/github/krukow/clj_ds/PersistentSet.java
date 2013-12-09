@@ -4,14 +4,21 @@ import java.util.Set;
 
 public interface PersistentSet<E> extends PersistentCollection<E>, Set<E>, EditableCollection<E> {
 
-	@Override PersistentSet<E> zero();
+    /** {@inheritDoc} */
+    @Override
+    PersistentSet<E> zero();
 
-	@Override PersistentSet<E> plus(E val);
+    /** {@inheritDoc} */
+    @Override
+    PersistentSet<E> plus(E val);
 
-	/**
-	 * @return A new {@link PersistentSet} that consists of the elements of the
-	 *         current {@link PersistentSet} without the value val.
-	 */
-	PersistentSet<E> minus(E val);
+    /**
+     * @return A new {@link PersistentSet} that consists of the elements of the
+     *         current {@link PersistentSet} without the value val.
+     */
+    PersistentSet<E> minus(E val);
 
+    /** {@inheritDoc} */
+    @Override
+    public TransientSet<E> asTransient();
 }

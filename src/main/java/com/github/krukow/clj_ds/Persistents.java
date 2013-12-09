@@ -112,7 +112,7 @@ public final class Persistents {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <K, V> PersistentMap<K, V> arrayMap() {
-		return PersistentArrayMap.EMPTY;
+		return PersistentArrayMap.empty();
 	}
 
 	/**
@@ -152,7 +152,7 @@ public final class Persistents {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <E> PersistentSortedSet<E> treeSet() {
-		return PersistentTreeSet.EMPTY;
+		return PersistentTreeSet.empty();
 	}
 
 	/**

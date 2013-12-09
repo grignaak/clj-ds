@@ -24,7 +24,7 @@ public final class Transients {
 	
 	@SuppressWarnings("unchecked")
 	public static final <K, V> TransientMap<K, V> transientArrayMap() {
-		return PersistentArrayMap.EMPTY.asTransient();
+		return PersistentArrayMap.empty().asTransient();
 	}
 	
 	// Utilities

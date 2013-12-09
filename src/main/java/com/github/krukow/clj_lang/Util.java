@@ -91,10 +91,12 @@ public class Util {
         }
     }
 
+    @Deprecated
     static public RuntimeException runtimeException(String s) {
         return new RuntimeException(s);
     }
 
+    @Deprecated
     static public RuntimeException runtimeException(String s, Throwable e) {
         return new RuntimeException(s, e);
     }

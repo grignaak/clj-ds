@@ -12,134 +12,87 @@
 
 package com.github.krukow.clj_lang;
 
-import java.io.Serializable;
-import java.util.Collection;
+import java.util.AbstractSet;
 import java.util.Iterator;
-import java.util.Set;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.PersistentSet;
+import com.github.krukow.clj_ds.TransientMap;
+import com.github.krukow.clj_ds.TransientSet;
 
-public abstract class APersistentSet<T> implements PersistentSet<T>, Collection<T>, Set<T>, Serializable {
-    int _hash = -1;
+public class APersistentSet<T> extends AbstractSet<T> implements PersistentSet<T> {
 
-    final PersistentMap<T, Boolean> impl;
+    protected final PersistentMap<T, Boolean> impl;
 
     protected APersistentSet(PersistentMap<T, Boolean> impl) {
         this.impl = impl;
     }
 
-    public String toString() {
-        return RT.printString(this);
-    }
-
+    @Override
     public boolean contains(Object key) {
         return impl.containsKey(key);
     }
 
-    public Boolean get(T key) {
-        return (Boolean) impl.get(key);
+    @Override
+    public Iterator<T> iterator() {
+        return impl.keySet().iterator();
     }
-
-    public int count() {
+    
+    @Override
+    public int size() {
         return impl.size();
     }
 
-    public ISeq<T> seq() {
-        return RT.keys(impl);
+    @Override
+    public TransientSet<T> asTransient() {
+        return new ATransientSet<>(impl.asTransient());
     }
 
-    public Object invoke(Object arg1) {
-        return get((T) arg1);
+    @Override
+    public PersistentSet<T> zero() {
+        return new APersistentSet<>(impl.zero());
     }
 
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof Set))
-            return false;
-        Set m = (Set) obj;
+    @Override
+    public PersistentSet<T> plus(T val) {
+        return new APersistentSet<>(impl.plus(val, Boolean.TRUE));
+    }
 
-        if (m.size() != count())
-            return false;
+    @Override
+    public PersistentSet<T> minus(T val) {
+        return new APersistentSet<>(impl.minus(val));
+    }
+    
+    private static class ATransientSet<T> extends AbstractSet<T> implements TransientSet<T> {
 
-        for (Object aM : m)
-        {
-            if (!contains(aM))
-                return false;
+        private final TransientMap<T, Boolean> impl;
+
+        private ATransientSet(TransientMap<T, Boolean> impl) {
+            this.impl = impl;
+        }
+        @Override
+        public TransientSet<T> plus(T val) {
+            return new ATransientSet<>(impl.plus(val, Boolean.TRUE));
         }
 
-        return true;
-    }
-
-    public boolean equiv(Object o) {
-        return equals(o);
-    }
-
-    public int hashCode() {
-        if (_hash == -1)
-        {
-            // int hash = count();
-            int hash = 0;
-            for (Object e : this)
-            {
-                hash += Util.hash(e);
-            }
-            this._hash = hash;
+        @Override
+        public TransientSet<T> minus(T val) {
+            return new ATransientSet<>(impl.minus(val));
         }
-        return _hash;
-    }
 
-    public Object[] toArray() {
-        return RT.seqToArray(this);
-    }
-
-    public boolean add(Object o) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean remove(Object o) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean addAll(Collection c) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void clear() {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean retainAll(Collection c) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean removeAll(Collection c) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean containsAll(Collection c) {
-        for (Object o : c)
-        {
-            if (!contains(o))
-                return false;
+        @Override
+        public PersistentSet<T> persist() {
+            return new APersistentSet<>(impl.persist());
         }
-        return true;
-    }
 
-    public Object[] toArray(Object[] a) {
-        return RT.seqToPassedArray(this, a);
-    }
+        @Override
+        public Iterator<T> iterator() {
+            return impl.keySet().iterator();
+        }
 
-    public int size() {
-        return count();
+        @Override
+        public int size() {
+            return impl.size();
+        }
     }
-
-    public boolean isEmpty() {
-        return count() == 0;
-    }
-
-    public Iterator<T> iterator() {
-        return new SeqIterator<T>(seq());
-    }
-
 }

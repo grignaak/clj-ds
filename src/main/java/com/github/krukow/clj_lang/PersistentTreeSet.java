@@ -16,86 +16,60 @@ import java.util.Comparator;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.PersistentSortedSet;
-import com.github.krukow.clj_ds.TransientCollection;
+import com.github.krukow.clj_ds.TransientSet;
 
-public class PersistentTreeSet<T> extends APersistentSet<T> implements PersistentSortedSet<T>{
-static public final PersistentTreeSet EMPTY = new PersistentTreeSet(PersistentTreeMap.EMPTY);
+public class PersistentTreeSet<T> extends APersistentSet<T> implements PersistentSortedSet<T> {
+    private static final PersistentTreeSet<?> EMPTY = new PersistentTreeSet<>(PersistentTreeMap.EMPTY);
 
 
-static public <T> PersistentTreeSet<T> create(Iterable<? extends T> items){
-	PersistentTreeSet<T> ret = EMPTY;
-	for (T item : items)
-		{
-		ret = (PersistentTreeSet<T>) ret.cons(item);
-		}
-	return ret;
-}
+    public static <T> PersistentTreeSet<T> empty() {
+        return (PersistentTreeSet<T>) EMPTY;
+    }
 
-static public <T> PersistentTreeSet<T> create(Comparator<T> comp, Iterable<? extends T> items){
-	PersistentTreeSet<T> ret = new PersistentTreeSet<T>(new PersistentTreeMap(comp));
-	for (T item : items)
-		{
-		ret = (PersistentTreeSet<T>) ret.cons(item);
-		}
-	return ret;
-}
+    static public <T> PersistentTreeSet<T> create(Iterable<? extends T> items) {
+        PersistentTreeSet<T> ret = empty();
+        for (T item : items) {
+            ret = ret.plus(item);
+        }
+        return ret;
+    }
 
-PersistentTreeSet(PersistentMap<T, Boolean> impl){
-	super(impl);
-}
+    static public <T> PersistentTreeSet<T> create(Comparator<T> comp, Iterable<? extends T> items) {
+        PersistentTreeSet<T> ret = new PersistentTreeSet<T>(new PersistentTreeMap(comp));
+        for (T item : items) {
+            ret = ret.plus(item);
+        }
+        return ret;
+    }
 
-public PersistentTreeSet<T> disjoin(T key) {
-	if(contains(key))
-		return new PersistentTreeSet<T>(impl.minus(key));
-	return this;
-}
+    private PersistentTreeSet(PersistentMap<T, Boolean> impl) {
+        super(impl);
+    }
 
-public PersistentTreeSet<T> cons(T o){
-	if(contains(o))
-		return this;
-	return new PersistentTreeSet<T>(impl.plus(o,Boolean.TRUE));
-}
+    @Override
+    public PersistentTreeSet<T> minus(T key) {
+        if (contains(key))
+            return new PersistentTreeSet<T>(impl.minus(key));
+        return this;
+    }
 
-public PersistentTreeSet<T> empty(){
-	return new PersistentTreeSet<T>((PersistentTreeMap)impl.zero());
-}
+    @Override
+    public PersistentTreeSet<T> plus(T o) {
+        if (contains(o))
+            return this;
+        return new PersistentTreeSet<T>(impl.plus(o, Boolean.TRUE));
+    }
 
-public Comparator<T> comparator(){
-	return ((PersistentTreeMap<T, ?>)impl).comparator();
-}
+    public PersistentTreeSet<T> zero() {
+        return new PersistentTreeSet<T>((PersistentTreeMap) impl.zero());
+    }
 
-public Object entryKey(Object entry){
-	return entry;
-}
-
-public ISeq<T> seq(boolean ascending){
-	PersistentTreeMap m = (PersistentTreeMap) impl;
-	return RT.keys(m.seq(ascending));
-}
-
-public ISeq<T> seqFrom(T key, boolean ascending){
-	PersistentTreeMap m = (PersistentTreeMap) impl;
-	return RT.keys(m.seqFrom(key,ascending));
-}
-	
-	@Override
-	public PersistentSortedSet<T> zero() {
-		return empty();
-	}
-	
-	@Override
-	public PersistentSortedSet<T> plus(T o) {
-		return cons(o);
-	}
-	
-	@Override
-	public PersistentSortedSet<T> minus(T key) {
-		return disjoin(key);
-	}
-	
-	@Override
-	public TransientCollection<T> asTransient() {
-		throw new UnsupportedOperationException();
-	}
-
+    public Comparator<T> comparator() {
+        return ((PersistentTreeMap<T, ?>) impl).comparator();
+    }
+    
+    @Override
+    public TransientSet<T> asTransient() {
+        throw new UnsupportedOperationException();
+    }
 }

@@ -1,8 +1,7 @@
 package com.github.krukow.clj_ds;
 
-import com.github.krukow.clj_lang.Sorted;
 
-public interface PersistentSortedMap<K, V> extends PersistentMap<K, V>, Sorted<K> /* , SortedMap<K, V> */{
+public interface PersistentSortedMap<K, V> extends PersistentMap<K, V> /* , SortedMap<K, V> */{
 
     @Override PersistentSortedMap<K, V> zero();
 

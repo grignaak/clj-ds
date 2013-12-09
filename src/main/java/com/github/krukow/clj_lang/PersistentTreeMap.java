@@ -12,13 +12,16 @@ a *   Copyright (c) Rich Hickey. All rights reserved.
 
 package com.github.krukow.clj_lang;
 
+import java.util.AbstractSet;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.PersistentSortedMap;
+import com.github.krukow.clj_ds.TransientMap;
 
 /**
  * Persistent Red Black Tree
@@ -878,126 +881,27 @@ static class ValIterator<T> implements Iterator<T>{
         return valAt((K)key);
     }
 
-/*
-static public void main(String args[]){
-	if(args.length != 1)
-		System.err.println("Usage: RBTree n");
-	int n = Integer.parseInt(args[0]);
-	Integer[] ints = new Integer[n];
-	for(int i = 0; i < ints.length; i++)
-		{
-		ints[i] = i;
-		}
-	Collections.shuffle(Arrays.asList(ints));
-	//force the ListMap class loading now
-//	try
-//		{
-//
-//		//PersistentListMap.EMPTY.assocEx(1, null).assocEx(2,null).assocEx(3,null);
-//		}
-//	catch(Exception e)
-//		{
-//		e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//		}
-	System.out.println("Building set");
-	//IPersistentMap set = new PersistentArrayMap();
-	//IPersistentMap set = new PersistentHashtableMap(1001);
-	IPersistentMap set = PersistentHashMap.EMPTY;
-	//IPersistentMap set = new ListMap();
-	//IPersistentMap set = new ArrayMap();
-	//IPersistentMap set = new PersistentTreeMap();
-//	for(int i = 0; i < ints.length; i++)
-//		{
-//		Integer anInt = ints[i];
-//		set = set.add(anInt);
-//		}
-	long startTime = System.nanoTime();
-	for(Integer anInt : ints)
-		{
-		set = set.assoc(anInt, anInt);
-		}
-	//System.out.println("_count = " + set.count());
+    @Override
+    public Set<Entry<K, V>> entrySet() {
+        return new AbstractSet<Map.Entry<K, V>>() {
 
-//	System.out.println("_count = " + set._count + ", min: " + set.minKey() + ", max: " + set.maxKey()
-//	                   + ", depth: " + set.depth());
-	for(Object aSet : set)
-		{
-		IMapEntry o = (IMapEntry) aSet;
-		if(!set.contains(o.key()))
-			System.err.println("Can't find: " + o.key());
-		//else if(n < 2000)
-		//	System.out.print(o.key().toString() + ",");
-		}
+            @Override
+            public Iterator<Map.Entry<K, V>> iterator() {
+                // TODO unimplemented
+                throw new RuntimeException("Unimplemented: AbstractCollection<Entry<K,V>>.iterator");
+            }
 
-	Random rand = new Random(42);
-	for(int i = 0; i < ints.length / 2; i++)
-		{
-		Integer anInt = ints[rand.nextInt(n)];
-		set = set.without(anInt);
-		}
+            @Override
+            public int size() {
+                // TODO unimplemented
+                throw new RuntimeException("Unimplemented: AbstractCollection<Entry<K,V>>.size");
+            }
 
-	long estimatedTime = System.nanoTime() - startTime;
-	System.out.println();
+        };
+    }
 
-	System.out.println("_count = " + set.count() + ", time: " + estimatedTime / 1000000);
-
-	System.out.println("Building ht");
-	Hashtable ht = new Hashtable(1001);
-	startTime = System.nanoTime();
-//	for(int i = 0; i < ints.length; i++)
-//		{
-//		Integer anInt = ints[i];
-//		ht.put(anInt,null);
-//		}
-	for(Integer anInt : ints)
-		{
-		ht.put(anInt, anInt);
-		}
-	//System.out.println("size = " + ht.size());
-	//Iterator it = ht.entrySet().iterator();
-	for(Object o1 : ht.entrySet())
-		{
-		Map.Entry o = (Map.Entry) o1;
-		if(!ht.containsKey(o.getKey()))
-			System.err.println("Can't find: " + o);
-		//else if(n < 2000)
-		//	System.out.print(o.toString() + ",");
-		}
-
-	rand = new Random(42);
-	for(int i = 0; i < ints.length / 2; i++)
-		{
-		Integer anInt = ints[rand.nextInt(n)];
-		ht.remove(anInt);
-		}
-	estimatedTime = System.nanoTime() - startTime;
-	System.out.println();
-	System.out.println("size = " + ht.size() + ", time: " + estimatedTime / 1000000);
-
-	System.out.println("set lookup");
-	startTime = System.nanoTime();
-	int c = 0;
-	for(Integer anInt : ints)
-		{
-		if(!set.contains(anInt))
-			++c;
-		}
-	estimatedTime = System.nanoTime() - startTime;
-	System.out.println("notfound = " + c + ", time: " + estimatedTime / 1000000);
-
-	System.out.println("ht lookup");
-	startTime = System.nanoTime();
-	c = 0;
-	for(Integer anInt : ints)
-		{
-		if(!ht.containsKey(anInt))
-			++c;
-		}
-	estimatedTime = System.nanoTime() - startTime;
-	System.out.println("notfound = " + c + ", time: " + estimatedTime / 1000000);
-
-//	System.out.println("_count = " + set._count + ", min: " + set.minKey() + ", max: " + set.maxKey()
-//	                   + ", depth: " + set.depth());
-}
-*/
+    @Override
+    public TransientMap<K, V> asTransient() {
+        return SimpleTransientMap.wrap(this);
+    }
 }

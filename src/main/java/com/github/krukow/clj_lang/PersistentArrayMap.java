@@ -1,7 +1,7 @@
 /**
  *   Copyright (c) Rich Hickey. All rights reserved.
  *   The use and distribution terms for this software are covered by the
- *   Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+ *   Eclipse private License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
  *   which can be found in the file epl-v10.html at the root of this distribution.
  *   By using this software in any fashion, you are agreeing to be bound by
  * 	 the terms of this license.
@@ -10,7 +10,8 @@
 
 package com.github.krukow.clj_lang;
 
-import java.util.Collection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -21,486 +22,291 @@ import com.github.krukow.clj_ds.TransientMap;
 /**
  * Simple implementation of persistent map on an array
  * <p/>
- * Note that instances of this class are constant values
- * i.e. add/remove etc return new values
+ * Note that instances of this class are constant values i.e. add/remove etc
+ * return new values
  * <p/>
  * Copies array on every change, so only appropriate for _very_small_ maps
  * <p/>
- * null keys and values are ok, but you won't be able to distinguish a null value via valAt - use contains/entryAt
+ * null keys and values are ok, but you won't be able to distinguish a null
+ * value via valAt - use contains/entryAt
  */
 
-public class PersistentArrayMap<K,V> extends APersistentMap<K,V> implements PersistentMap<K,V> {
+public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements PersistentMap<K, V> {
+    private static final int HASHTABLE_THRESHOLD = 16;
+    private static final PersistentArrayMap EMPTY = new PersistentArrayMap();
 
-final Object[] array;
-static final int HASHTABLE_THRESHOLD = 16;
+    private final Object[] array;
 
-public static final PersistentArrayMap EMPTY = new PersistentArrayMap();
+    
+    public static <K, V> PersistentArrayMap<K, V> empty() {
+        return (PersistentArrayMap<K,V>)EMPTY;
+    }
 
-@SuppressWarnings("unchecked")
-static public <K,V> PersistentMap<K,V> create(Map<? extends K, ? extends V> other){
-	TransientMap<K,V> ret = EMPTY.asTransient();
-	for(Map.Entry<? extends K, ? extends V> e : other.entrySet())
-		{
-		ret = ret.plus(e.getKey(), e.getValue());
-		}
-	return (PersistentMap<K, V>) ret.persist();
-}
-
-protected PersistentArrayMap(){
-	this.array = new Object[]{};
-}
-
-PersistentArrayMap<K,V> create(Object... init){
-	return new PersistentArrayMap<K,V>(init);
-}
-
-
-PersistentHashMap<K,V> createHT(Object[] init){
-	return PersistentHashMap.create(init);
-}
-
-static public <K,V> PersistentArrayMap<K,V> createWithCheck(Object[] init){
-	for(int i=0;i< init.length;i += 2)
-		{
-		K k = (K) init[i];
-		if (i+1 >= init.length) {throw new IllegalArgumentException("Must provide an even number of params...");}
-		V v = (V) init[i+1];
-		for(int j=i+2;j<init.length;j += 2)
-			{
-			if(equalKey(init[i],init[j]))
-				throw new IllegalArgumentException("Duplicate key: " + init[i]);
-			}
-		}
-	return new PersistentArrayMap<K,V>(init);
-}
-
-static public <K, V> PersistentArrayMap<K, V> createAsIfByAssoc(Object[] init){
-	// If this looks like it is doing busy-work, it is because it
-	// is achieving these goals: O(n^2) run time like
-	// createWithCheck(), never modify init arg, and only
-	// allocate memory if there are duplicate keys.
-	int n = 0;
-	for(int i=0;i< init.length;i += 2)
-		{
-		boolean duplicateKey = false;
-		for(int j=0;j<i;j += 2)
-			{
-			if(equalKey(init[i],init[j]))
-				{
-				duplicateKey = true;
-				break;
-				}
-			}
-		if(!duplicateKey)
-			n += 2;
-		}
-	if(n < init.length)
-		{
-		// Create a new shorter array with unique keys, and
-		// the last value associated with each key.  To behave
-		// like assoc, the first occurrence of each key must
-		// be used, since its metadata may be different than
-		// later equal keys.
-		Object[] nodups = new Object[n];
-		int m = 0;
-		for(int i=0;i< init.length;i += 2)
-			{
-			boolean duplicateKey = false;
-			for(int j=0;j<m;j += 2)
-				{
-				if(equalKey(init[i],nodups[j]))
-					{
-					duplicateKey = true;
-					break;
-					}
-				}
-			if(!duplicateKey)
-				{
-				int j;
-				for (j=init.length-2; j>=i; j -= 2)
-					{
-					if(equalKey(init[i],init[j]))
-						{
-						break;
-						}
-					}
-				nodups[m] = init[i];
-				nodups[m+1] = init[j+1];
-				m += 2;
-				}
-			}
-		if (m != n)
-			throw new IllegalArgumentException("Internal error: m=" + m);
-		init = nodups;
-		}
-	return new PersistentArrayMap<K, V>(init);
-}
-
-/**
- * This ctor captures/aliases the passed array, so do not modify later
- *
- * @param init {key1,val1,key2,val2,...}
- */
-public PersistentArrayMap(Object[] init){
-	this.array = init;
-}
-
-public int count(){
-	return array.length / 2;
-}
-
-public boolean containsKey(Object key){
-	return indexOf(key) >= 0;
-}
-
-public java.util.Map.Entry<K, V> entryAt(K key){
-	int i = indexOf(key);
-	if(i >= 0)
-		return new MapEntry<K,V>((K) array[i],(V)array[i+1]);
-	return null;
-}
-
-public PersistentMap<K,V> assocEx(K key, V val) {
-	int i = indexOf(key);
-	Object[] newArray;
-	if(i >= 0)
-		{
-		throw Util.runtimeException("Key already present");
-		}
-	else //didn't have key, grow
-		{
-		if(array.length > HASHTABLE_THRESHOLD)
-			return createHT(array).assocEx(key, val);
-		newArray = new Object[array.length + 2];
-		if(array.length > 0)
-			System.arraycopy(array, 0, newArray, 2, array.length);
-		newArray[0] = key;
-		newArray[1] = val;
-		}
-	return create(newArray);
-}
-
-public PersistentMap<K,V> assoc(K key, V val){
-	int i = indexOf(key);
-	Object[] newArray;
-	if(i >= 0) //already have key, same-sized replacement
-		{
-		if(array[i + 1] == val) //no change, no op
-			return this;
-		newArray = array.clone();
-		newArray[i + 1] = val;
-		}
-	else //didn't have key, grow
-		{
-		if(array.length > HASHTABLE_THRESHOLD)
-			return createHT(array).assoc(key, val);
-		newArray = new Object[array.length + 2];
-		if(array.length > 0)
-			System.arraycopy(array, 0, newArray, 2, array.length);
-		newArray[0] = key;
-		newArray[1] = val;
-		}
-	return create(newArray);
-}
-
-public PersistentArrayMap<K,V> without(K key){
-	int i = indexOf(key);
-	if(i >= 0) //have key, will remove
-		{
-		int newlen = array.length - 2;
-		if(newlen == 0)
-			return empty();
-		Object[] newArray = new Object[newlen];
-		for(int s = 0, d = 0; s < array.length; s += 2)
-			{
-			if(!equalKey(array[s], key)) //skip removal key
-				{
-				newArray[d] = array[s];
-				newArray[d + 1] = array[s + 1];
-				d += 2;
-				}
-			}
-		return create(newArray);
-		}
-	//don't have key, no op
-	return this;
-}
-
-public PersistentArrayMap<K,V> empty(){
-	return (PersistentArrayMap<K,V>) EMPTY;
-}
-
-public V get(Object key){
-	int i = indexOf((K)key);
-    if(i >= 0)
-    	return (V) array[i + 1];
-    return null;
-}
-
-public int capacity(){
-	return count();
-}
-
-private int indexOfObject(Object key){
-    for(int i = 0; i < array.length; i += 2)
+    @SuppressWarnings("unchecked")
+    public static <K, V> PersistentMap<K, V> create(Map<? extends K, ? extends V> other) {
+        TransientMap<K, V> ret = EMPTY.asTransient();
+        for (Map.Entry<? extends K, ? extends V> e : other.entrySet())
         {
-        if(Util.equals(key, array[i]))
-            return i;
+            ret = ret.plus(e.getKey(), e.getValue());
         }
-	return -1;
-}
+        return (PersistentMap<K, V>) ret.persist();
+    }
 
-private int indexOf(Object key){
-    return indexOfObject(key);
-}
+    protected PersistentArrayMap() {
+        this.array = new Object[] {};
+    }
 
-private static boolean equalKey(Object k1, Object k2){
-	return Util.equals(k1, k2);
-}
+    private PersistentArrayMap<K, V> create(Object... init) {
+        return new PersistentArrayMap<K, V>(init);
+    }
 
-public Iterator<Map.Entry<K, V>> iterator(){
-	return new Iter(array);
-}
+    private PersistentHashMap<K, V> createHT(Object[] init) {
+        return PersistentHashMap.create(init);
+    }
 
-public Iterator<Map.Entry<K, V>> reverseIterator(){
-	return new RevIter(array);
-}
-
-public Iterator<Map.Entry<K, V>> iteratorFrom(K key){
-	int i = indexOf(key);
-	return new Iter(array,i);
-}
-
-public ISeq seq(){
-	if(array.length > 0)
-		return new Seq(array, 0);
-	return null;
-}
-
-static class Seq extends ASeq implements Counted{
-	final Object[] array;
-	final int i;
-
-	Seq(Object[] array, int i){
-		this.array = array;
-		this.i = i;
-	}
-
-	public Object first(){
-		return new MapEntry(array[i],array[i+1]);
-	}
-
-	public ISeq next(){
-		if(i + 2 < array.length)
-			return new Seq(array, i + 2);
-		return null;
-	}
-
-	public int count(){
-		return (array.length - i) / 2;
-	}
-}
-
-static class Iter implements Iterator{
-	Object[] array;
-	int i;
-
-	//for iterator
-	Iter(Object[] array){
-		this(array, -2);
-	}
-
-	//for entryAt
-	Iter(Object[] array, int i){
-		this.array = array;
-		this.i = i;
-	}
-
-	public boolean hasNext(){
-		return i < array.length - 2;
-	}
-
-	public Object next(){
-		i += 2;
-		return new MapEntry(array[i],array[i+1]);
-	}
-
-	public void remove(){
-		throw new UnsupportedOperationException();
-	}
-
-}
-
-static class RevIter implements Iterator{
-	Object[] array;
-	int i;
-
-	//for iterator
-	RevIter(Object[] array){
-		this(array, array.length);
-	}
-
-	//for entryAt
-	RevIter(Object[] array, int i){
-		this.array = array;
-		this.i = i;
-	}
-
-	public boolean hasNext(){
-		return i > 0;
-	}
-
-	public Object next(){
-		i -= 2;
-		return new MapEntry(array[i],array[i+1]);
-	}
-
-	public void remove(){
-		throw new UnsupportedOperationException();
-	}
-
-}
-
-
-public TransientArrayMap asTransient(){
-	return new TransientArrayMap(array);
-}
-
-static final class TransientArrayMap<K,V> extends ATransientMap<K,V> implements TransientMap<K, V> {
-	int len;
-	final Object[] array;
-	Thread owner;
-
-	public TransientArrayMap(Object[] array){
-		this.owner = Thread.currentThread();
-		this.array = new Object[Math.max(HASHTABLE_THRESHOLD, array.length)];
-		System.arraycopy(array, 0, this.array, 0, array.length);
-		this.len = array.length;
-	}
-	
-	private int indexOf(Object key){
-		for(int i = 0; i < len; i += 2)
-			{
-			if(equalKey(array[i], key))
-				return i;
-			}
-		return -1;
-	}
-
-	TransientMap<K,V> doAssoc(K key, V val){
-		int i = indexOf(key);
-		if(i >= 0) //already have key,
-			{
-			if(array[i + 1] != val) //no change, no op
-				array[i + 1] = val;
-			}
-		else //didn't have key, grow
-			{
-			if(len >= array.length)
-				return PersistentHashMap.create(array).asTransient().assoc(key, val);
-			array[len++] = key;
-			array[len++] = val;
-			}
-		return this;
-	}
-
-	TransientArrayMap<K,V> doWithout(K key) {
-		int i = indexOf(key);
-		if(i >= 0) //have key, will remove
-			{
-			if (len >= 2)
-				{
-					array[i] = array[len - 2];
-					array[i + 1] = array[len - 1];
-				}
-			len -= 2;
-			}
-		return this;
-	}
-
-	V doValAt(K key, V notFound) {
-		int i = indexOf(key);
-		if (i >= 0)
-			return (V) array[i + 1];
-		return notFound;
-	}
-
-	int doCount() {
-		return len / 2;
-	}
-	
-	PersistentArrayMap<K,V> doPersistent(){
-		ensureEditable();
-		owner = null;
-		Object[] a = new Object[len];
-		System.arraycopy(array,0,a,0,len);
-		return new PersistentArrayMap<K,V>(a);
-	}
-
-	void ensureEditable(){
-		if(owner == Thread.currentThread())
-			return;
-		if(owner != null)
-			throw new IllegalAccessError("Transient used by non-owner thread");
-		throw new IllegalAccessError("Transient used after persistent! call");
-	}
-
-	public PersistentMap<K, V> persistent() {
-		return persistentMap();
-	}
-	
-	@Override
-	public PersistentMap<K, V> persist() {
-		return (PersistentMap<K, V>) persistent();
-	}
-	
-	@Override
-	public TransientMap<K, V> plus(K key, V val) {
-		return (TransientMap<K, V>) assoc(key, val);
-	}
-	
-	@Override
-	public TransientMap<K, V> minus(K key) {
-		return (TransientMap<K, V>) without(key);
-	}
-
-
+    /**
+     * This ctor captures/aliases the passed array, so do not modify later
+     * 
+     * @param init
+     *            {key1,val1,key2,val2,...}
+     */
+    private PersistentArrayMap(Object[] init) {
+        this.array = init;
+    }
+    
     @Override
-    public Set<K> keySet() {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: Map<K,V>.keySet");
+    public Set<Entry<K, V>> entrySet() {
+        return new AbstractSet<Entry<K, V>>() {
+            @Override
+            public Iterator<Entry<K, V>> iterator() {
+                return new Iter<K, V>(array);
+            }
+
+            @Override
+            public int size() {
+                return array.length / 2;
+            }
+            
+        };
+    }
+    
+    @Override
+    public PersistentMap<K, V> zero() {
+        return empty();
     }
 
     @Override
-    public Collection<V> values() {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: Map<K,V>.values");
+    public boolean containsKey(Object key) {
+        return indexOf(key) >= 0;
+    }
+
+    public PersistentMap<K, V> plusEx(K key, V val) {
+        int i = indexOf(key);
+        Object[] newArray;
+        if (i >= 0)
+        {
+            throw Util.runtimeException("Key already present");
+        }
+        else // didn't have key, grow
+        {
+            if (array.length > HASHTABLE_THRESHOLD)
+                return createHT(array).plusEx(key, val);
+            newArray = new Object[array.length + 2];
+            if (array.length > 0)
+                System.arraycopy(array, 0, newArray, 2, array.length);
+            newArray[0] = key;
+            newArray[1] = val;
+        }
+        return create(newArray);
     }
 
     @Override
-    public Set<java.util.Map.Entry<K, V>> entrySet() {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: Map<K,V>.entrySet");
+    public PersistentMap<K, V> plus(K key, V val) {
+        int i = indexOf(key);
+        Object[] newArray;
+        if (i >= 0) // already have key, same-sized replacement
+        {
+            if (array[i + 1] == val) // no change, no op
+                return this;
+            newArray = array.clone();
+            newArray[i + 1] = val;
+        }
+        else // didn't have key, grow
+        {
+            if (array.length > HASHTABLE_THRESHOLD)
+                return createHT(array).plus(key, val);
+            newArray = new Object[array.length + 2];
+            if (array.length > 0)
+                System.arraycopy(array, 0, newArray, 2, array.length);
+            newArray[0] = key;
+            newArray[1] = val;
+        }
+        return create(newArray);
     }
-	
-}
-	@Override
-	public PersistentMap<K, V> zero() {
-		return empty();
-	}
-	
-	@Override
-	public PersistentMap<K, V> plus(K key, V val) {
-		return (PersistentMap<K, V>) assoc(key, val);
-	}
-	
-	@Override
-	public PersistentMap<K, V> plusEx(K key, V val) {
-		return (PersistentMap<K, V>) assocEx(key, val);
-	}
-	
-	@Override
-	public PersistentMap<K, V> minus(K key) {
-		return without(key);
-	}
+
+    @Override
+    public PersistentArrayMap<K, V> minus(K key) {
+        int i = indexOf(key);
+        if (i >= 0) // have key, will remove
+        {
+            int newlen = array.length - 2;
+            if (newlen == 0)
+                return empty();
+            Object[] newArray = new Object[newlen];
+            for (int s = 0, d = 0; s < array.length; s += 2)
+            {
+                if (!equalKey(array[s], key)) // skip removal key
+                {
+                    newArray[d] = array[s];
+                    newArray[d + 1] = array[s + 1];
+                    d += 2;
+                }
+            }
+            return create(newArray);
+        }
+        // don't have key, no op
+        return this;
+    }
+
+    @Override
+    public V get(Object key) {
+        int i = indexOf((K) key);
+        if (i >= 0)
+            return (V) array[i + 1];
+        return null;
+    }
+
+    private static int indexOf(Object key, Object[] array, int len) {
+        for (int i = 0; i < len; i += 2) {
+            if (equalKey(array[i], key))
+                return i;
+        }
+        return -1;
+    }
+    
+    private int indexOf(Object key) {
+        return indexOf(key, array, array.length);
+    }
+
+    private static boolean equalKey(Object k1, Object k2) {
+        return Util.equals(k1, k2);
+    }
+
+    public TransientArrayMap asTransient() {
+        return new TransientArrayMap(array);
+    }
+
+    private static class Iter<K, V> implements Iterator<Entry<K, V>> {
+        private final Object[] array;
+        private int i = -2;
+        
+        private Iter(Object[] array) {
+            this.array = array;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return i < array.length - 2;
+        }
+
+        @Override
+        public Entry<K, V> next() {
+            i += 2;
+            return new AbstractMap.SimpleImmutableEntry<>((K)array[i], (V)array[i + 1]);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static final class TransientArrayMap<K, V> extends ATransientMap<K, V> implements TransientMap<K, V> {
+        private int len;
+        private final Object[] array;
+
+        private TransientArrayMap(Object[] array) {
+            this.array = new Object[Math.max(HASHTABLE_THRESHOLD, array.length)];
+            System.arraycopy(array, 0, this.array, 0, array.length);
+            this.len = array.length;
+        }
+
+        private int indexOf(Object key) {
+            return PersistentArrayMap.indexOf(key, array, len);
+        }
+
+        protected TransientMap<K, V> doAssoc(K key, V val) {
+            int i = indexOf(key);
+            if (i >= 0) // already have key,
+            {
+                if (array[i + 1] != val) // no change, no op
+                    array[i + 1] = val;
+            }
+            else // didn't have key, grow
+            {
+                if (len >= array.length)
+                    return PersistentHashMap.create(array).asTransient().plus(key, val);
+                array[len++] = key;
+                array[len++] = val;
+            }
+            return this;
+        }
+
+        protected TransientArrayMap<K, V> doWithout(K key) {
+            int i = indexOf(key);
+            if (i >= 0) // have key, will remove
+            {
+                if (len >= 2)
+                {
+                    array[i] = array[len - 2];
+                    array[i + 1] = array[len - 1];
+                }
+                len -= 2;
+            }
+            return this;
+        }
+
+        protected V doValAt(K key) {
+            int i = indexOf(key);
+            if (i >= 0)
+                return (V) array[i + 1];
+            return null;
+        }
+
+        protected int doCount() {
+            return len / 2;
+        }
+
+        protected PersistentArrayMap<K, V> doPersistent() {
+            Object[] a = new Object[len];
+            System.arraycopy(array, 0, a, 0, len);
+            return new PersistentArrayMap<K, V>(a);
+        }
+
+        @Override
+        public Set<Entry<K, V>> doEntrySet() {
+            return new AbstractSet<Entry<K,V>>() {
+                @Override
+                public Iterator<Entry<K, V>> iterator() {
+                    return new Iter<K,V>(array) {
+                        @Override
+                        public boolean hasNext() {
+                            return super.hasNext();
+                        }
+                        
+                        @Override
+                        public Entry<K, V> next() {
+                            return super.next();
+                        }
+                    };
+                }
+
+                @Override
+                public int size() {
+                    return TransientArrayMap.this.size();
+                }
+            };
+        }
+
+    }
 }

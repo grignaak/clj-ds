@@ -33,9 +33,9 @@ public class PersistentHashMapTest {
 	@Test
 	public final void testEmptyMap() {
 		PersistentHashMap<String, Integer> genMap = PersistentHashMap.emptyMap();
-		assertEquals(0, genMap.count());
+		assertEquals(0, genMap.size());
 		PersistentHashMap<Number, Boolean> genMap2 = PersistentHashMap.emptyMap();
-		assertEquals(0, genMap2.count());
+		assertEquals(0, genMap2.size());
 		assert(genMap == (PersistentHashMap) genMap2);
 	}
 
@@ -43,14 +43,14 @@ public class PersistentHashMapTest {
 	@Test
 	public final void testNullMap() {
 		PersistentHashMap<String, Integer> genMap = PersistentHashMap.emptyMap();
-		genMap = (PersistentHashMap<String, Integer>) genMap.assoc(null, 42);
-		genMap = (PersistentHashMap<String, Integer>) genMap.assoc("43", 43);
-		Iterator<Entry<String, Integer>> iterator = genMap.iterator();
+		genMap = (PersistentHashMap<String, Integer>) genMap.plus(null, 42);
+		genMap = (PersistentHashMap<String, Integer>) genMap.plus("43", 43);
+		Iterator<Entry<String, Integer>> iterator = genMap.entrySet().iterator();
 		assertTrue(iterator.hasNext());
 		assertEquals(42, (int) genMap.get(null));
 		int count=0;
 		boolean nullKey = false;
-		for (Map.Entry<String,Integer> e:genMap) {
+		for (Map.Entry<String,Integer> e: genMap.entrySet()) {
 			count+=1;
 			if (e.getKey()==null) {
 				nullKey = true;
@@ -114,11 +114,11 @@ public class PersistentHashMapTest {
 		for (int i=0;i<N;i++) {
 			assertEquals(i,  (int) output.get(String.valueOf(('A'+i))));
 		}
-		assertEquals(N, output.count());
+		assertEquals(N, output.size());
 		
 		input = Collections.EMPTY_MAP;
 		output = PersistentHashMap.create(input);
-		assertEquals(0, output.count());
+		assertEquals(0, output.size());
 		
 	}
 
@@ -195,13 +195,7 @@ public class PersistentHashMapTest {
 		for (Map.Entry<Double, String> e: genMap.entrySet()) {
 			lst.add(e.getKey());
 		}
-		for (Iterator<Map.Entry<Double, Double>> it = ((PersistentHashMap) genMap).reverseIterator();it.hasNext();) {
-			Map.Entry<Double, Double> e= it.next();
-			Double removed = (Double) lst.remove(lst.size()-1);
-			assertEquals(removed, e.getKey());
-			assertEquals(removed+"", e.getValue());
-		}
-		assertEquals(0, lst.size());
+		assertEquals(33000, lst.size());
 		
 	}
 	

@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.RandomAccess;
 import java.util.regex.Matcher;
 
+import com.github.krukow.clj_ds.PersistentMap;
+
 public class RT {
 	static volatile boolean readably = true;
 
@@ -70,11 +72,7 @@ public class RT {
 			throw new IllegalArgumentException("Don't know how to create ISeq from: " + c.getName());
 		}
 	}
-
-	static public ISeq keys(Object coll) {
-		return APersistentMap.KeySeq.create(seq(coll));
-	}
-
+	
 	public static int count(Object o) {
 		if (o instanceof Counted)
 			return ((Counted) o).count();
@@ -105,13 +103,6 @@ public class RT {
 
 		throw new UnsupportedOperationException("count not supported on this type: " + o.getClass().getSimpleName());
 	}
-//
-//	static public IPersistentCollection conj(IPersistentCollection coll,
-//			Object x) {
-//		if (coll == null)
-//			return new PersistentList(x);
-//		return coll.cons(x);
-//	}
 
 	static public ISeq cons(Object x, Object coll) {
 		// ISeq y = seq(coll);
@@ -237,10 +228,6 @@ public class RT {
 		return i;
 	}
 
-	static public boolean isReduced(Object r){
-		return r instanceof Reduced;
-	}
-
 	static public String printString(Object x) {
 		try {
 			StringWriter sw = new StringWriter();
@@ -295,7 +282,7 @@ public class RT {
 				}
 				w.write('"');
 			}
-		} else if (x instanceof IPersistentMap) {
+		} else if (x instanceof PersistentMap) {
 			w.write('{');
 			for (ISeq s = seq(x); s != null; s = s.next()) {
 				Map.Entry e = (Map.Entry) s.first();

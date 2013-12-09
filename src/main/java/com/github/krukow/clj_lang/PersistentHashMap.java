@@ -11,7 +11,8 @@
 package com.github.krukow.clj_lang;
 
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -43,12 +44,12 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
 
     @SuppressWarnings("unchecked")
     static public <K, V> PersistentHashMap<K, V> create(Map<? extends K, ? extends V> other) {
-        TransientHashMap<K, V> ret = EMPTY.asTransient();
+        TransientMap<K, V> ret = EMPTY.asTransient();
         for (Map.Entry<? extends K, ? extends V> e : other.entrySet())
         {
             ret = ret.plus(e.getKey(), e.getValue());
         }
-        return (PersistentHashMap<K, V>) ret.persistentMap();
+        return (PersistentHashMap<K, V>) ret.persist();
     }
 
     /* @param init {key1,val1,key2,val2,...} */
@@ -75,30 +76,6 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
         return (PersistentHashMap<K, V>) ret.persist();
     }
 
-    static public <K, V> PersistentHashMap<K, V> create(ISeq items) {
-        TransientMap<K, V> ret = EMPTY.asTransient();
-        for (; items != null; items = items.next().next())
-        {
-            if (items.next() == null)
-                throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-            ret = ret.plus((K) items.first(), (V) RT.second(items));
-        }
-        return (PersistentHashMap<K, V>) ret.persist();
-    }
-
-    static public <K, V> PersistentHashMap<K, V> createWithCheck(ISeq items) {
-        TransientMap<K, V> ret = EMPTY.asTransient();
-        for (int i = 0; items != null; items = items.next().next(), ++i)
-        {
-            if (items.next() == null)
-                throw new IllegalArgumentException(String.format("No value supplied for key: %s", items.first()));
-            ret = ret.plus((K) items.first(), (V) RT.second(items));
-            if (ret.size() != i + 1)
-                throw new IllegalArgumentException("Duplicate key: " + items.first());
-        }
-        return (PersistentHashMap<K, V>) ret.persist();
-    }
-
     PersistentHashMap(int count, INode root, boolean hasNull, V nullValue) {
         this.count = count;
         this.root = root;
@@ -106,23 +83,19 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
         this.nullValue = nullValue;
     }
 
-    static int hash(Object k) {
+    private static int hash(Object k) {
         return Util.hash(k);
     }
 
+    @Override
     public boolean containsKey(Object key) {
         if (key == null)
             return hasNull;
         return (root != null) ? root.find(0, hash(key), key, NOT_FOUND) != NOT_FOUND : false;
     }
 
-    public java.util.Map.Entry<K, V> entryAt(K key) {
-        if (key == null)
-            return hasNull ? new MapEntry<K, V>(null, nullValue) : null;
-        return (root != null) ? root.find(0, hash(key), key) : null;
-    }
-
-    public PersistentMap<K, V> assoc(K key, V val) {
+    @Override
+    public PersistentMap<K, V> plus(K key, V val) {
         if (key == null) {
             if (hasNull && val == nullValue)
                 return this;
@@ -136,23 +109,21 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
         return new PersistentHashMap<K, V>(addedLeaf.val == null ? count : count + 1, newroot, hasNull, nullValue);
     }
 
-    public V valAt(K key, V notFound) {
-        if (key == null)
-            return hasNull ? nullValue : notFound;
-        return (V) (root != null ? root.find(0, hash(key), key, notFound) : notFound);
-    }
-
+    @Override
     public V get(Object key) {
-        return valAt((K)key, null);
+        if (key == null)
+            return hasNull ? nullValue : null;
+        return (V) (root != null ? root.find(0, hash(key), key, null) : null);
     }
 
-    public PersistentMap<K, V> assocEx(K key, V val) {
+    @Override
+    public PersistentMap<K, V> plusEx(K key, V val) {
         if (containsKey(key))
             throw Util.runtimeException("Key already present");
-        return assoc(key, val);
+        return plus(key, val);
     }
 
-    public PersistentMap<K, V> without(K key) {
+    public PersistentMap<K, V> minus(K key) {
         if (key == null)
             return hasNull ? new PersistentHashMap<K, V>(count - 1, root, false, null) : this;
         if (root == null)
@@ -163,136 +134,76 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
         return new PersistentHashMap<K, V>(count - 1, newroot, hasNull, nullValue);
     }
 
-    public Iterator<Map.Entry<K, V>> iterator2() {
-        return new Iterator<Map.Entry<K, V>>() {
-            ISeq<Map.Entry<K, V>> seq = seq();
-
-            public boolean hasNext() {
-                return seq != null;
-            }
-
-            @Override
-            public Map.Entry<K, V> next() {
-                Entry<K, V> first = seq.first();
-                seq = seq.next();
-                return first;
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-    }
-
-    public Iterator<Map.Entry<K, V>> iterator() {
-        final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
-        return hasNull ? new Iterator<Map.Entry<K, V>>() {
-            Iterator<Map.Entry<K, V>> i = s;
-            boolean nullReady = true;
-
-            public boolean hasNext() {
-                return nullReady || i.hasNext();
-            }
-
-            @Override
-            public Map.Entry<K, V> next() {
-                if (nullReady) {
-                    nullReady = false;
-                    return new MapEntry<K, V>(null, PersistentHashMap.this.nullValue);
-                }
-                return i.next();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-        } : s;
-    }
-
-    public Iterator<Map.Entry<K, V>> reverseIterator() {
-        final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(true) : new EmptyIterator();
-        return hasNull ? new Iterator<Map.Entry<K, V>>() {
-            Iterator<Map.Entry<K, V>> i = s;
-            boolean nullReady = true;
-
-            public boolean hasNext() {
-                return nullReady || i.hasNext();
-            }
-
-            @Override
-            public Map.Entry<K, V> next() {
-                if (i.hasNext()) {
-                    return i.next();
-                } else if (nullReady) {
-                    nullReady = false;
-                    return new MapEntry<K, V>(null, PersistentHashMap.this.nullValue);
-                }
-                throw new IllegalStateException();
-
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-        } : s;
-    }
-
-    public int count() {
+    @Override
+    public int size() {
         return count;
     }
 
-    public ISeq<Map.Entry<K, V>> seq() {
-        ISeq<Map.Entry<K, V>> s = root != null ? root.nodeSeq() : null;
-        return hasNull ? new Cons<Map.Entry<K, V>>(new MapEntry<K, V>(null, nullValue), s) : s;
+    @Override
+    public PersistentMap<K,V> zero() {
+        return emptyMap();
     }
 
-    public Iterator<Map.Entry<K, V>> iteratorFrom(K key) {
-        if (hasNull) {
-            throw new UnsupportedOperationException("not supported for maps with null entries yet");
-        }
-        Iterator<Map.Entry<K, V>> s = root != null ? root.nodeItFrom(0, hash(key), key) : new EmptyIterator();
-        return s;
-    }
-
-    public PersistentMap empty() {
-        return EMPTY;
-    }
-
-    static int mask(int hash, int shift) {
+    private static int mask(int hash, int shift) {
         // return ((hash << shift) >>> 27);// & 0x01f;
         return (hash >>> shift) & 0x01f;
     }
 
+    // TODO pull this up into the API
     public TransientHashMap asTransient() {
         return new TransientHashMap(this);
     }
 
-    static final class TransientHashMap<K, V> extends ATransientMap<K, V> implements TransientMap<K, V> {
-        AtomicReference<Thread> edit;
-        INode root;
-        int count;
-        boolean hasNull;
-        V nullValue;
-        final Box leafFlag = new Box(null);
+    private static class Iter<K,V> implements Iterator<Map.Entry<K, V>> {
+        private final Iterator<Map.Entry<K, V>> i;
+        private final V nullValue;
+        private boolean nullReady = true;
 
-        TransientHashMap(PersistentHashMap<K, V> m) {
-            this(new AtomicReference<Thread>(Thread.currentThread()), m.root, m.count, m.hasNull, m.nullValue);
+        private Iter(Iterator<Entry<K, V>> s, V nullValue) {
+            this.i = s;
+            this.nullValue = nullValue;
         }
 
-        TransientHashMap(AtomicReference<Thread> edit, INode root, int count, boolean hasNull, V nullValue) {
-            this.edit = edit;
+        @Override
+        public boolean hasNext() {
+            return nullReady || i.hasNext();
+        }
+
+        @Override
+        public Map.Entry<K, V> next() {
+            if (nullReady) {
+                nullReady = false;
+                return new AbstractMap.SimpleImmutableEntry<>(null, nullValue);
+            }
+            return i.next();
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public static final class TransientHashMap<K, V> extends ATransientMap<K, V> implements TransientMap<K, V> {
+        private INode root;
+        private int count;
+        private boolean hasNull;
+        private V nullValue;
+        private final Box leafFlag = new Box(null);
+
+        private TransientHashMap(PersistentHashMap<K, V> m) {
+            this(m.root, m.count, m.hasNull, m.nullValue);
+        }
+
+        private TransientHashMap(INode root, int count, boolean hasNull, V nullValue) {
             this.root = root;
             this.count = count;
             this.hasNull = hasNull;
             this.nullValue = nullValue;
         }
 
-        TransientHashMap<K, V> doAssoc(K key, V val) {
+        @Override
+        protected TransientHashMap<K, V> doAssoc(K key, V val) {
             if (key == null) {
                 if (this.nullValue != val)
                     this.nullValue = (V) val;
@@ -305,14 +216,14 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
             // Box leafFlag = new Box(null);
             leafFlag.val = null;
             INode n = (root == null ? BitmapIndexedNode.EMPTY : root)
-                    .assoc(edit, 0, hash(key), key, val, leafFlag);
+                    .assoc(owner, 0, hash(key), key, val, leafFlag);
             if (n != this.root)
                 this.root = n;
             if (leafFlag.val != null) this.count++;
             return this;
         }
 
-        TransientHashMap<K, V> doWithout(K key) {
+        protected TransientHashMap<K, V> doWithout(K key) {
             if (key == null) {
                 if (!hasNull) return this;
                 hasNull = false;
@@ -323,78 +234,35 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
             if (root == null) return this;
             // Box leafFlag = new Box(null);
             leafFlag.val = null;
-            INode n = root.without(edit, 0, hash(key), key, leafFlag);
+            INode n = root.without(owner, 0, hash(key), key, leafFlag);
             if (n != root)
                 this.root = n;
             if (leafFlag.val != null) this.count--;
             return this;
         }
 
-        PersistentHashMap<K, V> doPersistent() {
-            edit.set(null);
+        protected PersistentHashMap<K, V> doPersistent() {
             return new PersistentHashMap<K, V>(count, root, hasNull, nullValue);
         }
 
-        V doValAt(K key, V notFound) {
-            if (key == null)
-                if (hasNull)
-                    return nullValue;
-                else
-                    return notFound;
-            if (root == null)
-                return null;
-            return (V) root.find(0, hash(key), key, notFound);
-        }
-
-        int doCount() {
+        protected int doCount() {
             return count;
         }
 
-        void ensureEditable() {
-            Thread owner = edit.get();
-            if (owner == Thread.currentThread())
-                return;
-            if (owner != null)
-                throw new IllegalAccessError("Transient used by non-owner thread");
-            throw new IllegalAccessError("Transient used after persistent! call");
-        }
-
-        public PersistentMap<K,V> persistent() {
-            // TODO Auto-generated method stub
-            return persistentMap();
-        }
-
         @Override
-        public PersistentMap<K, V> persist() {
-            return (PersistentMap<K, V>) persistent();
-        }
+        public Set<Map.Entry<K, V>> doEntrySet() {
+            return new AbstractSet<Map.Entry<K, V>>() {
+                @Override
+                public Iterator<Map.Entry<K, V>> iterator() {
+                    final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
+                    return hasNull ? new Iter(s, nullValue) : s;
+                }
 
-        @Override
-        public TransientHashMap<K, V> plus(K key, V val) {
-            return (TransientHashMap<K, V>) assoc(key, val);
-        }
-
-        @Override
-        public TransientMap<K, V> minus(K key) {
-            return (TransientMap<K, V>) without(key);
-        }
-
-        @Override
-        public Set<K> keySet() {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: Map<K,V>.keySet");
-        }
-
-        @Override
-        public Collection<V> values() {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: Map<K,V>.values");
-        }
-
-        @Override
-        public Set<java.util.Map.Entry<K, V>> entrySet() {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: Map<K,V>.entrySet");
+                @Override
+                public int size() {
+                    return count;
+                }
+            };
         }
 
     }
@@ -1320,47 +1188,6 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
         }
     }
 
-    /*public static void main(String[] args){ try { ArrayList words = new
-     * ArrayList(); Scanner s = new Scanner(new File(args[0]));
-     * s.useDelimiter(Pattern.compile("\\W")); while(s.hasNext()) { String word
-     * = s.next(); words.add(word); } System.out.println("words: " +
-     * words.size()); IPersistentMap map = PersistentHashMap.EMPTY;
-     * //IPersistentMap map = new PersistentTreeMap(); //Map ht = new
-     * Hashtable(); Map ht = new HashMap(); Random rand;
-     * 
-     * System.out.println("Building map"); long startTime = System.nanoTime();
-     * for(Object word5 : words) { map = map.assoc(word5, word5); } rand = new
-     * Random(42); IPersistentMap snapshotMap = map; for(int i = 0; i <
-     * words.size() / 200; i++) { map =
-     * map.without(words.get(rand.nextInt(words.size() / 2))); } long
-     * estimatedTime = System.nanoTime() - startTime;
-     * System.out.println("count = " + map.count() + ", time: " + estimatedTime
-     * / 1000000);
-     * 
-     * System.out.println("Building ht"); startTime = System.nanoTime();
-     * for(Object word1 : words) { ht.put(word1, word1); } rand = new
-     * Random(42); for(int i = 0; i < words.size() / 200; i++) {
-     * ht.remove(words.get(rand.nextInt(words.size() / 2))); } estimatedTime =
-     * System.nanoTime() - startTime; System.out.println("count = " + ht.size()
-     * + ", time: " + estimatedTime / 1000000);
-     * 
-     * System.out.println("map lookup"); startTime = System.nanoTime(); int c =
-     * 0; for(Object word2 : words) { if(!map.contains(word2)) ++c; }
-     * estimatedTime = System.nanoTime() - startTime;
-     * System.out.println("notfound = " + c + ", time: " + estimatedTime /
-     * 1000000); System.out.println("ht lookup"); startTime = System.nanoTime();
-     * c = 0; for(Object word3 : words) { if(!ht.containsKey(word3)) ++c; }
-     * estimatedTime = System.nanoTime() - startTime;
-     * System.out.println("notfound = " + c + ", time: " + estimatedTime /
-     * 1000000); System.out.println("snapshotMap lookup"); startTime =
-     * System.nanoTime(); c = 0; for(Object word4 : words) {
-     * if(!snapshotMap.contains(word4)) ++c; } estimatedTime = System.nanoTime()
-     * - startTime; System.out.println("notfound = " + c + ", time: " +
-     * estimatedTime / 1000000); } catch(FileNotFoundException e) {
-     * e.printStackTrace(); }
-     * 
-     * } */
-
     private static INode[] cloneAndSet(INode[] array, int i, INode a) {
         INode[] clone = array.clone();
         clone[i] = a;
@@ -1413,14 +1240,11 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
         return 1 << mask(hash, shift);
     }
 
-    static final class NodeSeq extends ASeq {
+    @Deprecated
+    private static final class NodeSeq extends ASeq {
         final Object[] array;
         final int i;
         final ISeq s;
-
-        NodeSeq(Object[] array, int i) {
-            this(array, i, null);
-        }
 
         static ISeq create(Object[] array) {
             return create(array, 0, null);
@@ -1462,23 +1286,19 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
     }
 
     @Override
-    public PersistentMap<K, V> zero() {
-        return (PersistentMap<K, V>) empty();
-    }
+    public Set<Map.Entry<K, V>> entrySet() {
+        return new AbstractSet<Map.Entry<K,V>>() {
+            @Override
+            public Iterator<Map.Entry<K, V>> iterator() {
+                final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
+                return hasNull ? new Iter(s, nullValue) : s;
+            }
 
-    @Override
-    public PersistentMap<K, V> plus(K key, V val) {
-        return (PersistentMap<K, V>) assoc(key, val);
-    }
-
-    @Override
-    public PersistentMap<K, V> plusEx(K key, V val) {
-        return (PersistentMap<K, V>) assocEx(key, val);
-    }
-
-    @Override
-    public PersistentMap<K, V> minus(K key) {
-        return (PersistentMap<K, V>) without(key);
+            @Override
+            public int size() {
+                return count;
+            }
+        };
     }
 
 }

@@ -10,7 +10,7 @@ import java.util.Map;
  * @param <V>
  *            The type of the values
  */
-public interface PersistentMap<K, V> extends Map<K, V> {
+public interface PersistentMap<K, V> extends Map<K, V>, ThouShaltNotMutateThisMap<K, V> {
 
 	/**
 	 * @return An empty instance of this kind of {@link PersistentMap}
@@ -40,5 +40,7 @@ public interface PersistentMap<K, V> extends Map<K, V> {
 	 *         key.
 	 */
 	PersistentMap<K, V> minus(K key);
+
+    TransientMap<K, V> asTransient();
 
 }

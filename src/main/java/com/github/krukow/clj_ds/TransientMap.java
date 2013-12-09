@@ -2,7 +2,7 @@ package com.github.krukow.clj_ds;
 
 import java.util.Map;
 
-public interface TransientMap<K, V> extends Map<K, V> {
+public interface TransientMap<K, V> extends Map<K, V>, ThouShaltNotMutateThisMap<K, V> {
 
 	/**
 	 * @return A new {@link PersistentMap} consisting of the content of the
