@@ -5,16 +5,15 @@ package com.github.krukow.clj_lang.test;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.ListIterator;
 
 import org.junit.Test;
 
 import com.github.krukow.clj_lang.AFn;
-import com.github.krukow.clj_lang.IFn;
 import com.github.krukow.clj_lang.IPersistentVector;
-import com.github.krukow.clj_lang.ISeq;
 import com.github.krukow.clj_lang.PersistentVector;
-import com.github.krukow.clj_lang.Util;
 
 /**
  * @author krukow
@@ -29,6 +28,10 @@ public class PersistentVectorTest {
 		PersistentVector<String> vecS = PersistentVector.emptyVector();
 		assertEquals(0, vecS.size());
 		assert(vecI == (PersistentVector) vecS);
+		
+		ListIterator<Integer> abc = Arrays.asList(1, 2, 3).listIterator(1);
+		System.out.println(abc.previous());
+		System.out.println(abc.next());
 	}
 
 	/**

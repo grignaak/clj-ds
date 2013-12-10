@@ -1,9 +1,11 @@
 package com.github.krukow.clj_ds;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
 import com.github.krukow.clj_lang.PersistentArrayMap;
+import com.github.krukow.clj_lang.PersistentConsList;
 import com.github.krukow.clj_lang.PersistentHashMap;
 import com.github.krukow.clj_lang.PersistentHashSet;
 import com.github.krukow.clj_lang.PersistentTreeMap;
@@ -159,7 +161,7 @@ public final class Persistents {
 	 * @return An empty {@link PersistentList}; implemented as linked list.
 	 */
 	public static <E> PersistentList<E> linkedList() {
-		return com.github.krukow.clj_lang.PersistentList.emptyList();
+		return com.github.krukow.clj_lang.PersistentConsList.emptyList();
 	}
 
 	/**
@@ -175,7 +177,7 @@ public final class Persistents {
 	 *         vals; implemented as linked list.
 	 */
 	public static <E> PersistentList<E> linkedList(E... vals) {
-		return com.github.krukow.clj_lang.PersistentList.create(vals);
+		return com.github.krukow.clj_lang.PersistentConsList.create(vals);
 	}
 
 	/**
@@ -183,7 +185,7 @@ public final class Persistents {
 	 *         {@link Iterator} vals; implemented as linked list.
 	 */
 	public static <E> PersistentList<E> linkedList(Iterable<? extends E> vals) {
-		return com.github.krukow.clj_lang.PersistentList.create(vals);
+		return com.github.krukow.clj_lang.PersistentConsList.create(vals);
 	}
 
 	// Utilities
@@ -192,18 +194,14 @@ public final class Persistents {
 	 * Applies successively the method {@link PersistentList#plus(E)}.
 	 */
 	public static <E> PersistentList<E> plusAll(PersistentList<E> list, Iterable<? extends E> others) {
-		return com.github.krukow.clj_lang.PersistentList.consAll(list, others);
+		return PersistentConsList.plusAll(list, others);
 	}
 
 	/**
 	 * Applies successively the method {@link PersistentList#plus(E)}.
 	 */
 	public static <E> PersistentList<E> plusAll(PersistentList<E> list, E... others) {
-		PersistentList<E> result = list;
-		for (E other : others) {
-			result = result.plus(other);
-		}
-		return result;
+	    return plusAll(list, Arrays.asList(others));
 	}
 
 	/**

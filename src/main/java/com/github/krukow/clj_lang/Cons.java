@@ -34,7 +34,7 @@ public ISeq<T> next(){
 
 public ISeq<T> more(){
 	if(_more == null)
-		return (ISeq<T>) PersistentList.emptyList();
+		return (ISeq<T>) PersistentConsList.emptyList();
 	return _more;
 }
 

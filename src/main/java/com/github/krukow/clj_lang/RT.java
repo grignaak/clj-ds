@@ -107,7 +107,7 @@ public class RT {
 	static public ISeq cons(Object x, Object coll) {
 		// ISeq y = seq(coll);
 		if (coll == null)
-			return new PersistentList(x);
+			return null;
 		else if (coll instanceof ISeq)
 			return new Cons(x, (ISeq) coll);
 		else
@@ -190,7 +190,7 @@ public class RT {
 //	 */
 
 	static public ISeq list(Object arg1) {
-		return new PersistentList(arg1);
+		return null;
 	}
 	
 	static public Object[] seqToArray(Iterable<?> seq) {

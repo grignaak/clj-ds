@@ -379,7 +379,7 @@ static public final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T
 	public ISeq<T> chunkedMore(){
 		ISeq<T> s = chunkedNext();
 		if(s == null)
-			return (ISeq<T>) PersistentList.emptyList();
+			return (ISeq<T>) PersistentConsList.emptyList();
 		return s;
 	}
 

@@ -27,7 +27,7 @@ public String toString(){
 
 @Override
 public IPersistentCollection<T> empty() {
-	return PersistentList.emptyList();
+	return null;
 }
 
 
@@ -95,7 +95,7 @@ public ISeq<T> cons(T o){
 public ISeq<T> more(){
     ISeq<T> s = next();
     if(s == null)
-        return (ISeq<T>) PersistentList.emptyList();
+        return (ISeq<T>) PersistentConsList.emptyList();
     return s;
 }
 
