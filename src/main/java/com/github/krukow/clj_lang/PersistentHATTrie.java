@@ -10,6 +10,7 @@
 
 package com.github.krukow.clj_lang;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -113,12 +114,12 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 			return c.get(s, i+1);
 		}
 		
-		private static final class AccessNodeIterator<T> implements Iterator<MapEntry<String, T>> {
+		private static final class AccessNodeIterator<T> implements Iterator<Map.Entry<String, T>> {
 			private final HATTrieNode children[];
 			private final T emptyPtr;
 			private int index = -1;
 			private final String prefix;
-			Iterator<MapEntry<String, T>> current = null;
+			Iterator<Map.Entry<String, T>> current = null;
 			
 			AccessNodeIterator(AccessNode<T> node, String prefix) {
 				children = node.children;
@@ -157,11 +158,11 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 			}
 			
 			@Override
-			public MapEntry<String, T> next() {
+			public Map.Entry<String, T> next() {
 				if (index == -1 && emptyPtr != null)  {
 					index = 0;
 					moveCurIfNeeded();
-					return new MapEntry<String,T>(prefix, emptyPtr);
+					return new AbstractMap.SimpleImmutableEntry<>(prefix, emptyPtr);
 				}
 				return current.next();
 			}
@@ -253,7 +254,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 				@Override
 				public Map.Entry<String, T> next() {
 					Entry<String, T> next = it.next();
-					return new MapEntry(prefix+next.getKey(), next.getValue());
+					return new AbstractMap.SimpleImmutableEntry<>(prefix+next.getKey(), next.getValue());
 				}
 
 				@Override

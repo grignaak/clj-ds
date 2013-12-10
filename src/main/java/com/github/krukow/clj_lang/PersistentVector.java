@@ -13,13 +13,15 @@
 package com.github.krukow.clj_lang;
 
 import java.io.Serializable;
+import java.util.AbstractMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PersistentVector<T> extends APersistentVector<T> implements com.github.krukow.clj_ds.PersistentVector<T>{
 
-static class Node implements Serializable {
+private static class Node implements Serializable {
 	transient final AtomicReference<Thread> edit;
 	final Object[] array;
 
@@ -34,13 +36,13 @@ static class Node implements Serializable {
 	}
 }
 
-final static AtomicReference<Thread> NOEDIT = new AtomicReference<Thread>(null);
+private final static AtomicReference<Thread> NOEDIT = new AtomicReference<Thread>(null);
 final static Node EMPTY_NODE = new Node(NOEDIT, new Object[32]);
 
-final int cnt;
-final int shift;
-final Node root;
-final Object[] tail;
+private final int cnt;
+private final int shift;
+private final Node root;
+private final Object[] tail;
 
 
 @SuppressWarnings("unchecked")
@@ -157,7 +159,7 @@ private static Node doAssoc(int level, Node node, int i, Object val){
 	return ret;
 }
 
-public int count(){
+public int size(){
 	return cnt;
 }
 
@@ -220,8 +222,8 @@ private static Node newPath(AtomicReference<Thread> edit,int level, Node node){
 	return ret;
 }
 
-public IChunkedSeq<T> chunkedSeq(){
-	if(count() == 0)
+private IChunkedSeq<T> chunkedSeq(){
+	if(size() == 0)
 		return null;
 	return new ChunkedSeq<T>(this,0,0);
 }
@@ -230,11 +232,11 @@ public ISeq<T> seq(){
 	return chunkedSeq();
 }
 
-Iterator<T> rangedIterator(final int start, final int end){
+private Iterator<T> rangedIterator(final int start, final int end){
 	return new Iterator<T>(){
 		int i = start;
 		int base = i - (i%32);
-		Object[] array = (start < count())?arrayFor(i):null;
+		Object[] array = (start < size())?arrayFor(i):null;
 
 		public boolean hasNext(){
 			return i < end;
@@ -254,13 +256,13 @@ Iterator<T> rangedIterator(final int start, final int end){
 	};
 }
 
-public Iterator iterator151(){return rangedIterator(0,count());}
+public Iterator iterator151(){return rangedIterator(0,size());}
 
 
 final static class PersistentVectorIterator<T> implements Iterator<T> {
 	PersistentVector<T> vec;
 	int sft;
-	Stack<MapEntry<Integer, Object[]>> path;
+	Stack<Map.Entry<Integer, Object[]>> path;
 	Object[] current;
 	int currentIndex;
 	
@@ -268,11 +270,11 @@ final static class PersistentVectorIterator<T> implements Iterator<T> {
 		this.vec = vec;
 		sft = vec.shift;
 		path = initialPath();
-		MapEntry<Integer,Object[]> el = path.peek();
-		if (el.key() == -1) {
-			current = el.val();
+		Map.Entry<Integer,Object[]> el = path.peek();
+		if (el.getKey() == -1) {
+			current = el.getValue();
 		} else {
-			current = ((Node) el.val()[el.key()]).array;
+			current = ((Node) el.getValue()[el.getKey()]).array;
 		}
 	}
 	@Override
@@ -295,32 +297,32 @@ final static class PersistentVectorIterator<T> implements Iterator<T> {
 	private Object[] findNextArray() {
 		if (path.isEmpty()) {return null;}
 		while(path.peek().getKey() != -1) {
-			MapEntry<Integer, Object[]> loc = path.pop();
-			int idx = loc.key();
-			Object[] arr = loc.val();
+			Map.Entry<Integer, Object[]> loc = path.pop();
+			int idx = loc.getKey();
+			Object[] arr = loc.getValue();
 			idx += 1;
 			if (idx < arr.length) {
 				Node next = (Node) arr[idx];
 				if (next == null) {
 					continue;
 				}
-				path.push(new MapEntry(idx, arr));
+				path.push(new AbstractMap.SimpleImmutableEntry<>(idx, arr));
 				for(int level = sft - (path.size() - 1) * 5; level > 0; level -= 5) {
-					path.push(new MapEntry<Integer, Object[]>(0,next.array));
+					path.push(new AbstractMap.SimpleImmutableEntry<>(0,next.array));
 					next = (Node) next.array[0];
 				}
 				return next.array;
 				
 			}	
 		}
-		return path.pop().val();
+		return path.pop().getValue();
 	}
-	private Stack<MapEntry<Integer, Object[]>> initialPath() {
-		Stack<MapEntry<Integer, Object[]>>  res = new Stack<MapEntry<Integer, Object[]>>();
-		res.push(new MapEntry<Integer, Object[]>(-1, vec.tail));	
+	private Stack<Map.Entry<Integer, Object[]>> initialPath() {
+		Stack<Map.Entry<Integer, Object[]>>  res = new Stack<Map.Entry<Integer, Object[]>>();
+		res.push(new AbstractMap.SimpleImmutableEntry<>(-1, vec.tail));
 		Node node = vec.root;
 		for(int level = sft; level > 0; level -= 5) {
-			res.push(new MapEntry<Integer, Object[]>(0,node.array));
+			res.push(new AbstractMap.SimpleImmutableEntry<>(0,node.array));
 			node = (Node) node.array[0];
 			if (node == null) {
 				res.pop();
@@ -485,7 +487,7 @@ private Node popTail(int level, Node node){
 		}
 }
 
-static final class TransientVector<T> implements ITransientVector<T>, Counted, com.github.krukow.clj_ds.TransientVector<T> {
+static final class TransientVector<T> implements com.github.krukow.clj_ds.TransientVector<T> {
 	int cnt;
 	int shift;
 	Node root;
@@ -778,13 +780,8 @@ static final class TransientVector<T> implements ITransientVector<T>, Counted, c
 	}
 
 	@Override
-	public PersistentVector<T> persistent() {
+	public PersistentVector<T> persist() {
 		return persistentMap();
-	}
-	
-	@Override
-	public com.github.krukow.clj_ds.PersistentVector<T> persist() {
-		return persistent();
 	}
 	
 	@Override
@@ -824,7 +821,7 @@ static final class TransientVector<T> implements ITransientVector<T>, Counted, c
 		return pop();
 	}
 
-public static IPersistentVector vectormap(IFn f, PersistentVector v) {
+public static PersistentVector vectormap(IFn f, PersistentVector v) {
 	return new PersistentVector(v.cnt,v.shift,v.root,Util.ret1(v.tail,v=null),f);
 }
 
@@ -855,6 +852,16 @@ private static Node mapNode(IFn f, Node node, int level) {
 		newArr[i] = mapNode(f,Util.ret1((Node) newArr[i], newArr[i]=null),level);
 	}
 	return new Node(null,newArr);
+}
+
+@Override
+public T peek() {
+    return get(0);
+}
+
+@Override
+public T get(int index) {
+    return nth(index);
 }
 
 }

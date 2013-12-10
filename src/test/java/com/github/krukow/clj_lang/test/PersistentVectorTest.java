@@ -71,14 +71,14 @@ public class PersistentVectorTest {
 			vec = vec.cons(i);
 			
 		}
-		IPersistentVector vector = PersistentVector.vectormap(new AFn() {
+		PersistentVector vector = PersistentVector.vectormap(new AFn() {
 			@Override
 			public Object invoke(Object arg1) {
 				Integer s = (Integer )arg1;
 				return s.intValue()*2;
 			}
 		}, vec);
-		assertEquals(vec.length(), vector.length());
+		assertEquals(vec.size(), vector.size());
 		for (int i = 0; i < N; i++) {
 			assertEquals(i*2, vector.nth(i));
 			

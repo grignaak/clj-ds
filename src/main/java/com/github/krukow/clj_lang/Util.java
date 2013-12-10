@@ -18,8 +18,6 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.github.krukow.clj_lang.PersistentVector.Node;
-
 public class Util {
 
     static public boolean equals(Object k1, Object k2) {
@@ -60,11 +58,7 @@ public class Util {
                 || x instanceof BigInteger;
     }
 
-    static public Object ret1(Object ret, Object nil) {
-        return ret;
-    }
-
-    static public Node ret1(Node ret, Object nil) {
+    static public <T> T ret1(T ret, Object nil) {
         return ret;
     }
 

@@ -10,6 +10,7 @@
 
 package com.github.krukow.clj_lang;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -176,12 +177,12 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 			return c.get(s, i+1);
 		}
 		
-		private static final class AccessNodeIterator<T> implements Iterator<MapEntry<String, T>> {
+		private static final class AccessNodeIterator<T> implements Iterator<Map.Entry<String, T>> {
 			private final HATTrieNode children[];
 			private final T emptyPtr;
 			private int index = -1;
 			private final String prefix;
-			Iterator<MapEntry<String, T>> current = null;
+			Iterator<Map.Entry<String, T>> current = null;
 			
 			AccessNodeIterator(AccessNode<T> node, String prefix) {
 				children = node.children;
@@ -220,11 +221,11 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 			}
 			
 			@Override
-			public MapEntry<String, T> next() {
+			public Map.Entry<String, T> next() {
 				if (index == -1 && emptyPtr != null)  {
 					index = 0;
 					moveCurIfNeeded();
-					return new MapEntry<String,T>(prefix, emptyPtr);
+					return new AbstractMap.SimpleImmutableEntry<>(prefix, emptyPtr);
 				}
 				return current.next();
 			}
@@ -604,7 +605,7 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
 						String key = new String(str);
 						
 						int idx = (int) (ContainerNode.this.contents[j++] | (ContainerNode.this.contents[j++] << 16));
-						return new MapEntry(key, ContainerNode.this.values[idx]);
+						return new AbstractMap.SimpleImmutableEntry<>(key, (T)ContainerNode.this.values[idx]);
 				}
 
 				@Override

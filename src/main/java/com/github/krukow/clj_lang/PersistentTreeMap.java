@@ -12,6 +12,7 @@ a *   Copyright (c) Rich Hickey. All rights reserved.
 
 package com.github.krukow.clj_lang;
 
+import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -465,11 +466,11 @@ static Black black(Object key, Object val, Node left, Node right){
 	return new BlackBranchVal(key, val, left, right);
 }
 
-static abstract class Node extends AMapEntry{
+static abstract class Node implements Map.Entry {
 	final Object key;
 
 	Node(Object key){
-		this.key = key;
+	    this.key = key;
 	}
 
 	public Object key(){
@@ -486,6 +487,10 @@ static abstract class Node extends AMapEntry{
 
 	public Object getValue(){
 		return val();
+	}
+	
+	public Object setValue(Object value) {
+	    throw new UnsupportedOperationException();
 	}
 
 	Node left(){

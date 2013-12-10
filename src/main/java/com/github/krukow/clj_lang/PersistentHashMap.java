@@ -27,7 +27,7 @@ import com.github.krukow.clj_ds.TransientMap;
  * Node polymorphism vs. conditionals No sub-tree pools or root-resizing Any
  * errors are my own */
 
-public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements PersistentMap<K, V> {
+public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements PersistentMap<K, V> {
 
     final int count;
     final INode root;
@@ -666,7 +666,7 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
                 } else {
                     Object keyOrNull = node.array[index++];
                     Object valOrNode = node.array[index++];
-                    return new MapEntry(keyOrNull, valOrNode);
+                    return new AbstractMap.SimpleImmutableEntry<>(keyOrNull, valOrNode);
                 }
 
             }
@@ -733,7 +733,7 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
                 } else {
                     Object valOrNode = node.array[index--];
                     Object keyOrNull = node.array[index--];
-                    return new MapEntry(keyOrNull, valOrNode);
+                    return new AbstractMap.SimpleImmutableEntry<>(keyOrNull, valOrNode);
                 }
 
             }
@@ -822,7 +822,7 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
             if (keyOrNull == null)
                 return ((INode) valOrNode).find(shift + 5, hash, key);
             if (Util.equals(key, keyOrNull))
-                return new MapEntry(keyOrNull, valOrNode);
+                return new AbstractMap.SimpleImmutableEntry<>(keyOrNull, valOrNode);
             return null;
         }
 
@@ -1009,7 +1009,7 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
             public Object next() {
                 Object k = array[index++];
                 Object v = array[index++];
-                return new MapEntry(k, v);
+                return new AbstractMap.SimpleImmutableEntry<>(k, v);
             }
 
             @Override
@@ -1037,7 +1037,7 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
             public Object next() {
                 Object v = array[index--];
                 Object k = array[index--];
-                return new MapEntry(k, v);
+                return new AbstractMap.SimpleImmutableEntry<>(k, v);
             }
 
             @Override
@@ -1089,7 +1089,7 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
             if (idx < 0)
                 return null;
             if (Util.equals(key, array[idx]))
-                return new MapEntry(array[idx], array[idx + 1]);
+                return new AbstractMap.SimpleImmutableEntry<>(array[idx], array[idx + 1]);
             return null;
         }
 
@@ -1275,7 +1275,7 @@ public class PersistentHashMap<K, V> extends APersistentMap<K, V> implements Per
         public Object first() {
             if (s != null)
                 return s.first();
-            return new MapEntry(array[i], array[i + 1]);
+            return new AbstractMap.SimpleImmutableEntry<>(array[i], array[i + 1]);
         }
 
         public ISeq next() {

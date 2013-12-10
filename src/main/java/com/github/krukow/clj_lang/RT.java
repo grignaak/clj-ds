@@ -175,14 +175,6 @@ public class RT {
 			throw new UnsupportedOperationException("nth not supported on this type: " + coll.getClass().getSimpleName());
 	}
 
-	static public IPersistentVector subvec(IPersistentVector v, int start,
-			int end) {
-		if (end < start || start < 0 || end > v.count())
-			throw new IndexOutOfBoundsException();
-		if (start == end)
-			return PersistentVector.EMPTY;
-		return new APersistentVector.SubVector(v, start, end);
-	}
 //
 //	/**
 //	 * **************************************** list support
