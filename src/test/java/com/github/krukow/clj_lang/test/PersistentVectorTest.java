@@ -56,33 +56,4 @@ public class PersistentVectorTest {
 			vec = vec.plus(o);
 		}	
 	}
-	
-
-	/**
-	 *  * NB: this methods takes a long time to run. Be patient.
-	 */
-	@Test
-	public final void testVectorMap() {
-		PersistentVector<Integer> vec = PersistentVector.emptyVector();
-		HashSet<Integer> hs = null;
-		int N = 32*32*32+33;
-		//Checking all states up to: N
-		for (int i = 0; i < N; i++) {
-			vec = vec.plus(i);
-			
-		}
-		PersistentVector vector = PersistentVector.vectormap(new AFn() {
-			@Override
-			public Object invoke(Object arg1) {
-				Integer s = (Integer )arg1;
-				return s.intValue()*2;
-			}
-		}, vec);
-		assertEquals(vec.size(), vector.size());
-		for (int i = 0; i < N; i++) {
-			assertEquals(i*2, vector.get(i));
-			
-		}
-	}
-
 }

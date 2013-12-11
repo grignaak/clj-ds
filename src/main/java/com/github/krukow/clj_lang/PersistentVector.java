@@ -15,6 +15,7 @@ package com.github.krukow.clj_lang;
 import java.io.Serializable;
 import java.util.AbstractList;
 import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
@@ -68,19 +69,28 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
             ret = ret.plus(item);
         return ret.persist();
     }
+    
+
+    static private PersistentVector createOwning(Object... items) {
+        if (items.length == 0)
+            return PersistentVector.EMPTY;
+        else if (items.length <= 32)
+            return new PersistentVector(items.length, 5, PersistentVector.EMPTY_NODE, items);
+        return PersistentVector.create(items);
+    }
+
+    static public <T> PersistentVector<T> create(Collection<T> coll) {
+        if (coll.size() <= 32)
+            return (PersistentVector<T>) createOwning(coll.toArray());
+        return PersistentVector.create(coll);
+    }
+
 
     PersistentVector(int cnt, int shift, Node root, Object[] tail) {
         this.cnt = cnt;
         this.shift = shift;
         this.root = root;
         this.tail = tail;
-    }
-
-    private PersistentVector(int cnt, int shift, Node root, Object[] tail, IFn f) {
-        this.cnt = cnt;
-        this.shift = shift;
-        this.tail = mapArray(f, Util.ret1(tail, tail = null));
-        this.root = mapNode(f, Util.ret1(root, root = null), this.shift);
     }
 
     @Override
@@ -111,6 +121,11 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
     public T get(int i) {
         Object[] node = arrayFor(i);
         return (T) node[i & 0x01f];
+    }
+
+    @Override
+    public T peek() {
+        return get(0);
     }
 
     @Override
@@ -154,7 +169,6 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
 
     @Override
     public PersistentVector<T> plus(T val) {
-        int i = cnt;
         // room in tail?
         // if(tail.length < 32)
         if (cnt - tailoff() < 32)
@@ -507,7 +521,6 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
 
         @Override
         public TransientVector<T> plus(T val) {
-            T t = (T) val;
             ensureEditable();
             int i = cnt;
             // room in tail?
@@ -698,45 +711,5 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
                 return ret;
             }
         }
-    }
-
-    public static PersistentVector vectormap(IFn f, PersistentVector v) {
-        return new PersistentVector(v.cnt, v.shift, v.root, Util.ret1(v.tail, v = null), f);
-    }
-
-    private static Object[] mapArray(IFn f, Object[] arr) {
-        Object[] res = new Object[arr.length];
-        System.arraycopy(arr, 0, res, 0, arr.length);
-        arr = null;
-        try {
-            for (int i = 0; i < res.length; i++) {
-                res[i] = f.invoke(res[i]);
-            }
-            return res;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Node mapNode(IFn f, Node node, int level) {
-        if (node == null) {
-            return null;
-        }
-        if (level == 0) {
-            return new Node(null, mapArray(f, Util.ret1(node.array, node = null)));
-        }
-        Object[] newArr = new Object[node.array.length];
-        System.arraycopy(node.array, 0, newArr, 0, node.array.length);
-        node = null;
-        level -= 5;
-        for (int i = 0; i < newArr.length; i++) {
-            newArr[i] = mapNode(f, Util.ret1((Node) newArr[i], newArr[i] = null), level);
-        }
-        return new Node(null, newArr);
-    }
-
-    @Override
-    public T peek() {
-        return get(0);
     }
 }
