@@ -11,34 +11,50 @@
 
 package com.github.krukow.clj_lang;
 
-import java.io.Serializable;
+import java.util.AbstractCollection;
+import java.util.Iterator;
 
-final public class Cons<T> extends ASeq<T> implements Serializable {
+import com.github.krukow.clj_ds.PersistentCollection;
+import com.github.krukow.clj_ds.PersistentSequence;
+
+final public class Cons<T> extends AbstractCollection<T> implements PersistentSequence<T> {
 
     private final T _first;
-    private final ISeq<T> _more;
+    private final PersistentSequence<T> _more;
 
-    public Cons(T first, ISeq<T> _more) {
+    public Cons(T first, PersistentSequence<T> _more) {
         this._first = first;
         this._more = _more;
     }
 
-    public T first() {
+    @Override
+    public T peek() {
         return _first;
     }
 
-    public ISeq<T> next() {
-        return more().seq();
-    }
-
-    public ISeq<T> more() {
-        if (_more == null)
-            return (ISeq<T>) PersistentConsList.emptyList();
+    @Override
+    public PersistentSequence<T> minus() {
         return _more;
     }
 
-    public int count() {
-        return 1 + RT.count(_more);
+    @Override
+    public int size() {
+        return 1 + _more.size();
     }
 
+    @Override
+    public PersistentSequence<T> zero() {
+        return PersistentConsList.empty();
+    }
+
+    @Override
+    public PersistentCollection<T> plus(T val) {
+        return new Cons<T>(val, this);
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: AbstractCollection<T>.iterator");
+    }
 }

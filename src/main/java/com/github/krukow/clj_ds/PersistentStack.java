@@ -1,20 +1,22 @@
 package com.github.krukow.clj_ds;
 
-public interface PersistentStack<E> extends PersistentCollection<E> {
+public interface PersistentStack<E> extends PersistentSequence<E> {
 
-    @Override PersistentStack<E> zero();
+    @Override
+    PersistentStack<E> zero();
 
-    @Override PersistentStack<E> plus(E o);
+    @Override
+    PersistentStack<E> plus(E o);
 
-	/**
-	 * @return A new stack consisting of the current stack without its top
-	 *         element.
-	 */
-	PersistentStack<E> minus();
+    /**
+     * @return A new stack consisting of the current stack without its top
+     *         element.
+     */
+    PersistentStack<E> minus();
 
-	/**
-	 * @return The top element of this stack.
-	 */
-	E peek();
+    /**
+     * @return The top element of this stack.
+     */
+    E peek();
 
 }

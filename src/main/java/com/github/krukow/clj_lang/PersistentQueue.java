@@ -10,95 +10,68 @@
 
 package com.github.krukow.clj_lang;
 
-import java.util.Collection;
+import java.util.AbstractCollection;
 import java.util.Iterator;
+
+import com.github.krukow.clj_ds.PersistentSequence;
+import com.github.krukow.clj_ds.PersistentStack;
 
 /**
  * conses onto rear, peeks/pops from front See Okasaki's Batched Queues This
  * differs in that it uses a PersistentVector as the rear, which is in-order, so
  * no reversing or suspensions required for persistent use
  */
+// TODO, not really a stack
+public class PersistentQueue<T> extends AbstractCollection<T> implements PersistentStack<T> {
 
-public class PersistentQueue<T> implements IPersistentList<T>, Collection<T>, Counted {
+    final private static PersistentQueue EMPTY = new PersistentQueue(0, null, null);
 
-    final public static PersistentQueue EMPTY = new PersistentQueue(0, null, null);
-
-    // *
-    final int cnt;
-    final ISeq f;
-    final PersistentVector r;
+    private final int cnt;
+    private final PersistentSequence f;
+    private final PersistentVector r;
     // static final int INITIAL_REAR_SIZE = 4;
-    int _hash = -1;
 
-    PersistentQueue(int cnt, ISeq f, PersistentVector r) {
+    private PersistentQueue(int cnt, PersistentSequence f, PersistentVector r) {
         this.cnt = cnt;
         this.f = f;
         this.r = r;
     }
 
-    public boolean equals(Object obj) {
-
-        if (!(obj instanceof Sequential))
-            return false;
-        ISeq ms = RT.seq(obj);
-        for (ISeq s = seq(); s != null; s = s.next(), ms = ms.next())
-        {
-            if (ms == null || !Util.equals(s.first(), ms.first()))
-                return false;
-        }
-        return ms == null;
-
-    }
-
-    public int hashCode() {
-        if (_hash == -1)
-        {
-            int hash = 1;
-            for (ISeq s = seq(); s != null; s = s.next())
-            {
-                hash = 31 * hash + (s.first() == null ? 0 : s.first().hashCode());
-            }
-            this._hash = hash;
-        }
-        return _hash;
-    }
-
+    @Override
     public T peek() {
         return (T) RT.first(f);
     }
 
-    public PersistentQueue<T> pop() {
+    @Override
+    public PersistentQueue<T> minus() {
         if (f == null)  // hmmm... pop of empty queue -> empty queue?
             return this;
         // throw new IllegalStateException("popping empty queue");
-        ISeq f1 = f.next();
+        PersistentSequence<T> f1 = f.minus();
         PersistentVector r1 = r;
         if (f1 == null)
         {
-            f1 = RT.seq(r);
-            r1 = null;
+            f1 = r.asFifoSequence();
+            r1 = PersistentVector.emptyVector();
         }
         return new PersistentQueue<T>(cnt - 1, f1, r1);
     }
 
-    public int count() {
+    @Override
+    public int size() {
         return cnt;
     }
 
-    public ISeq<T> seq() {
-        if (f == null)
-            return null;
-        return new Seq<T>(f, RT.seq(r));
-    }
-
-    public PersistentQueue<T> cons(T o) {
+    @Override
+    public PersistentQueue<T> plus(T o) {
         if (f == null)     // empty
-            return new PersistentQueue<T>(cnt + 1, RT.list(o), null);
+            return new PersistentQueue<T>(cnt + 1, PersistentConsList.create(o), null);
         else
-            return new PersistentQueue<T>(cnt + 1, f, (r != null ? r : PersistentVector.EMPTY).plus(o));
+            return new PersistentQueue<T>(cnt + 1, f, (r != null ? r : PersistentVector.emptyVector()).plus(o));
     }
 
-    public IPersistentCollection<T> empty() {
+    @Override
+    public PersistentQueue<T> zero() {
         return EMPTY;
     }
 
@@ -133,98 +106,26 @@ public class PersistentQueue<T> implements IPersistentList<T>, Collection<T>, Co
         }
     }
 
-    // java.util.Collection implementation
-
-    public Object[] toArray() {
-        return RT.seqToArray(this);
-    }
-
-    public boolean add(Object o) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean remove(Object o) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean addAll(Collection<? extends T> c) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void clear() {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean removeAll(Collection<?> c) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean containsAll(Collection<?> c) {
-        for (Object o : c)
-        {
-            if (contains(o))
-                return true;
-        }
-        return false;
-    }
-
-    public Object[] toArray(Object[] a) {
-        return RT.seqToPassedArray(this, a);
-    }
-
-    public int size() {
-        return count();
-    }
-
-    public boolean isEmpty() {
-        return count() == 0;
-    }
-
-    public boolean contains(Object o) {
-        for (ISeq<T> s = seq(); s != null; s = s.next())
-        {
-            if (Util.equals(s.first(), o))
-                return true;
-        }
-        return false;
-    }
-
+    @Override
     public Iterator<T> iterator() {
-        return new SeqIterator<T>(seq());
-    }
+        return new Iterator<T>() {
+            private final Iterator<T> first = f.iterator();
+            private final Iterator<T> second = r.iterator();
 
-    /*public static void main(String[] args){ if(args.length != 1) {
-     * System.err.println("Usage: PersistentQueue n"); return; } int n =
-     * Integer.parseInt(args[0]);
-     * 
-     * 
-     * long startTime, estimatedTime;
-     * 
-     * Queue list = new LinkedList(); //Queue list = new
-     * ConcurrentLinkedQueue(); System.out.println("Queue"); startTime =
-     * System.nanoTime(); for(int i = 0; i < n; i++) { list.add(i); list.add(i);
-     * list.remove(); } for(int i = 0; i < n - 10; i++) { list.remove(); }
-     * estimatedTime = System.nanoTime() - startTime;
-     * System.out.println("time: " + estimatedTime / 1000000);
-     * System.out.println("peek: " + list.peek());
-     * 
-     * 
-     * PersistentQueue q = PersistentQueue.EMPTY;
-     * System.out.println("PersistentQueue"); startTime = System.nanoTime();
-     * for(int i = 0; i < n; i++) { q = q.cons(i); q = q.cons(i); q = q.pop(); }
-     * // IPersistentList lastq = null; // IPersistentList lastq2; for(int i =
-     * 0; i < n - 10; i++) { //lastq2 = lastq; //lastq = q; q = q.pop(); }
-     * estimatedTime = System.nanoTime() - startTime;
-     * System.out.println("time: " + estimatedTime / 1000000);
-     * System.out.println("peek: " + q.peek());
-     * 
-     * IPersistentList q2 = q; for(int i = 0; i < 10; i++) { q2 =
-     * (IPersistentList) q2.cons(i); } // for(ISeq s = q.seq();s != null;s =
-     * s.rest()) // System.out.println("q: " + s.first().toString()); //
-     * for(ISeq s = q2.seq();s != null;s = s.rest()) //
-     * System.out.println("q2: " + s.first().toString()); } */
+            @Override
+            public boolean hasNext() {
+                return first.hasNext() || second.hasNext();
+            }
+
+            @Override
+            public T next() {
+                return first.hasNext() ? first.next() : second.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
 }

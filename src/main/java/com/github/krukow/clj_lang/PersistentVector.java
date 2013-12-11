@@ -13,13 +13,13 @@
 package com.github.krukow.clj_lang;
 
 import java.io.Serializable;
+import java.util.AbstractCollection;
 import java.util.AbstractList;
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicReference;
+
+import com.github.krukow.clj_ds.PersistentSequence;
 
 public class PersistentVector<T> extends AbstractList<T> implements com.github.krukow.clj_ds.PersistentVector<T> {
 
@@ -229,9 +229,9 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
 
     private Iterator<T> rangedIterator(final int start, final int end) {
         return new Iterator<T>() {
-            int i = start;
-            int base = i - (i % 32);
-            Object[] array = (start < size()) ? arrayFor(i) : null;
+            private int i = start;
+            private int base = i - (i % 32);
+            private Object[] array = (start < size()) ? arrayFor(i) : null;
 
             public boolean hasNext() {
                 return i < end;
@@ -251,154 +251,68 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
         };
     }
 
-    public Iterator iterator151() {
+    public Iterator<T> iterator() {
         return rangedIterator(0, size());
     }
 
-    private final static class PersistentVectorIterator<T> implements Iterator<T> {
-        private PersistentVector<T> vec;
-        private int sft;
-        private Stack<Map.Entry<Integer, Object[]>> path;
-        private Object[] current;
-        private int currentIndex;
+    private static final class ChunkedSequence<T> extends AbstractCollection<T> implements PersistentSequence<T> {
 
-        public PersistentVectorIterator(PersistentVector<T> vec) {
-            this.vec = vec;
-            sft = vec.shift;
-            path = initialPath();
-            Map.Entry<Integer, Object[]> el = path.peek();
-            if (el.getKey() == -1) {
-                current = el.getValue();
-            } else {
-                current = ((Node) el.getValue()[el.getKey()]).array;
-            }
-        }
+        private final PersistentVector<T> vec;
+        private final Object[] node;
+        private final int i;
+        private final int offset;
+        
 
-        @Override
-        public boolean hasNext() {
-            ensureCurrentReady();
-            return (current != null && currentIndex < current.length);
-
-        }
-
-        private void ensureCurrentReady() {
-            if (current != null && currentIndex < current.length) {
-                return;
-            }// else current is null or exhausted. Find next
-            Object[] last = current;
-            current = findNextArray();
-            if (current != last) {
-                currentIndex = 0;
-            }
-        }
-
-        private Object[] findNextArray() {
-            if (path.isEmpty()) {
-                return null;
-            }
-            while (path.peek().getKey() != -1) {
-                Map.Entry<Integer, Object[]> loc = path.pop();
-                int idx = loc.getKey();
-                Object[] arr = loc.getValue();
-                idx += 1;
-                if (idx < arr.length) {
-                    Node next = (Node) arr[idx];
-                    if (next == null) {
-                        continue;
-                    }
-                    path.push(new AbstractMap.SimpleImmutableEntry<>(idx, arr));
-                    for (int level = sft - (path.size() - 1) * 5; level > 0; level -= 5) {
-                        path.push(new AbstractMap.SimpleImmutableEntry<>(0, next.array));
-                        next = (Node) next.array[0];
-                    }
-                    return next.array;
-
-                }
-            }
-            return path.pop().getValue();
-        }
-
-        private Stack<Map.Entry<Integer, Object[]>> initialPath() {
-            Stack<Map.Entry<Integer, Object[]>> res = new Stack<Map.Entry<Integer, Object[]>>();
-            res.push(new AbstractMap.SimpleImmutableEntry<>(-1, vec.tail));
-            Node node = vec.root;
-            for (int level = sft; level > 0; level -= 5) {
-                res.push(new AbstractMap.SimpleImmutableEntry<>(0, node.array));
-                node = (Node) node.array[0];
-                if (node == null) {
-                    res.pop();
-                    break;
-                }
-            }
-            return res;
-        }
-
-        @Override
-        public T next() {
-            return (T) current[currentIndex++];
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
-        }
-    }
-
-    public Iterator<T> iterator() {
-        return new PersistentVectorIterator(this);
-    }
-
-    private static final class ChunkedSeq<T> extends ASeq<T> implements IChunkedSeq<T> {
-
-        public final PersistentVector<T> vec;
-        final Object[] node;
-        final int i;
-        public final int offset;
-
-        public ChunkedSeq(PersistentVector<T> vec, int i, int offset) {
+        private ChunkedSequence(PersistentVector<T> vec, int i, int offset) {
             this.vec = vec;
             this.i = i;
             this.offset = offset;
             this.node = vec.arrayFor(i);
         }
 
-        ChunkedSeq(PersistentVector<T> vec, Object[] node, int i, int offset) {
+        private ChunkedSequence(PersistentVector<T> vec, Object[] node, int i, int offset) {
             this.vec = vec;
             this.node = node;
             this.i = i;
             this.offset = offset;
         }
 
-        public IChunk<T> chunkedFirst() {
-            return new ArrayChunk<T>(node, offset);
+
+        @Override
+        public PersistentSequence<T> zero() {
+            return PersistentConsList.empty();
         }
 
-        public ISeq<T> chunkedNext() {
-            if (i + node.length < vec.cnt)
-                return new ChunkedSeq<T>(vec, i + node.length, 0);
-            return null;
+        @Override
+        public PersistentSequence<T> plus(T val) {
+            return new Cons(val, this);
         }
 
-        public ISeq<T> chunkedMore() {
-            ISeq<T> s = chunkedNext();
-            if (s == null)
-                return (ISeq<T>) PersistentConsList.emptyList();
-            return s;
+        @Override
+        public PersistentSequence<T> minus() {
+            if (offset + 1 < node.length)
+                return new ChunkedSequence<T>(vec, node, i, offset + 1);
+            else if (i + node.length < vec.cnt)
+                return new ChunkedSequence<T>(vec, i + node.length, 0);
+            else
+                return zero();
         }
 
-        public T first() {
+        @Override
+        public T peek() {
             return (T) node[offset];
         }
 
-        public ISeq<T> next() {
-            if (offset + 1 < node.length)
-                return new ChunkedSeq<T>(vec, node, i, offset + 1);
-            return chunkedNext();
+        @Override
+        public Iterator<T> iterator() {
+            return vec.rangedIterator(i+offset, vec.size());
         }
 
-        public int count() {
+        @Override
+        public int size() {
             return vec.cnt - (i + offset);
         }
+        
     }
 
     @Override
@@ -711,5 +625,9 @@ public class PersistentVector<T> extends AbstractList<T> implements com.github.k
                 return ret;
             }
         }
+    }
+
+    public PersistentSequence<T> asFifoSequence() {
+        return new ChunkedSequence<>(this, 0, 0);
     }
 }

@@ -14,15 +14,16 @@ import java.util.Collection;
  */
 public interface PersistentCollection<E> extends Collection<E>, ThouShaltNotMutateThisCollection<E> {
 
-	/**
-	 * @return An empty instance of this kind of collection.
-	 */
-	PersistentCollection<E> zero();
+    /**
+     * @return An empty instance of this kind of collection.
+     */
+    PersistentCollection<E> zero();
 
-	/**
-	 * @return A new collection consisting of all elements of the current
-	 *         collection together with the value val.
-	 */
-	PersistentCollection<E> plus(E val);
-
+    /**
+     * Optional.
+     * 
+     * @return A new collection consisting of all elements of the current
+     *         collection together with the value val.
+     */
+    PersistentCollection<E> plus(E val);
 }

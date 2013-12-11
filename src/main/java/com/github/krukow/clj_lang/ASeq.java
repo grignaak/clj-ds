@@ -86,7 +86,8 @@ public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializa
     }
 
     public ISeq<T> cons(T o) {
-        return new Cons<T>(o, this);
+        return null;
+        //return new Cons<T>(o, this);
     }
 
     public ISeq<T> more() {

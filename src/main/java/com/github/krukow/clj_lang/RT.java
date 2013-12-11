@@ -107,12 +107,12 @@ public class RT {
 	@Deprecated
 	static public ISeq cons(Object x, Object coll) {
 		// ISeq y = seq(coll);
-		if (coll == null)
+//		if (coll == null)
 			return null;
-		else if (coll instanceof ISeq)
-			return new Cons(x, (ISeq) coll);
-		else
-			return new Cons(x, seq(coll));
+//		else if (coll instanceof ISeq)
+//			return new Cons(x, (ISeq) coll);
+//		else
+//			return new Cons(x, seq(coll));
 	}
 	
 	@Deprecated
