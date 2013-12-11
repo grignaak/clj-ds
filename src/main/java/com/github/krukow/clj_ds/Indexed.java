@@ -5,6 +5,7 @@ package com.github.krukow.clj_ds;
  * {@link PersistentCollection}. "Random-access" runtime characteristics can be
  * expected for such collection.
  */
+@Deprecated
 public interface Indexed<E> {
 
 	/**

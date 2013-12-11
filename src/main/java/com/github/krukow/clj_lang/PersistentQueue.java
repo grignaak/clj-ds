@@ -96,7 +96,7 @@ public PersistentQueue<T> cons(T o){
 	if(f == null)     //empty
 		return new PersistentQueue<T>(cnt + 1, RT.list(o), null);
 	else
-		return new PersistentQueue<T>(cnt + 1, f, (r != null ? r : PersistentVector.EMPTY).cons(o));
+		return new PersistentQueue<T>(cnt + 1, f, (r != null ? r : PersistentVector.EMPTY).plus(o));
 }
 
 public IPersistentCollection<T> empty(){

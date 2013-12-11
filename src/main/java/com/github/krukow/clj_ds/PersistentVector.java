@@ -6,7 +6,7 @@ import java.util.List;
  * A {@link PersistentCollection} that has array-like runtime characteristics.
  * New elements are "added" at the end of the {@link PersistentVector}.
  */
-public interface PersistentVector<E> extends PersistentStack<E>, List<E>, Indexed<E>, EditableCollection<E> {
+public interface PersistentVector<E> extends PersistentStack<E>, List<E>, EditableCollection<E> {
 
     @Override PersistentVector<E> zero();
 

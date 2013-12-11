@@ -53,7 +53,7 @@ public class PersistentVectorTest {
 			}
 			assertEquals(i,hs.size());
 			Integer o = new Integer(i);
-			vec = vec.cons(o);
+			vec = vec.plus(o);
 		}	
 	}
 	
@@ -68,7 +68,7 @@ public class PersistentVectorTest {
 		int N = 32*32*32+33;
 		//Checking all states up to: N
 		for (int i = 0; i < N; i++) {
-			vec = vec.cons(i);
+			vec = vec.plus(i);
 			
 		}
 		PersistentVector vector = PersistentVector.vectormap(new AFn() {
@@ -80,7 +80,7 @@ public class PersistentVectorTest {
 		}, vec);
 		assertEquals(vec.size(), vector.size());
 		for (int i = 0; i < N; i++) {
-			assertEquals(i*2, vector.nth(i));
+			assertEquals(i*2, vector.get(i));
 			
 		}
 	}

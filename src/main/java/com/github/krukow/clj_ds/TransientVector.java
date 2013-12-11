@@ -1,6 +1,6 @@
 package com.github.krukow.clj_ds;
 
-public interface TransientVector<E> extends TransientCollection<E>, Indexed<E> {
+public interface TransientVector<E> extends TransientCollection<E> {
 
 	/**
 	 * @return A new {@link TransientVector} consisting of the elements of the
@@ -25,8 +25,6 @@ public interface TransientVector<E> extends TransientCollection<E>, Indexed<E> {
 	 *         are made on the current collection).
 	 */
 	TransientVector<E> minus();
-
-	TransientVector<E> pop();
 
 	@Override PersistentVector<E> persist();
 
