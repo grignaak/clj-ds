@@ -20,6 +20,7 @@ import com.github.krukow.clj_ds.PersistentSet;
 import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_ds.TransientSet;
 
+// TODO not really abstract, is it?
 public class APersistentSet<T> extends AbstractSet<T> implements PersistentSet<T> {
 
     protected final PersistentMap<T, Boolean> impl;

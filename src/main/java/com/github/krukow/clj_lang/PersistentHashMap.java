@@ -29,12 +29,12 @@ import com.github.krukow.clj_ds.TransientMap;
 
 public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements PersistentMap<K, V> {
 
-    final int count;
-    final INode root;
-    final boolean hasNull;
-    final V nullValue;
+    private final int count;
+    private final INode root;
+    private final boolean hasNull;
+    private final V nullValue;
 
-    final public static PersistentHashMap EMPTY = new PersistentHashMap(0, null, false, null);
+    final private static PersistentHashMap EMPTY = new PersistentHashMap(0, null, false, null);
     final private static Object NOT_FOUND = new Object();
 
     @SuppressWarnings("unchecked")

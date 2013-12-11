@@ -14,21 +14,19 @@ import java.util.AbstractCollection;
 import java.util.Iterator;
 
 import com.github.krukow.clj_ds.PersistentSequence;
-import com.github.krukow.clj_ds.PersistentStack;
 
 /**
  * conses onto rear, peeks/pops from front See Okasaki's Batched Queues This
  * differs in that it uses a PersistentVector as the rear, which is in-order, so
  * no reversing or suspensions required for persistent use
  */
-// TODO, not really a stack
-public class PersistentQueue<T> extends AbstractCollection<T> implements PersistentStack<T> {
+public class PersistentQueue<T> extends AbstractCollection<T> implements PersistentSequence<T> {
 
     final private static PersistentQueue EMPTY = new PersistentQueue(0, null, null);
 
     private final int cnt;
-    private final PersistentSequence f;
-    private final PersistentVector r;
+    private final PersistentSequence<T> f;
+    private final PersistentVector<T> r;
     // static final int INITIAL_REAR_SIZE = 4;
 
     private PersistentQueue(int cnt, PersistentSequence f, PersistentVector r) {
@@ -39,7 +37,7 @@ public class PersistentQueue<T> extends AbstractCollection<T> implements Persist
 
     @Override
     public T peek() {
-        return (T) RT.first(f);
+        return f.peek();
     }
 
     @Override
@@ -67,7 +65,7 @@ public class PersistentQueue<T> extends AbstractCollection<T> implements Persist
         if (f == null)     // empty
             return new PersistentQueue<T>(cnt + 1, PersistentConsList.create(o), null);
         else
-            return new PersistentQueue<T>(cnt + 1, f, (r != null ? r : PersistentVector.emptyVector()).plus(o));
+            return new PersistentQueue<T>(cnt + 1, f, (r != null ? r : PersistentVector.<T>emptyVector()).plus(o));
     }
 
     @Override
@@ -75,7 +73,7 @@ public class PersistentQueue<T> extends AbstractCollection<T> implements Persist
         return EMPTY;
     }
 
-    static class Seq<T> extends ASeq<T> {
+    private static class Seq<T> extends ASeq<T> {
         final ISeq<T> f;
         final ISeq<T> rseq;
 
