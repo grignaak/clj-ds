@@ -12,13 +12,29 @@
 
 package com.github.krukow.clj_lang;
 
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.math.BigInteger;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Util {
+
+    static final class DefaultComparator implements Comparator<Comparable>, Serializable {
+        public int compare(Comparable o1, Comparable o2) {
+            return o1.compareTo(o2);
+        }
+    
+        private Object readResolve() throws ObjectStreamException {
+            // ensures that we aren't hanging onto a new default comparator for
+            // every
+            // sorted set, etc., we deserialize
+            return Util.DEFAULT_COMPARATOR;
+        }
+    }
 
     static public boolean equals(Object k1, Object k2) {
         if (k1 == k2)
@@ -113,4 +129,7 @@ public class Util {
     static private <T extends Throwable> void sneakyThrow0(Throwable t) throws T {
         throw (T) t;
     }
+
+    static public final Comparator DEFAULT_COMPARATOR = new DefaultComparator();
+    static public final Object[] EMPTY_ARRAY = new Object[] {};
 }

@@ -21,57 +21,12 @@ import java.util.ListIterator;
 public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializable {
     transient int _hash = -1;
 
-    public String toString() {
-        return RT.printString(this);
-    }
-
     @Override
     public IPersistentCollection<T> empty() {
         return null;
     }
 
     protected ASeq() {}
-
-    public boolean equiv(Object obj) {
-
-        if (!(obj instanceof Sequential || obj instanceof List))
-            return false;
-        ISeq ms = RT.seq(obj);
-        for (ISeq s = seq(); s != null; s = s.next(), ms = ms.next())
-        {
-            if (ms == null || !Util.equals(s.first(), ms.first()))
-                return false;
-        }
-        return ms == null;
-
-    }
-
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof Sequential || obj instanceof List))
-            return false;
-        ISeq ms = RT.seq(obj);
-        for (ISeq s = seq(); s != null; s = s.next(), ms = ms.next())
-        {
-            if (ms == null || !Util.equals(s.first(), ms.first()))
-                return false;
-        }
-        return ms == null;
-
-    }
-
-    public int hashCode() {
-        if (_hash == -1)
-        {
-            int hash = 1;
-            for (ISeq s = seq(); s != null; s = s.next())
-            {
-                hash = 31 * hash + (s.first() == null ? 0 : s.first().hashCode());
-            }
-            this._hash = hash;
-        }
-        return _hash;
-    }
 
     public int count() {
         int i = 1;
@@ -107,7 +62,7 @@ public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializa
     // java.util.Collection implementation
 
     public Object[] toArray() {
-        return RT.seqToArray(this);
+        return null;
     }
 
     public boolean add(T o) {
@@ -144,7 +99,7 @@ public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializa
     }
 
     public Object[] toArray(Object[] a) {
-        return RT.seqToPassedArray(this, a);
+        return null;
     }
 
     public int size() {
@@ -165,7 +120,7 @@ public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializa
     }
 
     public Iterator iterator() {
-        return new SeqIterator(this);
+        return null;
     }
 
     // ////////// List stuff /////////////////
@@ -208,7 +163,7 @@ public abstract class ASeq<T> implements ISeq<T>, Sequential, List<T>, Serializa
     }
 
     public T get(int index) {
-        return (T) RT.nth(this, index);
+        return null;
     }
 
     public void add(int index, T element) {

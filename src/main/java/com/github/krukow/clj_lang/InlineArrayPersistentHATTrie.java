@@ -11,19 +11,18 @@
 package com.github.krukow.clj_lang;
 
 import java.util.AbstractMap;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
+
+import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.TransientMap;
 
 /*A persistent rendition of Nikolas Askitis' HAT Trie Uses path copying for
  * persistence Any errors are my own */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
-    /**
-	 * 
-	 */
+public class InlineArrayPersistentHATTrie<T> extends AbstractMap<String, T> implements PersistentMap<String, T> {
     private static final long serialVersionUID = 6864541653381702688L;
     final HATTrieNode<T> root;
     final int count;
@@ -644,13 +643,17 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
     }
 
     @Override
-    public T getMember(String s) {
+    public T get(Object s) {
+        return s instanceof String ? getMember((String) s) : null;
+    }
+    
+    private T getMember(String s) {
         if (root == null || s == null) return null;
         return root.get(s, 0);
     }
 
     @Override
-    public InlineArrayPersistentHATTrie<T> addMember(String s, T t) {
+    public InlineArrayPersistentHATTrie<T> plus(String s, T t) {
         if (root == null) {
             return new InlineArrayPersistentHATTrie(
                     singletonContainer(new StringRandomAccessChars(s), 0, s.length(), t), 1);
@@ -663,72 +666,23 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
     }
 
     @Override
-    public IPersistentSet disjoin(Object key) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean contains(Object key) {
+    public boolean containsKey(Object key) {
         return (key instanceof String) && getMember((String) key) != null;
     }
 
-    @Override
-    public Boolean get(Object key) {
-        return contains(key);
-    }
 
     @Override
-    public int count() {
+    public int size() {
         return count;
     }
 
     @Override
-    public IPersistentCollection cons(Object o) {
-        if (!(o instanceof Map.Entry)) {
-            throw new IllegalArgumentException("Only adding strings is supported");
-        }
-        Map.Entry<String, T> e = (Entry<String, T>) o;
-        return (IPersistentCollection) this.addMember(e.getKey(), e.getValue());
-    }
-
-    @Override
-    public IPersistentCollection empty() {
+    public InlineArrayPersistentHATTrie<T> zero() {
         return EMPTY;
     }
 
-    @Override
-    public Iterator<Map.Entry<String, T>> iterator() {
+    private Iterator<Map.Entry<String, T>> iterator() {
         return root != null ? root.nodeIt("") : new EmptyIterator();
-    }
-
-    @Override
-    public boolean remove(Object o) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        for (Object o : c) {
-            if (!contains(o)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -740,13 +694,27 @@ public class InlineArrayPersistentHATTrie<T> extends APersistentTrie<T> {
     }
 
     @Override
-    public boolean add(Entry<String, T> e) {
-        throw new UnsupportedOperationException();
+    public PersistentMap<String, T> plusEx(String key, T val) {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: PersistentMap<String,T>.plusEx");
     }
 
     @Override
-    public boolean addAll(Collection<? extends Entry<String, T>> c) {
-        throw new UnsupportedOperationException();
+    public PersistentMap<String, T> minus(String key) {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: PersistentMap<String,T>.minus");
+    }
+
+    @Override
+    public TransientMap<String, T> asTransient() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: PersistentMap<String,T>.asTransient");
+    }
+
+    @Override
+    public Set<java.util.Map.Entry<String, T>> entrySet() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: AbstractMap<String,T>.entrySet");
     }
 
 }

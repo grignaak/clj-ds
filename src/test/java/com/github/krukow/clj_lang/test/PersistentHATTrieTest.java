@@ -20,46 +20,46 @@ public class PersistentHATTrieTest {
 
 
 	PersistentHATTrie<Integer> createTrie() {
-		PersistentHATTrie<Integer> trie = (PersistentHATTrie<Integer>) PersistentHATTrie.EMPTY.addMember("we",0);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("were",1);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("went",2);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("west",3);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("water",4);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("western",5);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("tri",6);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("fork",7);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("trifork",8);
-		trie = (PersistentHATTrie<Integer>) trie.addMember("forks",9);
-		return trie;
+		return PersistentHATTrie.EMPTY
+		        .plus("we",0)
+		        .plus("were",1)
+        		.plus("went",2)
+        		.plus("west",3)
+        		.plus("water",4)
+        		.plus("western",5)
+        		.plus("tri",6)
+        		.plus("fork",7)
+        		.plus("trifork",8)
+        		.plus("forks",9);
 	}
 	@Test
 	public final void testSmallTrie() {
 		PersistentHATTrie trie = createTrie();
-		assertEquals(10, trie.count());
+		assertEquals(10, trie.size());
 		
-		assertEquals(0, trie.getMember("we"));
-		assertEquals(1, trie.getMember("were"));
-		assertEquals(2, trie.getMember("went"));
-		assertEquals(3, trie.getMember("west"));
-		assertEquals(4, trie.getMember("water"));
-		assertEquals(5, trie.getMember("western"));
-		assertEquals(6, trie.getMember("tri"));
-		assertEquals(7, trie.getMember("fork"));
-		assertEquals(8, trie.getMember("trifork"));
-		assertEquals(9, trie.getMember("forks"));		
+		assertEquals(0, trie.get("we"));
+		assertEquals(1, trie.get("were"));
+		assertEquals(2, trie.get("went"));
+		assertEquals(3, trie.get("west"));
+		assertEquals(4, trie.get("water"));
+		assertEquals(5, trie.get("western"));
+		assertEquals(6, trie.get("tri"));
+		assertEquals(7, trie.get("fork"));
+		assertEquals(8, trie.get("trifork"));
+		assertEquals(9, trie.get("forks"));		
 	}
 	
 	@Test
 	public final void doesNotContainNotAdded() {
 		PersistentHATTrie trie = createTrie();
-		assertNull(trie.getMember("wes"));
-		assertNull(trie.getMember("w"));
-		assertNull(trie.getMember("wents"));
-		assertNull(trie.getMember("westee"));
-		assertNull(trie.getMember("tris"));
-		assertNull(trie.getMember("sfork"));
-		assertNull(trie.getMember("tri2fork"));
-		assertNull(trie.getMember("forksa"));		
+		assertNull(trie.get("wes"));
+		assertNull(trie.get("w"));
+		assertNull(trie.get("wents"));
+		assertNull(trie.get("westee"));
+		assertNull(trie.get("tris"));
+		assertNull(trie.get("sfork"));
+		assertNull(trie.get("tri2fork"));
+		assertNull(trie.get("forksa"));		
 	}
 	
 	@Test

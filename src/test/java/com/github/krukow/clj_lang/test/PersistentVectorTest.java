@@ -11,8 +11,6 @@ import java.util.ListIterator;
 
 import org.junit.Test;
 
-import com.github.krukow.clj_lang.AFn;
-import com.github.krukow.clj_lang.IPersistentVector;
 import com.github.krukow.clj_lang.PersistentVector;
 
 /**

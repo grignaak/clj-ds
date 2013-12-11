@@ -48,7 +48,7 @@ public class PersistentTreeMap<K, V> extends AbstractMap<K, V> implements Persis
     }
 
     public PersistentTreeMap() {
-        this(RT.DEFAULT_COMPARATOR);
+        this(Util.DEFAULT_COMPARATOR);
     }
 
     public PersistentTreeMap(Comparator<K> comp) {
@@ -131,43 +131,43 @@ public class PersistentTreeMap<K, V> extends AbstractMap<K, V> implements Persis
         return null;
     }
 
-    public ISeq seqFrom(K key, boolean ascending) {
-        if (_count > 0)
-        {
-            ISeq stack = null;
-            Node t = tree;
-            while (t != null)
-            {
-                int c = doCompare(key, (K) t.key);
-                if (c == 0)
-                {
-                    stack = RT.cons(t, stack);
-                    return new Seq(stack, ascending);
-                }
-                else if (ascending)
-                {
-                    if (c < 0)
-                    {
-                        stack = RT.cons(t, stack);
-                        t = t.left();
-                    }
-                    else
-                        t = t.right();
-                }
-                else
-                {
-                    if (c > 0)
-                    {
-                        stack = RT.cons(t, stack);
-                        t = t.right();
-                    }
-                    else
-                        t = t.left();
-                }
-            }
-            if (stack != null)
-                return new Seq(stack, ascending);
-        }
+    private ISeq seqFrom(K key, boolean ascending) {
+//        if (_count > 0)
+//        {
+//            ISeq stack = null;
+//            Node t = tree;
+//            while (t != null)
+//            {
+//                int c = doCompare(key, (K) t.key);
+//                if (c == 0)
+//                {
+//                    stack = RT.cons(t, stack);
+//                    return new Seq(stack, ascending);
+//                }
+//                else if (ascending)
+//                {
+//                    if (c < 0)
+//                    {
+//                        stack = RT.cons(t, stack);
+//                        t = t.left();
+//                    }
+//                    else
+//                        t = t.right();
+//                }
+//                else
+//                {
+//                    if (c > 0)
+//                    {
+//                        stack = RT.cons(t, stack);
+//                        t = t.right();
+//                    }
+//                    else
+//                        t = t.left();
+//                }
+//            }
+//            if (stack != null)
+//                return new Seq(stack, ascending);
+//        }
         return null;
     }
 
@@ -687,12 +687,13 @@ public class PersistentTreeMap<K, V> extends AbstractMap<K, V> implements Persis
         }
 
         static ISeq push(Node t, ISeq stack, boolean asc) {
-            while (t != null)
-            {
-                stack = RT.cons(t, stack);
-                t = asc ? t.left() : t.right();
-            }
-            return stack;
+//            while (t != null)
+//            {
+//                stack = RT.cons(t, stack);
+//                t = asc ? t.left() : t.right();
+//            }
+//            return stack;
+            return null;
         }
 
         public Object first() {

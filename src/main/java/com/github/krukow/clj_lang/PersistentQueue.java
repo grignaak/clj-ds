@@ -100,7 +100,7 @@ public class PersistentQueue<T> extends AbstractCollection<T> implements Persist
         }
 
         public int count() {
-            return RT.count(f) + RT.count(rseq);
+            return f.count() + rseq.count();
         }
     }
 

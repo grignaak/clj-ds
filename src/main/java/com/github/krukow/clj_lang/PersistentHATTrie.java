@@ -11,177 +11,180 @@
 package com.github.krukow.clj_lang;
 
 import java.util.AbstractMap;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
-/*
- A persistent rendition of Nikolas Askitis' HAT Trie
- Uses path copying for persistence
- Any errors are my own
-*/
-@SuppressWarnings({"rawtypes","unchecked"})
-public class PersistentHATTrie<T> extends APersistentTrie<T> {
-	private static final long serialVersionUID = -7068824281866890730L;
-	final HATTrieNode<T> root;
-	final int count;
-	
-	public static final PersistentHATTrie EMPTY = new PersistentHATTrie(null, 0);
-	
-	public PersistentHATTrie(HATTrieNode root, int count) {
-		this.root = root;
-		this.count = count;
-	}
+import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.TransientMap;
 
-	private static interface HATTrieNode<T> {
-		HATTrieNode<T> add(String s, int i, T t);
-		T get(String s, int j);
-		Iterator<Map.Entry<String, T>> nodeIt(String prefix);
-	}
-	private static interface ToStringWithPrefix {
-		String toStringWithPrefix(String prefix);
-	}
+/*A persistent rendition of Nikolas Askitis' HAT Trie Uses path copying for
+ * persistence Any errors are my own */
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public class PersistentHATTrie<T> extends AbstractMap<String, T> implements PersistentMap<String, T>, Iterable<Map.Entry<String, T>> {
+    private static final long serialVersionUID = -7068824281866890730L;
+    final HATTrieNode<T> root;
+    final int count;
 
-	private static final class AccessNode<T> implements HATTrieNode<T>,ToStringWithPrefix {
-		private final HATTrieNode<T> children[];
-		private final T emptyPtr;
-		
-		public AccessNode(HATTrieNode[] children, T emptyPtr) {
-			this.children = children;
-			this.emptyPtr = emptyPtr;
-		}
-		
-		public String toString() {
-			return toStringWithPrefix("");
-		}
+    public static final PersistentHATTrie EMPTY = new PersistentHATTrie(null, 0);
 
-		public String toStringWithPrefix(String prefix) {
-			StringBuilder sb = new StringBuilder();
-			String nestedPrefix = prefix+"  ";
-			sb.append(prefix);
-			sb.append("(access-node\n").append(nestedPrefix);
-			for (int i=0;i<children.length;i++) {
-				HATTrieNode node = children[i];
-				if (node != null) {
-					sb.append((char) i).append(" -> ").append(((ToStringWithPrefix) node)
-							.toStringWithPrefix(nestedPrefix)).append(";\n").append(nestedPrefix);
-				}
-			}
-			if (emptyPtr != null) {
-				sb.append("\n").append(prefix).append("**");
-			}
-			sb.append(prefix).append(")");
-			return sb.toString();
-		}
+    public PersistentHATTrie(HATTrieNode root, int count) {
+        this.root = root;
+        this.count = count;
+    }
 
-		
-		public HATTrieNode<T> add(String s, int i, T t) {
-			int length = s.length();
-			if (i < length) {
-				char ichar = s.charAt(i);
-				HATTrieNode hatTrieNode = children[ichar];
-				if (hatTrieNode != null) {
-					HATTrieNode newNode = hatTrieNode.add(s, i+1, t);
-					if (newNode == hatTrieNode) {
-						return this;
-					}
-					HATTrieNode[] newArr = new HATTrieNode[children.length];
-					System.arraycopy(children, 0, newArr, 0, children.length);
-					newArr[ichar] = newNode;
-					return new AccessNode(newArr, emptyPtr);
-				}
-				ContainerNode c = new ContainerNode(PersistentTreeMap.EMPTY.plus(s.substring(i+1), t));
-				HATTrieNode[] newArr = new HATTrieNode[children.length];
-				System.arraycopy(children, 0, newArr, 0, children.length);
-				newArr[ichar] = c;
-				return new AccessNode(newArr, emptyPtr);
-			}
-			if (i == length && emptyPtr == null) {
-				return new AccessNode(children, s); 
-			}
-			return this;
-		}
+    private static abstract class HATTrieNode<T> {
+        protected abstract HATTrieNode<T> add(String s, int i, T t);
+        protected abstract T get(String s, int j);
+        protected abstract Iterator<Map.Entry<String, T>> nodeIt(String prefix);
+        protected abstract String toStringWithPrefix(String prefix);
+    }
 
-		public T get(String s, int i) {
-			if (i == s.length()) {
-				return emptyPtr;
-			}
-			HATTrieNode<T> c = children[s.charAt(i)];
-			if (c == null) {
-				return null;
-			}
-			return c.get(s, i+1);
-		}
-		
-		private static final class AccessNodeIterator<T> implements Iterator<Map.Entry<String, T>> {
-			private final HATTrieNode children[];
-			private final T emptyPtr;
-			private int index = -1;
-			private final String prefix;
-			Iterator<Map.Entry<String, T>> current = null;
-			
-			AccessNodeIterator(AccessNode<T> node, String prefix) {
-				children = node.children;
-				emptyPtr = node.emptyPtr;
-				this.prefix = prefix;
-				moveCurIfNeeded();
-			}
-			
-			private void moveCurIfNeeded() {
-				if (index == -1){
-					if (emptyPtr == null) {
-						index = 0;
-					} else {
-						return;
-					}
-				}
-				
-				if (current != null && current.hasNext()) return;
-				while (index < children.length && children[index] == null) {index += 1;};
-				if (index == children.length) { current = null;}
-				else {
-					String prefix = new StringBuilder(this.prefix).append((char) index).toString();
-					current = children[index++].nodeIt(prefix);
-				}
-				
-			}
-			
-			public boolean hasNext() {
-				if (index == -1 && emptyPtr != null)  {
-					return true;
-				}
-				while (current != null && !current.hasNext()) {
-					moveCurIfNeeded();
-				}
-				return current != null && current.hasNext(); 
-			}
-			
-			@Override
-			public Map.Entry<String, T> next() {
-				if (index == -1 && emptyPtr != null)  {
-					index = 0;
-					moveCurIfNeeded();
-					return new AbstractMap.SimpleImmutableEntry<>(prefix, emptyPtr);
-				}
-				return current.next();
-			}
+    private static final class AccessNode<T> extends HATTrieNode<T> {
+        private final HATTrieNode<T> children[];
+        private final T emptyPtr;
 
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();			
-			}
-			
-		}
+        private AccessNode(HATTrieNode[] children, T emptyPtr) {
+            this.children = children;
+            this.emptyPtr = emptyPtr;
+        }
 
-		@Override
-		public Iterator<Map.Entry<String, T>> nodeIt(String prefix) {
-			return new AccessNodeIterator(this,prefix);
-		}
-		
-	}
+        @Override
+        public String toString() {
+            return toStringWithPrefix("");
+        }
 
-    private static final class ContainerNode<T> implements HATTrieNode<T>, ToStringWithPrefix {
+        @Override
+        public String toStringWithPrefix(String prefix) {
+            StringBuilder sb = new StringBuilder();
+            String nestedPrefix = prefix + "  ";
+            sb.append(prefix);
+            sb.append("(access-node\n").append(nestedPrefix);
+            for (int i = 0; i < children.length; i++) {
+                HATTrieNode node = children[i];
+                if (node != null) {
+                    sb.append((char) i).append(" -> ").append(
+                            node.toStringWithPrefix(nestedPrefix)).append(";\n").append(nestedPrefix);
+                }
+            }
+            if (emptyPtr != null) {
+                sb.append("\n").append(prefix).append("**");
+            }
+            sb.append(prefix).append(")");
+            return sb.toString();
+        }
+
+        public HATTrieNode<T> add(String s, int i, T t) {
+            int length = s.length();
+            if (i < length) {
+                char ichar = s.charAt(i);
+                HATTrieNode hatTrieNode = children[ichar];
+                if (hatTrieNode != null) {
+                    HATTrieNode newNode = hatTrieNode.add(s, i + 1, t);
+                    if (newNode == hatTrieNode) {
+                        return this;
+                    }
+                    HATTrieNode[] newArr = new HATTrieNode[children.length];
+                    System.arraycopy(children, 0, newArr, 0, children.length);
+                    newArr[ichar] = newNode;
+                    return new AccessNode(newArr, emptyPtr);
+                }
+                ContainerNode c = new ContainerNode(PersistentTreeMap.EMPTY.plus(s.substring(i + 1), t));
+                HATTrieNode[] newArr = new HATTrieNode[children.length];
+                System.arraycopy(children, 0, newArr, 0, children.length);
+                newArr[ichar] = c;
+                return new AccessNode(newArr, emptyPtr);
+            }
+            if (i == length && emptyPtr == null) {
+                return new AccessNode(children, s);
+            }
+            return this;
+        }
+
+        public T get(String s, int i) {
+            if (i == s.length()) {
+                return emptyPtr;
+            }
+            HATTrieNode<T> c = children[s.charAt(i)];
+            if (c == null) {
+                return null;
+            }
+            return c.get(s, i + 1);
+        }
+
+        private static final class AccessNodeIterator<T> implements Iterator<Map.Entry<String, T>> {
+            private final HATTrieNode children[];
+            private final T emptyPtr;
+            private int index = -1;
+            private final String prefix;
+            Iterator<Map.Entry<String, T>> current = null;
+
+            AccessNodeIterator(AccessNode<T> node, String prefix) {
+                children = node.children;
+                emptyPtr = node.emptyPtr;
+                this.prefix = prefix;
+                moveCurIfNeeded();
+            }
+
+            private void moveCurIfNeeded() {
+                if (index == -1) {
+                    if (emptyPtr == null) {
+                        index = 0;
+                    } else {
+                        return;
+                    }
+                }
+
+                if (current != null && current.hasNext()) return;
+                while (index < children.length && children[index] == null) {
+                    index += 1;
+                }
+                ;
+                if (index == children.length) {
+                    current = null;
+                }
+                else {
+                    String prefix = new StringBuilder(this.prefix).append((char) index).toString();
+                    current = children[index++].nodeIt(prefix);
+                }
+
+            }
+
+            public boolean hasNext() {
+                if (index == -1 && emptyPtr != null) {
+                    return true;
+                }
+                while (current != null && !current.hasNext()) {
+                    moveCurIfNeeded();
+                }
+                return current != null && current.hasNext();
+            }
+
+            @Override
+            public Map.Entry<String, T> next() {
+                if (index == -1 && emptyPtr != null) {
+                    index = 0;
+                    moveCurIfNeeded();
+                    return new AbstractMap.SimpleImmutableEntry<>(prefix, emptyPtr);
+                }
+                return current.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
+        }
+
+        @Override
+        public Iterator<Map.Entry<String, T>> nodeIt(String prefix) {
+            return new AccessNodeIterator(this, prefix);
+        }
+
+    }
+
+    private static final class ContainerNode<T> extends HATTrieNode<T> {
         private PersistentTreeMap<String, T> strings;
 
         public ContainerNode(PersistentTreeMap<String, T> strings) {
@@ -273,110 +276,76 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 
     }
 
-	@Override
-	public T getMember(String s) {
-		if (root == null || s == null) return null;
-		return root.get(s,0);
-	}
+    @Override
+    public T get(Object s) {
+        if (root == null || s == null || !(s instanceof String)) return null;
+        return root.get((String)s, 0);
+    }
 
-	@Override
-	public IPersistentTrie<T> addMember(String s, T t) {
-		if (root == null) {
-			return new PersistentHATTrie(new ContainerNode(PersistentTreeMap.EMPTY.plus(s, t)),1);
-		}
-		HATTrieNode<T> newRoot = root.add(s, 0,t);
-		if (root == newRoot) {
-			return this;
-		}
-		return new PersistentHATTrie(newRoot,count+1);
-	}
+    @Override
+    public PersistentHATTrie<T> plus(String s, T t) {
+        if (root == null) {
+            return new PersistentHATTrie(new ContainerNode(PersistentTreeMap.EMPTY.plus(s, t)), 1);
+        }
+        HATTrieNode<T> newRoot = root.add(s, 0, t);
+        if (root == newRoot) {
+            return this;
+        }
+        return new PersistentHATTrie(newRoot, count + 1);
+    }
 
-	@Override
-	public IPersistentSet disjoin(Object key) {
-		throw new UnsupportedOperationException();
-	}
+    private IPersistentSet disjoin(Object key) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public boolean contains(Object key) {
-		return (key instanceof String) && getMember((String) key) != null;
-	}
+    @Override
+    public boolean containsKey(Object key) {
+        return (key instanceof String) && get((String) key) != null;
+    }
 
-	@Override
-	public Boolean get(Object key) {
-		return contains(key);
-	}
+    @Override
+    public int size() {
+        return count;
+    }
 
-	@Override
-	public int count() {
-		return count;
-	}
+    @Override
+    public PersistentHATTrie<T> zero() {
+        return EMPTY;
+    }
 
-	@Override
-	public IPersistentCollection cons(Object o) {
-		if (!(o instanceof Map.Entry)) {
-			throw new IllegalArgumentException("Only adding strings is supported");
-		}
-		Map.Entry<String, T> e = (Entry<String, T>) o;
-		return (IPersistentCollection) this.addMember(e.getKey(),e.getValue());
-	}
+    public Iterator<Map.Entry<String, T>> iterator() {
+        return root != null ? root.nodeIt("") : new EmptyIterator();
+    }
 
-	@Override
-	public IPersistentCollection empty() {
-		return EMPTY;
-	}
+    @Override
+    public String toString() {
+        if (root == null) {
+            return "{}";
+        }
+        return root.toString();
+    }
 
-	@Override
-	public Iterator<Map.Entry<String, T>> iterator() {
-		return root != null ? root.nodeIt("") : new EmptyIterator(); 
-	}
-		
-		
+    @Override
+    public PersistentMap<String, T> plusEx(String key, T val) {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: PersistentMap<String,T>.plusEx");
+    }
 
-	@Override
-	public boolean remove(Object o) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public PersistentMap<String, T> minus(String key) {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: PersistentMap<String,T>.minus");
+    }
 
-	@Override
-	public boolean containsAll(Collection<?> c) {
-		for (Object o : c) {
-			if (!contains(o)) {
-				return false;
-			}
-		}
-		return true;
-	}
+    @Override
+    public TransientMap<String, T> asTransient() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: PersistentMap<String,T>.asTransient");
+    }
 
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public void clear() {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
-	public String toString() {
-		if (root == null) {return "{}";}
-		return root.toString();
-	}
-
-
-	@Override
-	public boolean add(Entry<String, T> e) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean addAll(Collection<? extends Entry<String, T>> c) {
-		throw new UnsupportedOperationException();
-	}
-
+    @Override
+    public Set<java.util.Map.Entry<String, T>> entrySet() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: AbstractMap<String,T>.entrySet");
+    }
 }

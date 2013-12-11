@@ -9,10 +9,7 @@ import java.util.HashSet;
 
 import org.junit.Test;
 
-import com.github.krukow.clj_lang.IPersistentCollection;
 import com.github.krukow.clj_lang.PersistentHashSet;
-import com.github.krukow.clj_lang.PersistentVector;
-import com.github.krukow.clj_lang.RT;
 
 /**
  * @author krukow
@@ -44,7 +41,7 @@ public class PersistentHashSetTest {
 			}
 			assertEquals(i,hs.size());
 			Integer o = new Integer(i);
-			dsSet = (PersistentHashSet<Integer>) dsSet.cons(o);
+			dsSet = (PersistentHashSet<Integer>) dsSet.plus(o);
 
 		}
 		

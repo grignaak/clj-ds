@@ -22,10 +22,6 @@ import java.util.RandomAccess;
 public abstract class APersistentVector<T> extends AbstractList<T> implements List<T>, RandomAccess {
     private int _hash = -1;
 
-    public String toString() {
-        return RT.printString(this);
-    }
-
     public int hashCode() {
         if (_hash == -1)
         {
