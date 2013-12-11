@@ -104,6 +104,7 @@ public class RT {
 		throw new UnsupportedOperationException("count not supported on this type: " + o.getClass().getSimpleName());
 	}
 
+	@Deprecated
 	static public ISeq cons(Object x, Object coll) {
 		// ISeq y = seq(coll);
 		if (coll == null)
@@ -113,7 +114,8 @@ public class RT {
 		else
 			return new Cons(x, seq(coll));
 	}
-
+	
+	@Deprecated
 	static public Object first(Object x) {
 		if (x instanceof ISeq)
 			return ((ISeq) x).first();
@@ -123,10 +125,12 @@ public class RT {
 		return seq.first();
 	}
 
+	@Deprecated
 	static public Object second(Object x) {
 		return first(next(x));
 	}
 
+	@Deprecated
 	static public ISeq next(Object x) {
 		if (x instanceof ISeq)
 			return ((ISeq) x).next();
@@ -136,12 +140,14 @@ public class RT {
 		return seq.next();
 	}
 
+	@Deprecated
 	static public Object nth(Object coll, int n) {
 		if (coll instanceof Indexed)
 			return ((Indexed) coll).nth(n);
 		return nthFrom(Util.ret1(coll, coll = null), n);
 	}
 
+	@Deprecated
 	static Object nthFrom(Object coll, int n) {
 		if (coll == null)
 			return null;
@@ -181,16 +187,19 @@ public class RT {
 //	 * *******************************
 //	 */
 
+	@Deprecated
 	static public ISeq list(Object arg1) {
 		return null;
 	}
 	
+	@Deprecated
 	static public Object[] seqToArray(Iterable<?> seq) {
 		int len = length(seq);
 		Object[] ret = new Object[len];
 		fillArray(seq, ret);
 		return ret;
 	}
+	@Deprecated
 	static private void fillArray(Iterable<?> list, Object[] array) {
 	    Iterator<?> iter = list.iterator();
 	    for (int i = 0; iter.hasNext(); i++) {
@@ -199,6 +208,7 @@ public class RT {
 	}
 
     // supports java Collection.toArray(T[])
+	@Deprecated
     static public Object[] seqToPassedArray(Iterable<?> seq, Object[] passed){
         Object[] dest = passed;
         int len = count(seq);
@@ -212,6 +222,7 @@ public class RT {
         return dest;
     }
 
+	@Deprecated
 	static public int length(Iterable<?> list) {
 		int i = 0;
 		for (Object _ : list) {
@@ -220,6 +231,7 @@ public class RT {
 		return i;
 	}
 
+	@Deprecated
 	static public String printString(Object x) {
 		try {
 			StringWriter sw = new StringWriter();
@@ -231,6 +243,7 @@ public class RT {
 		}
 	}
 
+	@Deprecated
 	static public void print(Object x, Writer w) throws IOException {
 		if (x == null)
 			w.write("null");
@@ -344,6 +357,7 @@ public class RT {
 			w.write(x.toString());
 	}
 
+	@Deprecated
 	private static void printInnerSeq(ISeq x, Writer w) throws IOException {
 		for (ISeq s = x; s != null; s = s.next()) {
 			print(s.first(), w);

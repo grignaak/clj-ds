@@ -15,79 +15,80 @@ package com.github.krukow.clj_lang;
 import java.lang.reflect.Array;
 
 public class ArraySeq extends ASeq implements IndexedSeq {
-public final Object array;
-final int i;
-final Object[] oa;
-final Class ct;
-//ISeq _rest;
+    public final Object array;
+    final int i;
+    final Object[] oa;
+    final Class ct;
 
-static public ArraySeq create(){
-	return null;
-}
+    // ISeq _rest;
 
-static public ArraySeq create(Object... array){
-	if(array == null || array.length == 0)
-		return null;
-	return new ArraySeq(array, 0);
-}
+    static public ArraySeq create() {
+        return null;
+    }
 
-ArraySeq(Object array, int i){
-	this.array = array;
-	this.ct = array.getClass().getComponentType();
-	this.i = i;
-	this.oa = (Object[]) (array instanceof Object[] ? array : null);
-//    this._rest = this;
-}
+    static public ArraySeq create(Object... array) {
+        if (array == null || array.length == 0)
+            return null;
+        return new ArraySeq(array, 0);
+    }
 
-public Object first(){
-	if(oa != null)
-		return oa[i];
-	return Reflector.prepRet(ct, Array.get(array, i));
-}
+    ArraySeq(Object array, int i) {
+        this.array = array;
+        this.ct = array.getClass().getComponentType();
+        this.i = i;
+        this.oa = (Object[]) (array instanceof Object[] ? array : null);
+        // this._rest = this;
+    }
 
-public ISeq next(){
-	if(oa != null)
-		{
-		if(i + 1 < oa.length)
-			return new ArraySeq(array, i + 1);
-		}
-	else
-		{
-		if(i + 1 < Array.getLength(array))
-			return new ArraySeq(array, i + 1);
-		}
-	return null;
-}
+    public Object first() {
+        if (oa != null)
+            return oa[i];
+        return Reflector.prepRet(ct, Array.get(array, i));
+    }
 
-public int count(){
-	if(oa != null)
-		return oa.length - i;
-	return Array.getLength(array) - i;
-}
+    public ISeq next() {
+        if (oa != null)
+        {
+            if (i + 1 < oa.length)
+                return new ArraySeq(array, i + 1);
+        }
+        else
+        {
+            if (i + 1 < Array.getLength(array))
+                return new ArraySeq(array, i + 1);
+        }
+        return null;
+    }
 
-public int index(){
-	return i;
-}
+    public int count() {
+        if (oa != null)
+            return oa.length - i;
+        return Array.getLength(array) - i;
+    }
 
-public int lastIndexOf(Object o) {
-	if (oa != null) {
-		if (o == null) {
-			for (int j = oa.length - 1 ; j >= i; j--)
-				if (oa[j] == null) return j - i;
-		} else {
-			for (int j = oa.length - 1 ; j >= i; j--)
-				if (o.equals(oa[j])) return j - i;
-		}
-	} else {
-		if (o == null) {
-			for (int j = Array.getLength(array) - 1 ; j >= i; j--)
-				if (Reflector.prepRet(ct, Array.get(array, j)) == null) return j - i;
-		} else {
-			for (int j = Array.getLength(array) - 1 ; j >= i; j--)
-				if (o.equals(Reflector.prepRet(ct, Array.get(array, j)))) return j - i;
-		}
-	}
-	return -1;
-}
+    public int index() {
+        return i;
+    }
+
+    public int lastIndexOf(Object o) {
+        if (oa != null) {
+            if (o == null) {
+                for (int j = oa.length - 1; j >= i; j--)
+                    if (oa[j] == null) return j - i;
+            } else {
+                for (int j = oa.length - 1; j >= i; j--)
+                    if (o.equals(oa[j])) return j - i;
+            }
+        } else {
+            if (o == null) {
+                for (int j = Array.getLength(array) - 1; j >= i; j--)
+                    if (Reflector.prepRet(ct, Array.get(array, j)) == null) return j - i;
+            } else {
+                for (int j = Array.getLength(array) - 1; j >= i; j--)
+                    if (o.equals(Reflector.prepRet(ct, Array.get(array, j)))) return j - i;
+            }
+        }
+        return -1;
+    }
 
 }

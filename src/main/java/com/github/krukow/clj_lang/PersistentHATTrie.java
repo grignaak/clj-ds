@@ -181,96 +181,97 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 		
 	}
 
-	private static final class ContainerNode<T> implements HATTrieNode<T>,ToStringWithPrefix {
-		private PersistentTreeMap<String, T> strings;
-		
-		public ContainerNode(PersistentTreeMap<String, T> strings) {
-			this.strings = strings;
-		}
-		
-		public String toString() {
-			return strings.toString();
-		}
+    private static final class ContainerNode<T> implements HATTrieNode<T>, ToStringWithPrefix {
+        private PersistentTreeMap<String, T> strings;
 
-		public HATTrieNode<T> add(String s, int i, T t) {
-			String ss = s.substring(i);
-			T et = strings.get(ss);
-			if (Util.equals(et, t)) {
-				return this;
-			}
-		    if (shouldBurst()) {
-			   return burst(s,i,t);
-		    }
-			return new ContainerNode<T>(this.strings.plus(s.substring(i),t));
-		}
+        public ContainerNode(PersistentTreeMap<String, T> strings) {
+            this.strings = strings;
+        }
 
-		public T get(String s, int i) {
-			return strings.get(s.substring(i));
-		}
-		
-		private HATTrieNode burst(String s, int i, T t) {
-			HATTrieNode[] children = new HATTrieNode[256];
-			T empty = s.length() == i ? t : null;
-			for (Iterator<Map.Entry<String, T>> iterator = strings.entrySet().iterator(); iterator.hasNext();) {
-				Entry<String, T> next = iterator.next();
-				String old = next.getKey();
-				T value = next.getValue();
-				if (empty == null && "".equals(old)) {//can only happen once
-					empty = value;
-				} else {
-					char f = old.charAt(0);
-					children[f] = addToNode(children[f],old,value,1);
-				}
-			}
-			if (empty != t) {//i < s.length()
-				char f = s.charAt(i);
-				children[f] = addToNode(children[f],s,t,i+1);
-			}
-			return new AccessNode(children, empty);			
-		}
+        public String toString() {
+            return strings.toString();
+        }
 
-		private static final <T> HATTrieNode addToNode(HATTrieNode hatTrieNode, String s, T v, int i) {
-			if (hatTrieNode == null) {
-				return new ContainerNode(PersistentTreeMap.EMPTY.plus(s.substring(i),v));
-			} else {
-				return hatTrieNode.add(s, i,v);
-			}
-			
-		}
+        public HATTrieNode<T> add(String s, int i, T t) {
+            String ss = s.substring(i);
+            T et = strings.get(ss);
+            if (Util.equals(et, t)) {
+                return this;
+            }
+            if (shouldBurst()) {
+                return burst(s, i, t);
+            }
+            return new ContainerNode<T>(this.strings.plus(s.substring(i), t));
+        }
 
-		private boolean shouldBurst() {
-			return strings.size() == 4;
-		}
+        public T get(String s, int i) {
+            return strings.get(s.substring(i));
+        }
 
-		@Override
-		public Iterator<Map.Entry<String, T>> nodeIt(final String prefix) {
-			return new Iterator<Map.Entry<String, T>>() {
-				Iterator<Map.Entry<String, T>> it  = strings.entrySet().iterator();
-				@Override
-				public boolean hasNext() {
-					return it.hasNext();
-				}
+        private HATTrieNode burst(String s, int i, T t) {
+            HATTrieNode[] children = new HATTrieNode[256];
+            T empty = s.length() == i ? t : null;
+            for (Iterator<Map.Entry<String, T>> iterator = strings.entrySet().iterator(); iterator.hasNext();) {
+                Entry<String, T> next = iterator.next();
+                String old = next.getKey();
+                T value = next.getValue();
+                if (empty == null && "".equals(old)) {// can only happen once
+                    empty = value;
+                } else {
+                    char f = old.charAt(0);
+                    children[f] = addToNode(children[f], old, value, 1);
+                }
+            }
+            if (empty != t) {// i < s.length()
+                char f = s.charAt(i);
+                children[f] = addToNode(children[f], s, t, i + 1);
+            }
+            return new AccessNode(children, empty);
+        }
 
-				@Override
-				public Map.Entry<String, T> next() {
-					Entry<String, T> next = it.next();
-					return new AbstractMap.SimpleImmutableEntry<>(prefix+next.getKey(), next.getValue());
-				}
+        private static final <T> HATTrieNode addToNode(HATTrieNode hatTrieNode, String s, T v, int i) {
+            if (hatTrieNode == null) {
+                return new ContainerNode(PersistentTreeMap.EMPTY.plus(s.substring(i), v));
+            } else {
+                return hatTrieNode.add(s, i, v);
+            }
 
-				@Override
-				public void remove() {
-					throw new UnsupportedOperationException();
-				}
-			};
-		}
+        }
 
-		@Override
-		public String toStringWithPrefix(String prefix) {
-			return prefix+toString();
-			
-		}
+        private boolean shouldBurst() {
+            return strings.size() == 4;
+        }
 
-	}
+        @Override
+        public Iterator<Map.Entry<String, T>> nodeIt(final String prefix) {
+            return new Iterator<Map.Entry<String, T>>() {
+                Iterator<Map.Entry<String, T>> it = strings.entrySet().iterator();
+
+                @Override
+                public boolean hasNext() {
+                    return it.hasNext();
+                }
+
+                @Override
+                public Map.Entry<String, T> next() {
+                    Entry<String, T> next = it.next();
+                    return new AbstractMap.SimpleImmutableEntry<>(prefix + next.getKey(), next.getValue());
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            };
+        }
+
+        @Override
+        public String toStringWithPrefix(String prefix) {
+            return prefix + toString();
+
+        }
+
+    }
 
 	@Override
 	public T getMember(String s) {

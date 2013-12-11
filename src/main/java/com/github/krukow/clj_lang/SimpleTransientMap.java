@@ -7,7 +7,7 @@ import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.TransientMap;
 
 public class SimpleTransientMap<K, V> extends AbstractMap<K, V> implements TransientMap<K, V> {
-    private final PersistentMap<K,V> impl;
+    protected final PersistentMap<K,V> impl;
     
     private SimpleTransientMap(PersistentMap<K, V> impl) {
         this.impl = impl;

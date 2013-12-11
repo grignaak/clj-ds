@@ -20,147 +20,146 @@ import java.util.ListIterator;
 import java.util.RandomAccess;
 
 public abstract class APersistentVector<T> extends AbstractList<T> implements List<T>, RandomAccess {
-private int _hash = -1;
+    private int _hash = -1;
 
-public String toString(){
-	return RT.printString(this);
-}
+    public String toString() {
+        return RT.printString(this);
+    }
 
-public int hashCode(){
-	if(_hash == -1)
-		{
-		int hash = 1;
-		Iterator i = iterator();
-		while(i.hasNext())
-			{
-			Object obj = i.next();
-			hash = 31 * hash + (obj == null ? 0 : obj.hashCode());
-			}
-		this._hash = hash;
-		}
-	return _hash;
-}
+    public int hashCode() {
+        if (_hash == -1)
+        {
+            int hash = 1;
+            Iterator i = iterator();
+            while (i.hasNext())
+            {
+                Object obj = i.next();
+                hash = 31 * hash + (obj == null ? 0 : obj.hashCode());
+            }
+            this._hash = hash;
+        }
+        return _hash;
+    }
 
-public T remove(int i){
-	throw new UnsupportedOperationException();
-}
+    public T remove(int i) {
+        throw new UnsupportedOperationException();
+    }
 
-public ListIterator<T> listIterator(final int index){
-	return new ListIterator<T>(){
-		int nexti = index;
+    public ListIterator<T> listIterator(final int index) {
+        return new ListIterator<T>() {
+            int nexti = index;
 
-		public boolean hasNext(){
-			return nexti < size();
-		}
+            public boolean hasNext() {
+                return nexti < size();
+            }
 
-		public T next(){
-			return get(nexti++);
-		}
+            public T next() {
+                return get(nexti++);
+            }
 
-		public boolean hasPrevious(){
-			return nexti > 0;
-		}
+            public boolean hasPrevious() {
+                return nexti > 0;
+            }
 
-		public T previous(){
-			return get(--nexti);
-		}
+            public T previous() {
+                return get(--nexti);
+            }
 
-		public int nextIndex(){
-			return nexti;
-		}
+            public int nextIndex() {
+                return nexti;
+            }
 
-		public int previousIndex(){
-			return nexti - 1;
-		}
+            public int previousIndex() {
+                return nexti - 1;
+            }
 
-		public void remove(){
-			throw new UnsupportedOperationException();
-		}
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
 
-		public void set(Object o){
-			throw new UnsupportedOperationException();
-		}
+            public void set(Object o) {
+                throw new UnsupportedOperationException();
+            }
 
-		public void add(Object o){
-			throw new UnsupportedOperationException();
-		}
-	};
-}
+            public void add(Object o) {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
 
-public T set(int i, T o){
-	throw new UnsupportedOperationException();
-}
+    public T set(int i, T o) {
+        throw new UnsupportedOperationException();
+    }
 
-public void add(int i, T o){
-	throw new UnsupportedOperationException();
-}
+    public void add(int i, T o) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean addAll(int i, Collection c){
-	throw new UnsupportedOperationException();
-}
+    public boolean addAll(int i, Collection c) {
+        throw new UnsupportedOperationException();
+    }
 
-// java.util.Collection implementation
+    // java.util.Collection implementation
 
-public boolean add(T o){
-	throw new UnsupportedOperationException();
-}
+    public boolean add(T o) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean remove(Object o){
-	throw new UnsupportedOperationException();
-}
+    public boolean remove(Object o) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean addAll(Collection c){
-	throw new UnsupportedOperationException();
-}
+    public boolean addAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
 
-public void clear(){
-	throw new UnsupportedOperationException();
-}
+    public void clear() {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean retainAll(Collection c){
-	throw new UnsupportedOperationException();
-}
+    public boolean retainAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean removeAll(Collection c){
-	throw new UnsupportedOperationException();
-}
+    public boolean removeAll(Collection c) {
+        throw new UnsupportedOperationException();
+    }
 
-public boolean containsAll(Collection c){
-	for(Object o : c)
-		{
-		if(!contains(o))
-			return false;
-		}
-	return true;
-}
+    public boolean containsAll(Collection c) {
+        for (Object o : c)
+        {
+            if (!contains(o))
+                return false;
+        }
+        return true;
+    }
 
     static class Seq<T> extends ASeq<T> implements IndexedSeq<T> {
-	//todo - something more efficient
-	final IPersistentVector<T> v;
-	final int i;
+        // todo - something more efficient
+        final IPersistentVector<T> v;
+        final int i;
 
+        public Seq(IPersistentVector<T> v, int i) {
+            this.v = v;
+            this.i = i;
+        }
 
-	public Seq(IPersistentVector<T> v, int i){
-		this.v = v;
-		this.i = i;
-	}
+        public T first() {
+            return v.nth(i);
+        }
 
-	public T first(){
-		return v.nth(i);
-	}
+        public ISeq<T> next() {
+            if (i + 1 < v.count())
+                return new APersistentVector.Seq<T>(v, i + 1);
+            return null;
+        }
 
-	public ISeq<T> next(){
-		if(i + 1 < v.count())
-			return new APersistentVector.Seq<T>(v, i + 1);
-		return null;
-	}
+        public int index() {
+            return i;
+        }
 
-	public int index(){
-		return i;
-	}
-
-	public int count(){
-		return v.count() - i;
-	}
+        public int count() {
+            return v.count() - i;
+        }
     }
 }
