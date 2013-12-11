@@ -294,10 +294,6 @@ public class PersistentHATTrie<T> extends AbstractMap<String, T> implements Pers
         return new PersistentHATTrie(newRoot, count + 1);
     }
 
-    private IPersistentSet disjoin(Object key) {
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public boolean containsKey(Object key) {
         return (key instanceof String) && get((String) key) != null;

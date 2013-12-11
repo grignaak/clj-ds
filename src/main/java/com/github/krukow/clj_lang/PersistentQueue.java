@@ -73,37 +73,6 @@ public class PersistentQueue<T> extends AbstractCollection<T> implements Persist
         return EMPTY;
     }
 
-    private static class Seq<T> extends ASeq<T> {
-        final ISeq<T> f;
-        final ISeq<T> rseq;
-
-        Seq(ISeq<T> f, ISeq<T> rseq) {
-            this.f = f;
-            this.rseq = rseq;
-        }
-
-        public T first() {
-            return f.first();
-        }
-
-        public ISeq<T> next() {
-            ISeq<T> f1 = f.next();
-            ISeq<T> r1 = rseq;
-            if (f1 == null)
-            {
-                if (rseq == null)
-                    return null;
-                f1 = rseq;
-                r1 = null;
-            }
-            return new Seq<T>(f1, r1);
-        }
-
-        public int count() {
-            return f.count() + rseq.count();
-        }
-    }
-
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {

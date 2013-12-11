@@ -82,10 +82,6 @@ public class Util {
         return ret;
     }
 
-    static public ISeq ret1(ISeq ret, Object nil) {
-        return ret;
-    }
-
     static public <K, V> void clearCache(ReferenceQueue rq, ConcurrentHashMap<K, Reference<V>> cache) {
         // cleanup any dead entries
         if (rq.poll() != null)

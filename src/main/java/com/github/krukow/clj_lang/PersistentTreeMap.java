@@ -111,64 +111,8 @@ public class PersistentTreeMap<K, V> extends AbstractMap<K, V> implements Persis
         return new PersistentTreeMap(comp);
     }
 
-    public ISeq rseq() {
-        if (_count > 0)
-            return Seq.create(tree, false, _count);
-        return null;
-    }
-
     public Comparator<K> comparator() {
         return comp;
-    }
-
-    public Object entryKey(Object entry) {
-        return ((Map.Entry) entry).getKey();
-    }
-
-    public ISeq seq(boolean ascending) {
-        if (_count > 0)
-            return Seq.create(tree, ascending, _count);
-        return null;
-    }
-
-    private ISeq seqFrom(K key, boolean ascending) {
-//        if (_count > 0)
-//        {
-//            ISeq stack = null;
-//            Node t = tree;
-//            while (t != null)
-//            {
-//                int c = doCompare(key, (K) t.key);
-//                if (c == 0)
-//                {
-//                    stack = RT.cons(t, stack);
-//                    return new Seq(stack, ascending);
-//                }
-//                else if (ascending)
-//                {
-//                    if (c < 0)
-//                    {
-//                        stack = RT.cons(t, stack);
-//                        t = t.left();
-//                    }
-//                    else
-//                        t = t.right();
-//                }
-//                else
-//                {
-//                    if (c > 0)
-//                    {
-//                        stack = RT.cons(t, stack);
-//                        t = t.right();
-//                    }
-//                    else
-//                        t = t.left();
-//                }
-//            }
-//            if (stack != null)
-//                return new Seq(stack, ascending);
-//        }
-        return null;
     }
 
     public K firstKey() {
@@ -662,58 +606,6 @@ public class PersistentTreeMap<K, V> extends AbstractMap<K, V> implements Persis
 
         Node blacken() {
             return new BlackBranchVal(key, val, left, right);
-        }
-    }
-
-    static private class Seq extends ASeq {
-        final ISeq stack;
-        final boolean asc;
-        final int cnt;
-
-        public Seq(ISeq stack, boolean asc) {
-            this.stack = stack;
-            this.asc = asc;
-            this.cnt = -1;
-        }
-
-        public Seq(ISeq stack, boolean asc, int cnt) {
-            this.stack = stack;
-            this.asc = asc;
-            this.cnt = cnt;
-        }
-
-        static Seq create(Node t, boolean asc, int cnt) {
-            return new Seq(push(t, null, asc), asc, cnt);
-        }
-
-        static ISeq push(Node t, ISeq stack, boolean asc) {
-//            while (t != null)
-//            {
-//                stack = RT.cons(t, stack);
-//                t = asc ? t.left() : t.right();
-//            }
-//            return stack;
-            return null;
-        }
-
-        public Object first() {
-            return stack.first();
-        }
-
-        public ISeq next() {
-            Node t = (Node) stack.first();
-            ISeq nextstack = push(asc ? t.right() : t.left(), stack.next(), asc);
-            if (nextstack != null)
-            {
-                return new Seq(nextstack, asc, cnt - 1);
-            }
-            return null;
-        }
-
-        public int count() {
-            if (cnt < 0)
-                return super.count();
-            return cnt;
         }
     }
 

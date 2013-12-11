@@ -267,7 +267,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
 
     }
 
-    static interface INode extends Serializable {
+    private static interface INode extends Serializable {
         INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf);
 
         Iterator nodeIt(boolean reverse);
@@ -280,14 +280,14 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
 
         Object find(int shift, int hash, Object key, Object notFound);
 
-        ISeq nodeSeq();
+//        ISeq nodeSeq();
 
         INode assoc(AtomicReference<Thread> edit, int shift, int hash, Object key, Object val, Box addedLeaf);
 
         INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf);
     }
 
-    final static class ArrayNode implements INode {
+    private final static class ArrayNode implements INode {
         int count;
         final INode[] array;
         final AtomicReference<Thread> edit;
@@ -302,7 +302,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
             return new ArrayNodeIterator(this, shift, hash, key);
         }
 
-        static class ArrayNodeIterator implements Iterator {
+        private static class ArrayNodeIterator implements Iterator {
             int index;
             Iterator current;
             INode[] array;
@@ -360,7 +360,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
 
         }
 
-        static final class ReverseArrayNodeIterator implements Iterator {
+        private static final class ReverseArrayNodeIterator implements Iterator {
             int index;
             Iterator current;
             INode[] array;
@@ -448,10 +448,6 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
             return node.find(shift + 5, hash, key, notFound);
         }
 
-        public ISeq nodeSeq() {
-            return Seq.create(array);
-        }
-
         private ArrayNode ensureEditable(AtomicReference<Thread> edit) {
             if (this.edit == edit)
                 return this;
@@ -515,47 +511,9 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
             }
             return editAndSet(edit, idx, n);
         }
-
-        static class Seq extends ASeq {
-            final INode[] nodes;
-            final int i;
-            final ISeq s;
-
-            static ISeq create(INode[] nodes) {
-                return create(nodes, 0, null);
-            }
-
-            private static ISeq create(INode[] nodes, int i, ISeq s) {
-                if (s != null)
-                    return new Seq(nodes, i, s);
-                for (int j = i; j < nodes.length; j++)
-                    if (nodes[j] != null) {
-                        ISeq ns = nodes[j].nodeSeq();
-                        if (ns != null)
-                            return new Seq(nodes, j + 1, ns);
-                    }
-                return null;
-            }
-
-            private Seq(INode[] nodes, int i, ISeq s) {
-                this.nodes = nodes;
-                this.i = i;
-                this.s = s;
-            }
-
-            public Object first() {
-                return s.first();
-            }
-
-            public ISeq next() {
-                return create(nodes, i, s.next());
-            }
-
-        }
-
     }
 
-    final static class BitmapIndexedNode implements INode {
+    private final static class BitmapIndexedNode implements INode {
         static final BitmapIndexedNode EMPTY = new BitmapIndexedNode(null, 0, new Object[0]);
 
         int bitmap;
@@ -580,7 +538,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
             return reverse ? new ReverseBitmapIndexedNodeIterator(this) : new BitmapIndexedNodeIterator(this);
         }
 
-        static class BitmapIndexedNodeIterator implements Iterator {
+        private static class BitmapIndexedNodeIterator implements Iterator {
             BitmapIndexedNode node;
 
             int index;
@@ -840,10 +798,6 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
             return notFound;
         }
 
-        public ISeq nodeSeq() {
-            return NodeSeq.create(array);
-        }
-
         private BitmapIndexedNode ensureEditable(AtomicReference<Thread> edit) {
             if (this.edit == edit)
                 return this;
@@ -968,7 +922,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
         }
     }
 
-    final static class HashCollisionNode implements INode {
+    private final static class HashCollisionNode implements INode {
 
         final int hash;
         int count;
@@ -1100,10 +1054,6 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
             if (Util.equals(key, array[idx]))
                 return array[idx + 1];
             return notFound;
-        }
-
-        public ISeq nodeSeq() {
-            return NodeSeq.create(array);
         }
 
         public int findIndex(Object key) {
@@ -1238,51 +1188,6 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Persis
 
     private static int bitpos(int hash, int shift) {
         return 1 << mask(hash, shift);
-    }
-
-    @Deprecated
-    private static final class NodeSeq extends ASeq {
-        final Object[] array;
-        final int i;
-        final ISeq s;
-
-        static ISeq create(Object[] array) {
-            return create(array, 0, null);
-        }
-
-        private static ISeq create(Object[] array, int i, ISeq s) {
-            if (s != null)
-                return new NodeSeq(array, i, s);
-            for (int j = i; j < array.length; j += 2) {
-                if (array[j] != null)
-                    return new NodeSeq(array, j, null);
-                INode node = (INode) array[j + 1];
-                if (node != null) {
-                    ISeq nodeSeq = node.nodeSeq();
-                    if (nodeSeq != null)
-                        return new NodeSeq(array, j + 2, nodeSeq);
-                }
-            }
-            return null;
-        }
-
-        NodeSeq(Object[] array, int i, ISeq s) {
-            this.array = array;
-            this.i = i;
-            this.s = s;
-        }
-
-        public Object first() {
-            if (s != null)
-                return s.first();
-            return new AbstractMap.SimpleImmutableEntry<>(array[i], array[i + 1]);
-        }
-
-        public ISeq next() {
-            if (s != null)
-                return create(array, i, s.next());
-            return create(array, i + 2, null);
-        }
     }
 
     @Override
