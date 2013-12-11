@@ -91,7 +91,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 					newArr[ichar] = newNode;
 					return new AccessNode(newArr, emptyPtr);
 				}
-				ContainerNode c = new ContainerNode(PersistentTreeMap.EMPTY.assoc(s.substring(i+1), t));
+				ContainerNode c = new ContainerNode(PersistentTreeMap.EMPTY.plus(s.substring(i+1), t));
 				HATTrieNode[] newArr = new HATTrieNode[children.length];
 				System.arraycopy(children, 0, newArr, 0, children.length);
 				newArr[ichar] = c;
@@ -201,7 +201,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 		    if (shouldBurst()) {
 			   return burst(s,i,t);
 		    }
-			return new ContainerNode<T>(this.strings.assoc(s.substring(i),t));
+			return new ContainerNode<T>(this.strings.plus(s.substring(i),t));
 		}
 
 		public T get(String s, int i) {
@@ -211,7 +211,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 		private HATTrieNode burst(String s, int i, T t) {
 			HATTrieNode[] children = new HATTrieNode[256];
 			T empty = s.length() == i ? t : null;
-			for (Iterator<Map.Entry<String, T>> iterator = strings.iterator(); iterator.hasNext();) {
+			for (Iterator<Map.Entry<String, T>> iterator = strings.entrySet().iterator(); iterator.hasNext();) {
 				Entry<String, T> next = iterator.next();
 				String old = next.getKey();
 				T value = next.getValue();
@@ -231,7 +231,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 
 		private static final <T> HATTrieNode addToNode(HATTrieNode hatTrieNode, String s, T v, int i) {
 			if (hatTrieNode == null) {
-				return new ContainerNode(PersistentTreeMap.EMPTY.assoc(s.substring(i),v));
+				return new ContainerNode(PersistentTreeMap.EMPTY.plus(s.substring(i),v));
 			} else {
 				return hatTrieNode.add(s, i,v);
 			}
@@ -239,13 +239,13 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 		}
 
 		private boolean shouldBurst() {
-			return strings.count() == 4;
+			return strings.size() == 4;
 		}
 
 		@Override
 		public Iterator<Map.Entry<String, T>> nodeIt(final String prefix) {
 			return new Iterator<Map.Entry<String, T>>() {
-				Iterator<Map.Entry<String, T>> it  = strings.iterator();
+				Iterator<Map.Entry<String, T>> it  = strings.entrySet().iterator();
 				@Override
 				public boolean hasNext() {
 					return it.hasNext();
@@ -281,7 +281,7 @@ public class PersistentHATTrie<T> extends APersistentTrie<T> {
 	@Override
 	public IPersistentTrie<T> addMember(String s, T t) {
 		if (root == null) {
-			return new PersistentHATTrie(new ContainerNode(PersistentTreeMap.EMPTY.assoc(s, t)),1);
+			return new PersistentHATTrie(new ContainerNode(PersistentTreeMap.EMPTY.plus(s, t)),1);
 		}
 		HATTrieNode<T> newRoot = root.add(s, 0,t);
 		if (root == newRoot) {
