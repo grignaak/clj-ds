@@ -11,7 +11,7 @@
 
 package com.github.krukow.clj_lang;
 
-public class Box {
+class Box {
 
     public Object val;
 
