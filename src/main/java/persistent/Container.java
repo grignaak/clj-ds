@@ -1,8 +1,6 @@
 package persistent;
 
-import java.util.AbstractCollection;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A persistent, immutable container of elements of type E.
@@ -32,7 +30,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * <p>
  * Once a builder builds its Container, it may not be used anymore.
  */
-public abstract class Container<E> extends AbstractCollection<E> implements Collection<E> {
+public interface Container<E> extends Collection<E> {
+
     /**
      * A builder for a Container, which employs the same structure sharing and
      * runtime qualities as the container it builds.
@@ -51,60 +50,35 @@ public abstract class Container<E> extends AbstractCollection<E> implements Coll
      * Once a builder builds its Container, it may not be used anymore. Results
      * are undefined if more than one method on a builder is called.
      */
-    public static abstract class ContainerBuilder<E> {
-        protected final AtomicReference<Thread> owner;
-        
-        ContainerBuilder(AtomicReference<Thread> owner) {
-            this.owner = owner;
-        }
-        
-        protected void ensureEditable() {
-            final Thread thread = owner.get();
-            if (thread == Thread.currentThread())
-                return;
-            if (thread != null)
-                throw new IllegalAccessError("Builder used by non-owner thread");
-            throw new IllegalAccessError("Builder used after persistent! call");
-        }
-        
-        protected <Cont extends Container<E>> Cont built(Cont result) {
-            owner.set(null);
-            return result;
-        }
-        
+    interface ContainerBuilder<E> {
+
         /**
-         * Create or return a builder with the element added to it. (Note: some
-         * set-like builder may not allow duplicates, and the returned builder
-         * may be equivalent to the prior builder.)
+         * Build the container. Once called, this builder may no longer be used.
          */
-        public abstract ContainerBuilder<E> plus(E e);
-        
+        Container<E> build();
+
+        /**
+         * Create or return a builder without any elements, but with the same
+         * runtime characteristics as the this one.
+         */
+        ContainerBuilder<E> zero();
+
+
         /**
          * Create or return a builder with the elements added to it. (Note: some
          * set-like builder may not allow duplicates, and the returned builder
          * may be equivalent to the prior builder.)
          */
-        public ContainerBuilder<E> plusAll(Collection<? extends E> more) {
-            ContainerBuilder<E> plussed = this;
-            for (E item : more) {
-                plussed = plussed.plus(item);
-            }
-            return plussed;
-        }
-        
+        ContainerBuilder<E> plusAll(Collection<? extends E> more);
+
         /**
-         * Create or return a builder without any elements, but with the same
-         * runtime characteristics as the this one.
+         * Create or return a builder with the element added to it. (Note: some
+         * set-like builder may not allow duplicates, and the returned builder
+         * may be equivalent to the prior builder.)
          */
-        public abstract ContainerBuilder<E> zero();
+        ContainerBuilder<E> plus(E e);
         
-        /**
-         * Build the container. Once called, this builder may no longer be used.
-         */
-        public abstract Container<E> build();
     }
-    
-    public Container() {/* Don't want anyone faking immutability */}
     
     /**
      * Create or return a container with the element added to it. (Note: some
@@ -112,45 +86,36 @@ public abstract class Container<E> extends AbstractCollection<E> implements Coll
      * may be equivalent to the prior container.)
      */
     public abstract Container<E> plus(E e);
-    
+
     /**
      * Create or return container with the elements added to it. (Note: some
      * set-like containers may not allow duplicates, and the returned container
      * may be equivalent to the prior container.)
      */
-    public Container<E> plusAll(Collection<? extends E> more) {
-        return asBuilder().plusAll(more).build();
-    }
-    
+    public abstract Container<E> plusAll(Collection<? extends E> more);
+
     /**
      * Create or return a container without any elements, but with the same
      * runtime characteristics as the this one.
      */
     public abstract Container<E> zero();
-    
+
     /**
      * Create a builder for a container of this type.
      */
     public abstract ContainerBuilder<E> asBuilder();
-    
+
     /**
      * Create or return a persistent cursor that traverses this container.
      */
     public abstract Cursor<E> cursor();
+
+    @Override public abstract ImmutableIterator<E> iterator();
     
-    
-    @Deprecated @Override public final boolean add(E e) { throw mutate(); }
-    @Deprecated @Override public final boolean addAll(Collection<? extends E> c) { throw mutate(); }
-    @Deprecated @Override public final void clear() { throw mutate(); }
-    @Deprecated @Override public final boolean remove(Object o) { throw mutate(); }
-    @Deprecated @Override public final boolean removeAll(Collection<?> c) { throw mutate(); }
-    @Deprecated @Override public final boolean retainAll(Collection<?> c) { throw mutate(); }
-    @Override
-    public abstract ImmutableIterator<E> iterator();
-    
-    static final RuntimeException mutate() {
-        throw new UnsupportedOperationException("Mutator method not allowed on an immutable collection");
-    }
-    
-    static final AtomicReference<Thread> currentThread() { return new AtomicReference<>(Thread.currentThread()); }
+    @Deprecated @Override public abstract boolean add(E e);
+    @Deprecated @Override public abstract boolean addAll(Collection<? extends E> c);
+    @Deprecated @Override public abstract void clear();
+    @Deprecated @Override public abstract boolean remove(Object o);
+    @Deprecated @Override public abstract boolean removeAll(Collection<?> c);
+    @Deprecated @Override public abstract boolean retainAll(Collection<?> c);
 }

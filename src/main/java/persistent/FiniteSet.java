@@ -2,36 +2,37 @@ package persistent;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class FiniteSet<E> extends Container<E> implements Set<E> {
-    public static abstract class FiniteSetBuilder<E> extends ContainerBuilder<E> {
-        FiniteSetBuilder(AtomicReference<Thread> owner) { super(owner); }
-        @Override public abstract FiniteSetBuilder<E> plus(E e);
-        @Override public abstract FiniteSetBuilder<E> plusAll(Collection<? extends E> more);
+public interface FiniteSet<E> extends Container<E>, Set<E> {
+    public interface FiniteSetBuilder<E> extends Container.ContainerBuilder<E> {
+
+        @Override FiniteSetBuilder<E> plus(E e);
         
-        public abstract FiniteSetBuilder<E> difference(Collection<? extends E> minus);
-        public abstract FiniteSetBuilder<E> symmetricDifference(Collection<? extends E> minus);
-        public abstract FiniteSetBuilder<E> intersection(Collection<? extends E> other);
+        @Override
+        FiniteSetBuilder<E> plusAll(Collection<? extends E> more);
         
-        public abstract FiniteSetBuilder<E> minus(E value);
-        @Override public abstract FiniteSetBuilder<E> zero();
+        // TODO future implementation
+//        public abstract FiniteSetBuilder<E> difference(Collection<? extends E> minus);
+//        public abstract FiniteSetBuilder<E> symmetricDifference(Collection<? extends E> minus);
+//        public abstract FiniteSetBuilder<E> intersection(Collection<? extends E> other);
         
-        @Override public abstract FiniteSet<E> build();
+        FiniteSetBuilder<E> minus(E value);
+        @Override FiniteSetBuilder<E> zero();
+        
+        @Override FiniteSet<E> build();
     }
     
-    
-    FiniteSet() {/* masterlock */}
-    
     @Override public abstract FiniteSet<E> plus(E e);
-    @Override public abstract FiniteSet<E> plusAll(Collection<? extends E> more);
     
-    public abstract FiniteSet<E> difference(Collection<? extends E> minus);
-    public abstract FiniteSet<E> symmetricDifference(Collection<? extends E> minus);
-    public abstract FiniteSet<E> intersection(Collection<? extends E> other);
+    @Override
+    FiniteSet<E> plusAll(Collection<? extends E> more);
     
-    public abstract FiniteSet<E> minus(E value);
-    @Override public abstract FiniteSet<E> zero();
+    // TODO future implementation
+//    public abstract FiniteSet<E> difference(Collection<? extends E> minus);
+//    public abstract FiniteSet<E> symmetricDifference(Collection<? extends E> minus);
+//    public abstract FiniteSet<E> intersection(Collection<? extends E> other);
     
-    @Override public abstract FiniteSetBuilder<E> asBuilder();
+    FiniteSet<E> minus(E value);
+    @Override FiniteSet<E> zero();
+    @Override FiniteSetBuilder<E> asBuilder();
 }

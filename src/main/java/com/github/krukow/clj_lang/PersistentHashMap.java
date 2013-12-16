@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import persistent.Box;
+
 import com.github.krukow.clj_ds.PersistentMap;
 import com.github.krukow.clj_ds.TransientMap;
 

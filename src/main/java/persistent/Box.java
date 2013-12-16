@@ -9,9 +9,9 @@
 
 /* rich Mar 27, 2006 8:40:19 PM */
 
-package com.github.krukow.clj_lang;
+package persistent;
 
-class Box {
+public class Box { // TODO: privatize
 
     public Object val;
 

@@ -13,9 +13,9 @@ package persistent;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicReference;
 
-import persistent.Vector.VectorBuilder;
+import persistent.AbstractBuilder.Owner;
+import persistent.TrieVector.TrieVectorBuilder;
 
 /**
  * A series where elements are added onto the rear and removed from the front.
@@ -24,13 +24,13 @@ import persistent.Vector.VectorBuilder;
  * rear, which is in-order, so no reversing or suspensions required for
  * persistent use.
  */
-public class Queue<T> extends Series<T> {
+public class TrieQueue<T> extends AbstractSeries<T> {
 
-    private static class QueueIterator<T> extends ImmutableIterator<T> {
+    private static class TrieQueueIterator<T> extends AbstractImmutableIterator<T> {
         private final Iterator<T> first;
         private final Iterator<T> second;
 
-        public QueueIterator(Queue<T> queue) {
+        public TrieQueueIterator(TrieQueue<T> queue) {
             first = queue.front.iterator();
             second = queue.rear.iterator();
         }
@@ -46,12 +46,12 @@ public class Queue<T> extends Series<T> {
         }
     }
     
-    public static class QueueBuilder<T> extends SeriesBuilder<T> {
+    public static class TrieQueueBuilder<T> extends AbstractSeriesBuilder<T> {
         private final int size;
         private final Cursor<T> front;
-        private final Vector.VectorBuilder<T> rear;
+        private final TrieVector.TrieVectorBuilder<T> rear;
 
-        QueueBuilder(AtomicReference<Thread> owner, int size, Cursor<T> front, Vector.VectorBuilder<T> rear) {
+        TrieQueueBuilder(Owner owner, int size, Cursor<T> front, TrieVector.TrieVectorBuilder<T> rear) {
             super(owner);
             this.size = size;
             this.front = front;
@@ -59,65 +59,65 @@ public class Queue<T> extends Series<T> {
         }
 
         @Override
-        public QueueBuilder<T> plus(T e) {
-            ensureEditable();
+        public TrieQueueBuilder<T> plus(T e) {
+            owner.ensureEditable();
             if (size == 0)
-                return new QueueBuilder<>(owner, size + 1, ConsList.create(e).cursor(), rear);
+                return new TrieQueueBuilder<>(owner, size + 1, ConsList.create(e).cursor(), rear);
             else
-                return new QueueBuilder<>(owner, size + 1, front, rear.plus(e));
+                return new TrieQueueBuilder<>(owner, size + 1, front, rear.plus(e));
         }
         
         @Override
-        public QueueBuilder<T> plusAll(Collection<? extends T> more) {
-            return (QueueBuilder<T>) super.plusAll(more);
+        public TrieQueueBuilder<T> plusAll(Collection<? extends T> more) {
+            return (TrieQueueBuilder<T>) super.plusAll(more);
         }
 
         @Override
-        public QueueBuilder<T> zero() {
-            ensureEditable();
-            return Queue.<T>emptyQueue().asBuilder();
+        public TrieQueueBuilder<T> zero() {
+            owner.ensureEditable();
+            return TrieQueue.<T>emptyQueue().asBuilder();
         }
 
         @Override
-        public Queue<T> build() {
-            ensureEditable();
-            return built(new Queue<>(size, front, rear.build()));
+        public TrieQueue<T> build() {
+            owner.ensureEditable();
+            return built(new TrieQueue<>(size, front, rear.build()));
         }
 
         @Override
-        public QueueBuilder<T> minus() {
-            ensureEditable();
+        public TrieQueueBuilder<T> minus() {
+            owner.ensureEditable();
             if (front.isDone())
                 return this;
 
             Cursor<T> newFront = front.tail();
-            VectorBuilder<T> newRear = rear;
+            TrieVectorBuilder<T> newRear = rear;
             
             if (newFront.isDone()) {
                 /* Switching owners here because we're building the vector, it
                  * ends up being the same thread anyway. */
                 newFront = rear.build().cursor();
-                newRear = Vector.<T>emptyVector().asBuilder();
+                newRear = TrieVector.<T>emptyVector().asBuilder();
             }
             
-            return new QueueBuilder<T>(newRear.owner, size - 1, newFront, newRear);
+            return new TrieQueueBuilder<T>(newRear.owner, size - 1, newFront, newRear);
         }
     }
 
-    private final static Queue<?> EMPTY = new Queue<>(0, ConsList.emptyList().cursor(), Vector.emptyVector());
+    private final static TrieQueue<?> EMPTY = new TrieQueue<>(0, ConsList.emptyList().cursor(), TrieVector.emptyVector());
     
     @SuppressWarnings("unchecked")
-    public static <T> Queue<T> emptyQueue() {
-        return (Queue<T>) EMPTY;
+    public static <T> TrieQueue<T> emptyQueue() {
+        return (TrieQueue<T>) EMPTY;
     }
 
     private final int size;
     
     /* Invariant: If front is empty, size is 0 */
     private final Cursor<T> front;
-    private final Vector<T> rear;
+    private final TrieVector<T> rear;
 
-    private Queue(int size, Cursor<T> front, Vector<T> rear) {
+    private TrieQueue(int size, Cursor<T> front, TrieVector<T> rear) {
         this.size = size;
         this.front = front;
         this.rear = rear;
@@ -129,17 +129,17 @@ public class Queue<T> extends Series<T> {
     }
 
     @Override
-    public Queue<T> minus() {
+    public TrieQueue<T> minus() {
         if (front.isDone())
             throw new NoSuchElementException("removing from empty queue");
 
         Cursor<T> newFront = front.tail();
-        Vector<T> newRear = rear;
+        TrieVector<T> newRear = rear;
         if (newFront.isDone()) {
             newFront = rear.cursor();
-            newRear = Vector.<T>emptyVector();
+            newRear = TrieVector.<T>emptyVector();
         }
-        return new Queue<T>(size - 1, newFront, newRear);
+        return new TrieQueue<T>(size - 1, newFront, newRear);
     }
 
     @Override
@@ -148,29 +148,29 @@ public class Queue<T> extends Series<T> {
     }
 
     @Override
-    public Queue<T> plus(T o) {
+    public TrieQueue<T> plus(T o) {
         if (size == 0)
-            return new Queue<T>(size + 1, ConsList.create(o).cursor(), rear);
+            return new TrieQueue<T>(size + 1, ConsList.create(o).cursor(), rear);
         else
-            return new Queue<T>(size + 1, front, rear.plus(o));
+            return new TrieQueue<T>(size + 1, front, rear.plus(o));
     }
 
     @Override
-    public Queue<T> zero() {
+    public TrieQueue<T> zero() {
         return emptyQueue();
     }
 
     @Override
     public ImmutableIterator<T> iterator() {
-        return new QueueIterator<T>(this);
+        return new TrieQueueIterator<T>(this);
     }
 
     @Override
-    public QueueBuilder<T> asBuilder() {
-        return new QueueBuilder<>(currentThread(), size, front, rear.asBuilder());
+    public TrieQueueBuilder<T> asBuilder() {
+        return new TrieQueueBuilder<>(new Owner(), size, front, rear.asBuilder());
     }
 
-    public static <T> QueueBuilder<T> newBuilder() {
-        return Queue.<T>emptyQueue().asBuilder();
+    public static <T> TrieQueueBuilder<T> newBuilder() {
+        return TrieQueue.<T>emptyQueue().asBuilder();
     }
 }

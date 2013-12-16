@@ -8,8 +8,6 @@ import com.github.krukow.clj_lang.PersistentArrayMap;
 import com.github.krukow.clj_lang.PersistentConsList;
 import com.github.krukow.clj_lang.PersistentHashMap;
 import com.github.krukow.clj_lang.PersistentHashSet;
-import com.github.krukow.clj_lang.PersistentTreeMap;
-import com.github.krukow.clj_lang.PersistentTreeSet;
 
 public final class Persistents {
 
@@ -125,37 +123,37 @@ public final class Persistents {
 		return PersistentArrayMap.create(init);
 	}
 
-	/**
-	 * @return An empty {@link PersistentSortedMap}; implemented as a tree map.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <K, V> PersistentSortedMap<K, V> treeMap() {
-		return PersistentTreeMap.EMPTY;
-	}
-
-	/**
-	 * @return A singleton {@link PersistentSortedMap} associating the given key
-	 *         with the given value; implemented as tree map.
-	 */
-	public static <K, V> PersistentSortedMap<K, V> treeMap(K key, V val) {
-		return Persistents.<K, V> treeMap().plus(key, val);
-	}
-
-	/**
-	 * @return A {@link PersistentSortedMap} consisting of the associations of
-	 *         the map init; implemented as tree map.
-	 */
-	public static <K, V> PersistentSortedMap<K, V> treeMap(Map<? extends K, ? extends V> init) {
-		return PersistentTreeMap.create(init);
-	}
-
-	/**
-	 * @return An empty {@link PersistentSortedSet}; implemented as tree set.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <E> PersistentSortedSet<E> treeSet() {
-		return PersistentTreeSet.empty();
-	}
+//	/**
+//	 * @return An empty {@link PersistentSortedMap}; implemented as a tree map.
+//	 */
+//	@SuppressWarnings("unchecked")
+//	public static <K, V> PersistentSortedMap<K, V> treeMap() {
+//		return PersistentTreeMap.EMPTY;
+//	}
+//
+//	/**
+//	 * @return A singleton {@link PersistentSortedMap} associating the given key
+//	 *         with the given value; implemented as tree map.
+//	 */
+//	public static <K, V> PersistentSortedMap<K, V> treeMap(K key, V val) {
+//		return Persistents.<K, V> treeMap().plus(key, val);
+//	}
+//
+//	/**
+//	 * @return A {@link PersistentSortedMap} consisting of the associations of
+//	 *         the map init; implemented as tree map.
+//	 */
+//	public static <K, V> PersistentSortedMap<K, V> treeMap(Map<? extends K, ? extends V> init) {
+//		return PersistentTreeMap.create(init);
+//	}
+//
+//	/**
+//	 * @return An empty {@link PersistentSortedSet}; implemented as tree set.
+//	 */
+//	@SuppressWarnings("unchecked")
+//	public static <E> PersistentSortedSet<E> treeSet() {
+//		return PersistentTreeSet.empty();
+//	}
 
 	/**
 	 * @return An empty {@link PersistentList}; implemented as linked list.

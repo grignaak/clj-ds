@@ -10,16 +10,21 @@
 
 package persistent;
 
+import java.util.AbstractList;
+import java.util.AbstractSequentialList;
+import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+
+import persistent.AbstractSeries.SeriesIterator;
 
 /**
  * A persistent, threadSafe, singly-linked list. Adding and removing by default
  * happens at the <em>beginning</em> of the sequence, and is done in O(1) time.
  * Access at an arbitrary index is done in O(n) time.
  */
-public class ConsList<T> extends Sequence<T> {
+public class ConsList<T> extends AbstractSequentialList<T> implements Cursor<T>, Sequence<T> {
 
     private final static EmptyList<?> EMPTY = new EmptyList<>();
     
@@ -49,7 +54,7 @@ public class ConsList<T> extends Sequence<T> {
     }
 
     public static <T> Sequence<T> create(Iterable<? extends T> init) {
-        return create(init instanceof List<?> ? (List<? extends T>)init : Vector.create(init));
+        return create(init instanceof List<?> ? (List<? extends T>)init : TrieVector.create(init));
     }
 
     public static <T> Sequence<T> create(List<? extends T> init) {
@@ -71,12 +76,17 @@ public class ConsList<T> extends Sequence<T> {
     public int size() {
         return _count;
     }
+    
+    @Override
+    public Cursor<T> cursor() {
+        return this;
+    }
 
     public ConsList<T> plus(T o) {
         return new ConsList<T>(o, this, _count + 1);
     }
 
-    private static final class ConsListIterator<T> extends ImmutableListIterator<T> {
+    private static final class ConsListIterator<T> extends AbstractImmutableListIterator<T> {
         private Sequence<Sequence<T>> prior = ConsList.emptyList();
         private Sequence<T> cur;
 
@@ -129,7 +139,7 @@ public class ConsList<T> extends Sequence<T> {
         }
     }
 
-    private static class EmptyList<T> extends Sequence<T> {
+    private static class EmptyList<T> extends AbstractList<T> implements Sequence<T> {
         public ConsList<T> plus(T o) {
             return new ConsList<T>(o, null, 1);
         }
@@ -160,8 +170,13 @@ public class ConsList<T> extends Sequence<T> {
         }
 
         @Override
+        public ImmutableListIterator<T> listIterator() {
+            return listIterator();
+        }
+        @Override
         public ImmutableListIterator<T> listIterator(int index) {
-            return new ConsListIterator<>(this, index);
+            if (index != 0) throw new IndexOutOfBoundsException("Empty list");
+            return new EmptyIterator<>();
         }
 
         @Override
@@ -170,25 +185,35 @@ public class ConsList<T> extends Sequence<T> {
         }
 
         @Override
-        public List<T> subList(int fromIndex, int toIndex) {
-            return new SubSequence<>(this, fromIndex, toIndex);
-        }
-
-        @Override
         public Sequence<T> replace(int index, T e) {
-            rangeCheckInclusive(index, 0);
+            if (index != 0) throw new IndexOutOfBoundsException("Empty list");
             return plus(e);
         }
 
         @Override
         public SequenceBuilder<T> asBuilder() {
-            return new WrappedSequenceBuilder<>(currentThread(), this);
+            return Containers.wrappedBuilder(this);
+        }
+
+        @Override
+        public Cursor<T> cursor() {
+            return Containers.emptyCursor();
+        }
+
+        @Override
+        public Sequence<T> plusAll(Collection<? extends T> more) {
+            return asBuilder().plusAll(more).build();
         }
     }
 
     @Override
     public Sequence<T> zero() {
         return emptyList();
+    }
+    
+    @Override
+    public ImmutableListIterator<T> listIterator() {
+        return listIterator(0);
     }
 
     @Override
@@ -213,6 +238,16 @@ public class ConsList<T> extends Sequence<T> {
         }
         
         return current._first;
+    }
+
+    private static void rangeCheck(int index, int size) {
+        if (index < 0 || index >= size)
+            throw new IndexOutOfBoundsException("Index:"+index+" Size:"+size);
+    }
+    
+    private static void rangeCheckInclusive(int index, int size) {
+        if (index < 0 || index > size)
+            throw new IndexOutOfBoundsException("Index:"+index+" Size:"+size);
     }
 
     @Override
@@ -240,6 +275,26 @@ public class ConsList<T> extends Sequence<T> {
 
     @Override
     public SequenceBuilder<T> asBuilder() {
-        return new WrappedSequenceBuilder<>(currentThread(), this);
+        return Containers.wrappedBuilder(this);
+    }
+
+    @Override
+    public boolean isDone() {
+        return false;
+    }
+
+    @Override
+    public Cursor<T> tail() {
+        return _count > 1 ? _rest : Containers.<T>emptyCursor();
+    }
+
+    @Override
+    public T head() {
+        return _first;
+    }
+
+    @Override
+    public Sequence<T> plusAll(Collection<? extends T> more) {
+        return asBuilder().plusAll(more).build();
     }
 }

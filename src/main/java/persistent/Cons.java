@@ -11,27 +11,19 @@
 
 package persistent;
 
+import persistent.AbstractBuilder.Owner;
 
-public final class Cons<T> extends Series<T> {
+
+final class Cons<T> extends AbstractContainer<T> implements Cursor<T> {
 
     private final T _first;
-    private final Series<T> _more;
+    private final Container<T> _more;
     private final int _size;
 
-    Cons(T first, Series<T> _more) {
+    Cons(T first, Container<T> _more) {
         this._first = first;
         this._more = _more;
         this._size = _more.size() + 1;
-    }
-
-    @Override
-    public T peek() {
-        return _first;
-    }
-
-    @Override
-    public Series<T> minus() {
-        return _more;
     }
 
     @Override
@@ -40,23 +32,42 @@ public final class Cons<T> extends Series<T> {
     }
 
     @Override
-    public Series<T> zero() {
-        /* Improves the performance, I should think. */
-        return ConsList.emptyList();
+    public Container<T> zero() {
+        return TrieVector.<T>emptyVector();
     }
 
     @Override
-    public Series<T> plus(T val) {
+    public Container<T> plus(T val) {
         return new Cons<T>(val, this);
     }
 
     @Override
     public ImmutableIterator<T> iterator() {
-        return new SeriesIterator<>(this);
+        return new AbstractCursor.CursorIterator<>(this);
     }
 
     @Override
-    public SeriesBuilder<T> asBuilder() {
-        return new WrappedSeriesBuilder<T>(currentThread(), this);
+    public persistent.Container.ContainerBuilder<T> asBuilder() {
+        return new WrappedContainerBuilder<T>(new Owner(), this);
+    }
+
+    @Override
+    public Cursor<T> cursor() {
+        return this;
+    }
+
+    @Override
+    public boolean isDone() {
+        return false;
+    }
+
+    @Override
+    public Cursor<T> tail() {
+        return _more.cursor();
+    }
+
+    @Override
+    public T head() {
+        return _first;
     }
 }

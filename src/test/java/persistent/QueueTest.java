@@ -10,14 +10,14 @@ import java.util.NoSuchElementException;
 
 import org.junit.Test;
 
-import persistent.Queue.QueueBuilder;
+import persistent.TrieQueue.TrieQueueBuilder;
 
 public class QueueTest {
 
 
     @Test
     public void testCursor() {
-        Queue<Integer> list = Queue.<Integer>emptyQueue()
+        TrieQueue<Integer> list = TrieQueue.<Integer>emptyQueue()
                 .plus(1).plus(2).plus(3).plus(4).plus(5);
         {
             Cursor<Integer> cursor = list.cursor();
@@ -51,7 +51,7 @@ public class QueueTest {
     
     @Test
     public void testIterator() {
-        Queue<Integer> list = Queue.<Integer>emptyQueue()
+        TrieQueue<Integer> list = TrieQueue.<Integer>emptyQueue()
                 .plus(1).plus(2).plus(3).plus(4).plus(5);
         
         Iterator<Integer> it = list.iterator();
@@ -71,9 +71,9 @@ public class QueueTest {
     
     @Test
     public void testBuilder() {
-        Queue<Integer> zero = Queue.emptyQueue();
-        QueueBuilder<Integer> list = Queue.newBuilder();
-//        list = list.minus(); // shouldn't throw
+        TrieQueue<Integer> zero = TrieQueue.emptyQueue();
+        TrieQueueBuilder<Integer> list = TrieQueue.newBuilder();
+        list = list.minus(); // shouldn't throw
         
         list = zero.asBuilder().plus(1);
         list = list.minus();

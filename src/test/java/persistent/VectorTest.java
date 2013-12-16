@@ -13,7 +13,7 @@ public class VectorTest {
 
     @Test
     public void testReplace() {
-        Sequence<Integer> list = Vector.<Integer>emptyVector()
+        Sequence<Integer> list = TrieVector.<Integer>emptyVector()
                 .plus(1).plus(2).plus(3).plus(4).plus(5);
         assertEquals(Arrays.asList(1, 2, 3, 4, 5), list);
         
@@ -28,7 +28,7 @@ public class VectorTest {
 
     @Test
     public void testCursor() {
-        Sequence<Integer> list = Vector.<Integer>emptyVector()
+        Sequence<Integer> list = TrieVector.<Integer>emptyVector()
                 .plus(1).plus(2).plus(3).plus(4).plus(5);
         {
             Cursor<Integer> cursor = list.cursor();
@@ -62,7 +62,7 @@ public class VectorTest {
     
     @Test
     public void testIterator() {
-        Sequence<Integer> list = Vector.<Integer>emptyVector()
+        Sequence<Integer> list = TrieVector.<Integer>emptyVector()
                 .plus(1).plus(2).plus(3).plus(4).plus(5);
         
         Iterator<Integer> it = list.iterator();
@@ -83,7 +83,7 @@ public class VectorTest {
     @Test
     public void testListIterator() {
         int size = 130; // a little more than a 32-divisible vector
-        Sequence<Integer> list = Vector.<Integer>emptyVector();
+        Sequence<Integer> list = TrieVector.<Integer>emptyVector();
         for (int i = 1; i <= size; i++) {
             list = list.plus(i);
         }

@@ -2,42 +2,43 @@ package persistent;
 
 import java.util.Map;
 
-public abstract class Dictionary<K, V> implements Map<K, V> {
-    
-    public static abstract class DictionaryBuilder<K, V> {
-        DictionaryBuilder() {/* Blessed implementations only */}
-        public abstract DictionaryBuilder<K, V> plus(K key, V value);
-        public abstract DictionaryBuilder<K, V> plusIfAbsent(K key, V value);
-        
-        public abstract DictionaryBuilder<K, V> replace(K key, V expected, V actual);
-        
-        public abstract DictionaryBuilder<K, V> minus(K key);
-        public abstract DictionaryBuilder<K, V> minus(K key, V expected);
+public interface Dictionary<K, V> extends Map<K,V>{
 
-        public abstract DictionaryBuilder<K, V> zero();
+    public interface DictionaryBuilder<K, V> {
+        DictionaryBuilder<K, V> plus(K key, V value);
+        DictionaryBuilder<K, V> plusIfAbsent(K key, V value);
         
-        public abstract Dictionary<K,V> build();
+        DictionaryBuilder<K, V> replace(K key, V expected, V actual);
+        
+        DictionaryBuilder<K, V> minus(K key);
+        DictionaryBuilder<K, V> minus(K key, V expected);
+
+        DictionaryBuilder<K, V> zero();
+        
+        Dictionary<K,V> build();
     }
     
-    Dictionary() {/* Can't fake immutability */}
     
-    public abstract Dictionary<K, V> plus(K key, V value);
-    public abstract Dictionary<K, V> plusIfAbsent(K key, V value);
+    // TODO plusAll
+    Dictionary<K, V> plus(K key, V value);
+    Dictionary<K, V> plusIfAbsent(K key, V value);
 
-    public abstract Dictionary<K, V> replace(K key, V expected, V actual);
+    Dictionary<K, V> replace(K key, V expected, V actual);
     
-    public abstract Dictionary<K, V> minus(K key);
-    public abstract Dictionary<K, V> minus(K key, V expected);
+    // TODO minusAll/retainAll
+    Dictionary<K, V> minus(K key);
+    Dictionary<K, V> minus(K key, V expected);
     
-    public abstract Dictionary<K, V> zero();
+    Dictionary<K, V> zero();
     
-    public abstract DictionaryBuilder<K,V> asBuilder();
+    DictionaryBuilder<K,V> asBuilder();
     
-    @Deprecated @Override public final V put(K key, V value) { throw Container.mutate(); }
-    @Deprecated @Override public final void putAll(Map<? extends K, ? extends V> m)  { throw Container.mutate(); }
-    @Deprecated @Override public final V remove(Object key)  { throw Container.mutate(); }
+    @Deprecated @Override V put(K key, V value);
+    @Deprecated @Override void putAll(Map<? extends K, ? extends V> m);
+    @Deprecated @Override V remove(Object key);
+    @Deprecated @Override void clear();
     
-    @Override public abstract FiniteSet<Entry<K, V>> entrySet();
-    @Override public abstract FiniteSet<K> keySet();
-    @Override public abstract Container<V> values();
+    @Override FiniteSet<Entry<K, V>> entrySet();
+    @Override FiniteSet<K> keySet();
+    @Override Container<V> values();
 }

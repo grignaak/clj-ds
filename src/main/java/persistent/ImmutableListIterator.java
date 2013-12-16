@@ -2,13 +2,7 @@ package persistent;
 
 import java.util.ListIterator;
 
-/**
- * A {@link ListIterator} that does not support the mutation methods.
- */
-public abstract class ImmutableListIterator<E> extends ImmutableIterator<E> implements ListIterator<E> {
-    ImmutableListIterator() {/* package bolted down */}
-    @Deprecated @Override
-    public final void set(E e) { throw Container.mutate(); }
-    @Deprecated @Override
-    public void add(E e) { throw Container.mutate(); }
+public interface ImmutableListIterator<E> extends ListIterator<E>, ImmutableIterator<E> {
+    @Deprecated @Override void set(E e);
+    @Deprecated @Override void add(E e);
 }
