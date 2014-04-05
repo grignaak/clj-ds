@@ -148,7 +148,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
             return new TreeDictionary<K, V>(comp);
         }
         
-        if (found.val.val() == expected)
+        if (found.val.getValue() == expected)
             return new TreeDictionary<K, V>(comp, t.blacken(), _count - 1);
         else
             return this;

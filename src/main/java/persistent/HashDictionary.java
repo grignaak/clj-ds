@@ -39,6 +39,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
     final private static HashDictionary<?,?> EMPTY = new HashDictionary<>(0, null, false, null);
     final private static Object NOT_FOUND = new Object();
+    final private static Flag DONT_CARE = new Flag();
 
     @SuppressWarnings("unchecked")
     final public static <K, V> HashDictionary<K, V> emptyDictionary() {
@@ -58,30 +59,6 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         return ret.build();
     }
 
-//    /* @param init {key1,val1,key2,val2,...} */
-//    @SuppressWarnings("unchecked")
-//    public static <K, V> HashDictionary<K, V> create(Object... init) {
-//        DictionaryBuilder<K, V> ret = EMPTY.asTransient();
-//        for (int i = 0; i < init.length; i += 2)
-//        {
-//            K k = (K) init[i];
-//            V v = (V) init[i + 1];
-//            ret = ret.plus(k, v);
-//        }
-//        return (HashDictionary<K, V>) ret.build();
-//    }
-//
-//    public static <K, V> HashDictionary<K, V> createWithCheck(Object... init) {
-//        DictionaryBuilder<K, V> ret = EMPTY.asTransient();
-//        for (int i = 0; i < init.length; i += 2)
-//        {
-//            ret = ret.plus((K) init[i], (V) init[i + 1]);
-//            if (ret.size() != i / 2 + 1)
-//                throw new IllegalArgumentException("Duplicate key: " + init[i]);
-//        }
-//        return (HashDictionary<K, V>) ret.build();
-//    }
-
     HashDictionary(int count, INode root, boolean hasNull, V nullValue) {
         this.count = count;
         this.root = root;
@@ -93,7 +70,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
     public boolean containsKey(Object key) {
         if (key == null)
             return hasNull;
-        return (root != null) ? root.find(0, Objects.hashCode(key), key, NOT_FOUND) != NOT_FOUND : false;
+        return (root != null) ? root.find(0, key.hashCode(), key, NOT_FOUND) != NOT_FOUND : false;
     }
 
     @Override
@@ -105,7 +82,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         }
         Flag addedLeaf = new Flag();
         INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root)
-                .assoc(0, Objects.hashCode(key), key, val, addedLeaf);
+                .assoc(0, key.hashCode(), key, val, addedLeaf);
         if (newroot == root)
             return this;
         return new HashDictionary<K, V>(addedLeaf.val ? count : count + 1, newroot, hasNull, nullValue);
@@ -116,20 +93,47 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
     public V get(Object key) {
         if (key == null)
             return hasNull ? nullValue : null;
-        return (V) (root != null ? root.find(0, Objects.hashCode(key), key, null) : null);
+        return (V) (root != null ? root.find(0, key.hashCode(), key, null) : null);
     }
 
     @Override
     public HashDictionary<K, V> plusIfAbsent(K key, V val) {
-        if (containsKey(key))
-            throw new IllegalStateException("Key already present");
-        return plus(key, val);
+        if (key == null)
+            return hasNull || nullValue == val ? this : new HashDictionary<K, V>(count + 1, root, true, val);
+        
+        int hash = key.hashCode();
+        if (root == null) {
+            INode newroot = BitmapIndexedNode.EMPTY.assoc(0, hash, key, val, DONT_CARE);
+            return new HashDictionary<K, V>(count + 1, newroot, hasNull, nullValue);
+        } else if (root.find(0, hash, key, NOT_FOUND) == NOT_FOUND) {
+            INode newroot = root.assoc(0, hash, key, val, DONT_CARE);
+            return new HashDictionary<K, V>(count + 1, newroot, hasNull, nullValue);
+        } else {
+            return this;
+        }
     }
     
     @Override
-    public Dictionary<K, V> replace(K key, V expected, V actual) {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: HashDictionary.replace");
+    public HashDictionary<K, V> replace(K key, V expected, V replacement) {
+        if (expected == replacement)
+            return this;
+        
+        if (key == null) {
+            if (hasNull && nullValue == expected)
+                return new HashDictionary<K, V>(count + 1, root, true, replacement);
+            else
+                return this;
+        }
+        
+        if (root == null)
+            return this;
+        
+        final int hash = key.hashCode();
+        if (expected != root.find(0, hash, key, NOT_FOUND))
+            return this;
+        
+        INode newroot = root.assoc(0, hash, key, replacement, DONT_CARE);
+        return new HashDictionary<K, V>(count + 1, newroot, hasNull, nullValue);
     }
 
     public HashDictionary<K, V> minus(K key) {
@@ -137,16 +141,31 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             return hasNull ? new HashDictionary<K, V>(count - 1, root, false, null) : this;
         if (root == null)
             return this;
-        INode newroot = root.without(0, Objects.hashCode(key), key);
+        
+        INode newroot = root.without(0, key.hashCode(), key);
         if (newroot == root)
             return this;
         return new HashDictionary<K, V>(count - 1, newroot, hasNull, nullValue);
     }
     
     @Override
-    public Dictionary<K, V> minus(K key, V expected) {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: HashDictionary.minus");
+    public HashDictionary<K, V> minus(K key, V expected) {
+        if (key == null) {
+            if (hasNull && nullValue == expected)
+                return new HashDictionary<K, V>(count - 1, root, false, null);
+            else
+                return this;
+        }
+        
+        if (root == null)
+            return this;
+        
+        int hash = key.hashCode();
+        if (expected != root.find(0, hash, NOT_FOUND))
+            return this;
+        
+        INode newroot = root.without(0, hash, key);
+        return new HashDictionary<K, V>(count - 1, newroot, hasNull, nullValue);
     }
 
     @Override
@@ -222,36 +241,63 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         public HashDictionaryBuilder<K, V> plus(K key, V val) {
             owner.ensureEditable();
             if (key == null) {
-                if (this.nullValue != val)
-                    this.nullValue = (V) val;
+                nullValue = val;
                 if (!hasNull) {
                     this.count++;
                     this.hasNull = true;
                 }
                 return this;
             }
-            // Box leafFlag = new Box(null);
+
             leafFlag.val = false;
-            INode n = (root == null ? BitmapIndexedNode.EMPTY : root)
-                    .assoc(owner, 0, Objects.hashCode(key), key, val, leafFlag);
-            if (n != this.root)
-                this.root = n;
-            if (leafFlag.val) this.count++;
+            root = (root == null ? BitmapIndexedNode.EMPTY : root)
+                    .assoc(owner, 0, key.hashCode(), key, val, leafFlag);
+            if (leafFlag.val) count++;
             return this;
         }
         
         @Override
         public HashDictionaryBuilder<K, V> plusIfAbsent(K key, V value) {
             owner.ensureEditable();
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.plusIfAbsent");
+            if (key == null) {
+                if (!hasNull) {
+                    nullValue = value;
+                    count++;
+                    hasNull = true;
+                }
+            } else {
+                int hash = key.hashCode();
+                if (root == null) {
+                    root = BitmapIndexedNode.EMPTY.assoc(owner, 0, hash, key, value, DONT_CARE);
+                    count++;
+                } else if (root.find(0, hash, key, NOT_FOUND) == NOT_FOUND) {
+                    root = root.assoc(owner, 0, hash, key, value, DONT_CARE);
+                    count++;
+                }
+            }
+            return this;
         }
         
         @Override
-        public HashDictionaryBuilder<K, V> replace(K key, V expected, V actual) {
+        public HashDictionaryBuilder<K, V> replace(K key, V expected, V replacemnt) {
             owner.ensureEditable();
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.replace");
+            if (expected == replacemnt)
+                return this;
+            
+            if (key == null) {
+                if (hasNull && nullValue == expected && nullValue != replacemnt) {
+                    count++;
+                    hasNull = true;
+                }
+                return this;
+            }
+
+            int hash = key.hashCode();
+            if (root != null && root.find(0, hash, key, NOT_FOUND) == expected) {
+                root = root.assoc(owner, 0, hash, key, replacemnt, DONT_CARE);
+                count++;
+            }
+            return this;
         }
 
         @Override
@@ -267,24 +313,39 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             if (root == null) return this;
 
             leafFlag.val = false;
-            INode n = root.without(owner, 0, Objects.hashCode(key), key, leafFlag);
-            if (n != root)
-                this.root = n;
+            root = root.without(owner, 0, key.hashCode(), key, leafFlag);
             if (leafFlag.val) this.count--;
             return this;
         }
         
         @Override
         public HashDictionaryBuilder<K, V> minus(K key, V expected) {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.minus");
+            if (key == null) {
+                if (!hasNull || nullValue != expected) return this;
+                hasNull = false;
+                nullValue = null;
+                count--;
+                return this;
+            }
+            if (root == null) return this;
+            
+            int hash = key.hashCode();
+            if (root.find(0, hash, key, NOT_FOUND) == expected) {
+                root = root.without(owner, 0, hash, key, DONT_CARE);
+                count--;
+            }
+            return this;
         }
         
         @Override
         public HashDictionaryBuilder<K, V> zero() {
             owner.ensureEditable();
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.zero");
+            
+            root = null;
+            count = 0;
+            hasNull = false;
+            nullValue = null;
+            return this;
         }
 
         @Override
@@ -297,7 +358,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
     private static interface INode {
         INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf);
 
-        ImmutableIterator<?> nodeIt(boolean reverse);
+        ImmutableIterator<?> nodeIt();
 
         ImmutableIterator<?> nodeItFrom(int shift, int hash, Object key);
 
@@ -306,8 +367,6 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         Map.Entry<?,?> find(int shift, int hash, Object key);
 
         Object find(int shift, int hash, Object key, Object notFound);
-
-//        ISeq nodeSeq();
 
         INode assoc(Owner owner, int shift, int hash, Object key, Object val, Flag addedLeaf);
 
@@ -372,7 +431,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                     index += 1;
                 }
                 ;
-                current = (index == array.length) ? null : array[index++].nodeIt(false);
+                current = (index == array.length) ? null : array[index++].nodeIt();
             }
 
             @Override
@@ -387,46 +446,8 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
         }
 
-        private static final class ReverseArrayNodeIterator implements ImmutableIterator<Object> {
-            int index;
-            Iterator<?> current;
-            INode[] array;
-
-            public ReverseArrayNodeIterator(ArrayNode an) {
-                this.array = an.array;
-                this.index = array.length - 1;
-                moveCurIfNeeded();
-            }
-
-            private void moveCurIfNeeded() {
-                if (current != null && current.hasNext()) return;
-                while (index >= 0 && array[index] == null) {
-                    index -= 1;
-                }
-                ;
-                current = (index < 0) ? null : array[index--].nodeIt(true);
-            }
-
-            public boolean hasNext() {
-                while (current != null && !current.hasNext()) {
-                    moveCurIfNeeded();
-                }
-                return current != null && current.hasNext();
-            }
-
-            @Override
-            public Object next() {
-                return current.next();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        }
-
-        public ImmutableIterator<?> nodeIt(boolean reverse) {
-            return reverse ? new ReverseArrayNodeIterator(this) : new ArrayNodeIterator(this);
+        public ImmutableIterator<?> nodeIt() {
+            return new ArrayNodeIterator(this);
         }
 
         public INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf) {
@@ -559,8 +580,8 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             return new BitmapIndexedNodeIterator(this, shift, hash, key);
         }
 
-        public ImmutableIterator<?> nodeIt(boolean reverse) {
-            return reverse ? new ReverseBitmapIndexedNodeIterator(this) : new BitmapIndexedNodeIterator(this);
+        public ImmutableIterator<?> nodeIt() {
+            return new BitmapIndexedNodeIterator(this);
         }
 
         private static class BitmapIndexedNodeIterator implements ImmutableIterator<Object> {
@@ -630,7 +651,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                         index += 2;
                         INode val = ((INode) valOrNode);
                         if (val != null) {
-                            Iterator<?> nodeIt = val.nodeIt(false);
+                            Iterator<?> nodeIt = val.nodeIt();
                             if (nodeIt.hasNext()) {
                                 current = nodeIt;
                                 return;
@@ -659,67 +680,6 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                 throw new UnsupportedOperationException();
             }
 
-        }
-
-        static final class ReverseBitmapIndexedNodeIterator implements ImmutableIterator<Object> {
-            BitmapIndexedNode node;
-
-            int index;
-            Iterator<?> current;
-
-            public ReverseBitmapIndexedNodeIterator(BitmapIndexedNode node) {
-                this.node = node;
-                index = node.array.length - 1;
-                moveCurIfNeeded();
-            }
-
-            public boolean hasNext() {
-                moveCurIfNeeded();
-                if (current == null && index < 0) {
-                    return false;
-                }
-                return true;
-            }
-
-            // current != null => current.hasNext or index points to a valid key
-            private void moveCurIfNeeded() {
-                if (current != null && current.hasNext()) return;
-                current = null;
-                while (index >= 0) {
-                    Object valOrNode = node.array[index];
-                    Object keyOrNull = node.array[index - 1];
-                    if (keyOrNull == null) {
-                        index -= 2;
-                        INode val = ((INode) valOrNode);
-                        if (val != null) {
-                            Iterator<?> nodeIt = val.nodeIt(true);
-                            if (nodeIt.hasNext()) {
-                                current = nodeIt;
-                                return;
-                            }
-                        }
-                    } else {
-                        return;
-                    }
-                }
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Object next() {
-                if (current != null) {
-                    return current.next();
-                } else {
-                    Object valOrNode = node.array[index--];
-                    Object keyOrNull = node.array[index--];
-                    return new AbstractMap.SimpleImmutableEntry<>(keyOrNull, valOrNode);
-                }
-
-            }
         }
 
         public INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf) {
@@ -756,7 +716,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                             if (array[j] == null)
                                 nodes[i] = (INode) array[j + 1];
                             else
-                                nodes[i] = EMPTY.assoc(shift + 5, Objects.hashCode(array[j]), array[j], array[j + 1], addedLeaf);
+                                nodes[i] = EMPTY.assoc(shift + 5, array[j].hashCode(), array[j], array[j + 1], addedLeaf);
                             j += 2;
                         }
                     return new ArrayNode(null, n + 1, nodes);
@@ -898,7 +858,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                             if (array[j] == null)
                                 nodes[i] = (INode) array[j + 1];
                             else
-                                nodes[i] = EMPTY.assoc(edit, shift + 5, Objects.hashCode(array[j]), array[j], array[j + 1],
+                                nodes[i] = EMPTY.assoc(edit, shift + 5, array[j].hashCode(), array[j], array[j + 1],
                                         addedLeaf);
                             j += 2;
                         }
@@ -995,40 +955,12 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
         }
 
-        static final class ReverseHashCollisionNodeIterator implements ImmutableIterator<Object> {
-            Object[] array;
-            int index;
-            int count;
-
-            public ReverseHashCollisionNodeIterator(HashCollisionNode node) {
-                this.array = node.array;
-                this.count = node.count;
-                this.index = count * 2 - 1;
-            }
-
-            public boolean hasNext() {
-                return index >= 0;
-            }
-
-            public Object next() {
-                Object v = array[index--];
-                Object k = array[index--];
-                return new AbstractMap.SimpleImmutableEntry<>(k, v);
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-        }
-
         public ImmutableIterator<?> nodeItFrom(int shift, int hash, Object key) {
             return new HashCollisionNodeIterator(this, shift, hash, key);
         }
 
-        public ImmutableIterator<?> nodeIt(boolean reverse) {
-            return reverse ? new ReverseHashCollisionNodeIterator(this) : new HashCollisionNodeIterator(this);
+        public ImmutableIterator<?> nodeIt() {
+            return new HashCollisionNodeIterator(this);
         }
 
         public INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf) {
@@ -1187,7 +1119,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
     }
 
     private static INode createNode(int shift, Object key1, Object val1, int key2hash, Object key2, Object val2) {
-        int key1hash = Objects.hashCode(key1);
+        int key1hash = key1.hashCode();
         if (key1hash == key2hash)
             return new HashCollisionNode(null, key1hash, 2, new Object[] { key1, val1, key2, val2 });
         Flag _ = new Flag();
@@ -1199,7 +1131,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
     private static INode createNode(Owner edit, int shift, Object key1, Object val1, int key2hash,
             Object key2, Object val2) {
-        int key1hash = Objects.hashCode(key1);
+        int key1hash = key1.hashCode();
         if (key1hash == key2hash)
             return new HashCollisionNode(null, key1hash, 2, new Object[] { key1, val1, key2, val2 });
         Flag _ = new Flag();
@@ -1217,7 +1149,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         public ImmutableIterator<Map.Entry<K, V>> iterator() {
             @SuppressWarnings("unchecked")
             final ImmutableIterator<Map.Entry<K, V>> s =
-                root != null ? (ImmutableIterator<Map.Entry<K, V>>)root.nodeIt(false) : new EmptyIterator<Map.Entry<K, V>>();
+                root != null ? (ImmutableIterator<Map.Entry<K, V>>)root.nodeIt() : new EmptyIterator<Map.Entry<K, V>>();
             return hasNull ? new Iter<K,V>(s, nullValue) : s;
         }
         
