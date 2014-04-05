@@ -35,7 +35,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
     private final Node<K,V> tree;
     private final int _count;
 
-    final static public TreeDictionary<? extends Comparable<?>, ?> EMPTY = new TreeDictionary<>(Util.DEFAULT_COMPARATOR);
+    final static private TreeDictionary<? extends Comparable<?>, ?> EMPTY = new TreeDictionary<>(Util.DEFAULT_COMPARATOR);
 
     public static <K extends Comparable<K>, V> TreeDictionary<K, V> create(Map<? extends K, ? extends V> other) {
         TreeDictionary<K, V> ret = TreeDictionary.<K,V>emptyMap();
@@ -67,17 +67,6 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         return entryAt((K) key) != null;
     }
 
-//    @Override
-//    public TreeDictionary<K, V> plusEx(K key, V val) {
-//        Box found = new Box(null);
-//        Node t = add(tree, key, val, found);
-//        if (t == null)   // null == already contains key
-//        {
-//            throw Util.runtimeException("Key already present");
-//        }
-//        return new TreeDictionary<K, V>(comp, t.blacken(), _count + 1);
-//    }
-
     @Override
     public TreeDictionary<K, V> plus(K key, V val) {
         Box<Node<K,V>> found = new Box<>(null);
@@ -85,7 +74,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         if (t == null)   // null == already contains key
         {
             Node<K,V> foundNode = (Node<K,V>) found.val;
-            if (foundNode.val() == val)
+            if (foundNode.getValue() == val)
                 /* note only get same collection on
                  * identity of val, not equals() */
                 return this;
@@ -112,7 +101,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         if (t == null)   // null == already contains key
         {
             Node<K,V> foundNode = (Node<K,V>) found.val;
-            Object foundValue = foundNode.val();
+            Object foundValue = foundNode.getValue();
             if (foundValue == expected || foundValue == actual)
                 /* note: only get same collection on identity of val, not
                  * equals() */
@@ -137,7 +126,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
     }
     
     @Override
-    public Dictionary<K, V> minus(K key, V expected) {
+    public TreeDictionary<K, V> minus(K key, V expected) {
         Box<Node<K,V>> found = new Box<>(null);
         Node<K,V> t = remove(tree, key, found);
         if (t == null) // either not found, or empty tree
@@ -168,7 +157,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         return t != null ? t.getKey() : null;
     }
 
-    private Map.Entry<K,V> firstEntry() {
+    public Map.Entry<K,V> firstEntry() {
         Node<K,V> t = tree;
         if (t != null)
         {
@@ -183,7 +172,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         return t != null ? t.getKey() : null;
     }
 
-    private Map.Entry<K, V> lastEntry() {
+    public Map.Entry<K, V> lastEntry() {
         Node<K,V> t = tree;
         if (t != null)
         {
@@ -197,7 +186,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
     @SuppressWarnings("unchecked")
     public V get(Object key) {
         Node<K,V> n = entryAt((K)key);
-        return ((n != null) ? (V) n.val() : null);
+        return ((n != null) ? (V) n.getValue() : null);
     }
 
     @Override
@@ -209,7 +198,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         Node<K,V> t = tree;
         while (t != null)
         {
-            int c = doCompare(key, (K) t.key);
+            int c = comp.compare(key, (K) t.key);
             if (c == 0)
                 return t;
             else if (c < 0)
@@ -220,12 +209,6 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         return t;
     }
 
-    private int doCompare(K k1, K k2) {
-        // if(comp != null)
-        return comp.compare(k1, k2);
-        // return ((Comparable) k1).compareTo(k2);
-    }
-
     private Node<K,V> add(Node<K,V> t, K key, V val, Box<Node<K,V>> found) {
         if (t == null)
         {
@@ -233,7 +216,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
                 return new Red<>(key);
             return new RedVal<>(key, val);
         }
-        int c = doCompare((K) key, (K) t.key);
+        int c = comp.compare((K) key, (K) t.key);
         if (c == 0)
         {
             found.val = t;
@@ -255,7 +238,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
     private Node<K,V> remove(Node<K,V> t, K key, Box<Node<K,V>> found) {
         if (t == null)
             return null; // not found indicator
-        int c = doCompare(key, t.key);
+        int c = comp.compare(key, t.key);
         if (c == 0)
         {
             found.val = t;
@@ -267,13 +250,13 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         if (c < 0)
         {
             if (t.left() instanceof Black)
-                return balanceLeftDel(t.key, t.val(), del, t.right());
+                return balanceLeftDel(t.key, t.getValue(), del, t.right());
             else
-                return red(t.key, t.val(), del, t.right());
+                return red(t.key, t.getValue(), del, t.right());
         }
         if (t.right() instanceof Black)
-            return balanceRightDel(t.key, t.val(), t.left(), del);
-        return red(t.key, t.val(), t.left(), del);
+            return balanceRightDel(t.key, t.getValue(), t.left(), del);
+        return red(t.key, t.getValue(), t.left(), del);
         // return t.removeLeft(del);
         // return t.removeRight(del);
     }
@@ -289,27 +272,27 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
             {
                 Node<K,V> app = append(left.right(), right.left());
                 if (app instanceof Red)
-                    return red(app.key, app.val(),
-                            red(left.key, left.val(), left.left(), app.left()),
-                            red(right.key, right.val(), app.right(), right.right()));
+                    return red(app.key, app.getValue(),
+                            red(left.key, left.getValue(), left.left(), app.left()),
+                            red(right.key, right.getValue(), app.right(), right.right()));
                 else
-                    return red(left.key, left.val(), left.left(), red(right.key, right.val(), app, right.right()));
+                    return red(left.key, left.getValue(), left.left(), red(right.key, right.getValue(), app, right.right()));
             }
             else
-                return red(left.key, left.val(), left.left(), append(left.right(), right));
+                return red(left.key, left.getValue(), left.left(), append(left.right(), right));
         }
         else if (right instanceof Red)
-            return red(right.key, right.val(), append(left, right.left()), right.right());
+            return red(right.key, right.getValue(), append(left, right.left()), right.right());
         else // black/black
         {
             Node<K,V> app = append(left.right(), right.left());
             if (app instanceof Red)
-                return red(app.key, app.val(),
-                        black(left.key, left.val(), left.left(), app.left()),
-                        black(right.key, right.val(), app.right(), right.right()));
+                return red(app.key, app.getValue(),
+                        black(left.key, left.getValue(), left.left(), app.left()),
+                        black(right.key, right.getValue(), app.right(), right.right()));
             else
-                return balanceLeftDel(left.key, left.val(), left.left(),
-                        black(right.key, right.val(), app, right.right()));
+                return balanceLeftDel(left.key, left.getValue(), left.left(),
+                        black(right.key, right.getValue(), app, right.right()));
         }
     }
 
@@ -319,9 +302,9 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         else if (right instanceof Black)
             return rightBalance(key, val, del, right.redden());
         else if (right instanceof Red && right.left() instanceof Black)
-            return red(right.left().key, right.left().val(),
+            return red(right.left().key, right.left().getValue(),
                     black(key, val, del, right.left().left()),
-                    rightBalance(right.key, right.val(), right.left().right(), right.right().redden()));
+                    rightBalance(right.key, right.getValue(), right.left().right(), right.right().redden()));
         else
             throw new UnsupportedOperationException("Invariant violation");
     }
@@ -332,8 +315,8 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         else if (left instanceof Black)
             return leftBalance(key, val, left.redden(), del);
         else if (left instanceof Red && left.right() instanceof Black)
-            return red(left.right().key, left.right().val(),
-                    leftBalance(left.key, left.val(), left.left().redden(), left.right().left()),
+            return red(left.right().key, left.right().getValue(),
+                    leftBalance(left.key, left.getValue(), left.left().redden(), left.right().left()),
                     black(key, val, left.right().right(), del));
         else
             throw new UnsupportedOperationException("Invariant violation");
@@ -341,10 +324,10 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
 
     private static <K,V> Node<K,V> leftBalance(K key, V val, Node<K,V> ins, Node<K,V> right) {
         if (ins instanceof Red && ins.left() instanceof Red)
-            return red(ins.key, ins.val(), ins.left().blacken(), black(key, val, ins.right(), right));
+            return red(ins.key, ins.getValue(), ins.left().blacken(), black(key, val, ins.right(), right));
         else if (ins instanceof Red && ins.right() instanceof Red)
-            return red(ins.right().key, ins.right().val(),
-                    black(ins.key, ins.val(), ins.left(), ins.right().left()),
+            return red(ins.right().key, ins.right().getValue(),
+                    black(ins.key, ins.getValue(), ins.left(), ins.right().left()),
                     black(key, val, ins.right().right(), right));
         else
             return black(key, val, ins, right);
@@ -352,19 +335,19 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
 
     private static <K,V> Node<K,V> rightBalance(K key, V val, Node<K,V> left, Node<K,V> ins) {
         if (ins instanceof Red && ins.right() instanceof Red)
-            return red(ins.key, ins.val(), black(key, val, left, ins.left()), ins.right().blacken());
+            return red(ins.key, ins.getValue(), black(key, val, left, ins.left()), ins.right().blacken());
         else if (ins instanceof Red && ins.left() instanceof Red)
-            return red(ins.left().key, ins.left().val(),
+            return red(ins.left().key, ins.left().getValue(),
                     black(key, val, left, ins.left().left()),
-                    black(ins.key, ins.val(), ins.left().right(), ins.right()));
+                    black(ins.key, ins.getValue(), ins.left().right(), ins.right()));
         else
             return black(key, val, left, ins);
     }
 
     private Node<K,V> replace(Node<K,V> t, K key, V val) {
-        int c = doCompare(key, t.key);
+        int c = comp.compare(key, t.key);
         return t.replace(t.key,
-                c == 0 ? val : t.val(),
+                c == 0 ? val : t.getValue(),
                 c < 0 ? replace(t.left(), key, val) : t.left(),
                 c > 0 ? replace(t.right(), key, val) : t.right());
     }
@@ -400,22 +383,12 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
             this.key = key;
         }
 
-        @Deprecated
-        public K key() {
+        public final K getKey() {
             return key;
         }
 
-        @Deprecated
-        public V val() {
-            return null;
-        }
-
-        public K getKey() {
-            return key();
-        }
-
         public V getValue() {
-            return val();
+            return null;
         }
 
         public final V setValue(V value) { throw new UnsupportedOperationException(); }
@@ -441,11 +414,11 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         abstract Node<K,V> redden();
 
         Node<K,V> balanceLeft(Node<K,V> parent) {
-            return black(parent.key, parent.val(), this, parent.right());
+            return black(parent.key, parent.getValue(), this, parent.right());
         }
 
         Node<K,V> balanceRight(Node<K,V> parent) {
-            return black(parent.key, parent.val(), parent.left(), this);
+            return black(parent.key, parent.getValue(), parent.left(), this);
         }
 
         abstract Node<K,V> replace(K key, V val, Node<K,V> left, Node<K,V> right);
@@ -465,11 +438,11 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         }
 
         Node<K,V> removeLeft(Node<K,V> del) {
-            return balanceLeftDel(key, val(), del, right());
+            return balanceLeftDel(key, getValue(), del, right());
         }
 
         Node<K,V> removeRight(Node<K,V> del) {
-            return balanceRightDel(key, val(), left(), del);
+            return balanceRightDel(key, getValue(), left(), del);
         }
 
         Node<K,V> blacken() {
@@ -494,7 +467,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
             this.val = val;
         }
 
-        public V val() {
+        public V getValue() {
             return val;
         }
 
@@ -537,7 +510,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
             this.val = val;
         }
 
-        public V val() {
+        public V getValue() {
             return val;
         }
 
@@ -553,19 +526,19 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         }
 
         Node<K,V> addLeft(Node<K,V> ins) {
-            return red(key, val(), ins, right());
+            return red(key, getValue(), ins, right());
         }
 
         Node<K,V> addRight(Node<K,V> ins) {
-            return red(key, val(), left(), ins);
+            return red(key, getValue(), left(), ins);
         }
 
         Node<K,V> removeLeft(Node<K,V> del) {
-            return red(key, val(), del, right());
+            return red(key, getValue(), del, right());
         }
 
         Node<K,V> removeRight(Node<K,V> del) {
-            return red(key, val(), left(), del);
+            return red(key, getValue(), left(), del);
         }
 
         Node<K,V> blacken() {
@@ -590,7 +563,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
             this.val = val;
         }
 
-        public V val() {
+        public V getValue() {
             return val;
         }
 
@@ -621,10 +594,10 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
 
         Node<K,V> balanceLeft(Node<K,V> parent) {
             if (left instanceof Red)
-                return red(key, val(), left.blacken(), black(parent.key, parent.val(), right, parent.right()));
+                return red(key, getValue(), left.blacken(), black(parent.key, parent.getValue(), right, parent.right()));
             else if (right instanceof Red)
-                return red(right.key, right.val(), black(key, val(), left, right.left()),
-                        black(parent.key, parent.val(), right.right(), parent.right()));
+                return red(right.key, right.getValue(), black(key, getValue(), left, right.left()),
+                        black(parent.key, parent.getValue(), right.right(), parent.right()));
             else
                 return super.balanceLeft(parent);
 
@@ -632,10 +605,10 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
 
         Node<K,V> balanceRight(Node<K,V> parent) {
             if (right instanceof Red)
-                return red(key, val(), black(parent.key, parent.val(), parent.left(), left), right.blacken());
+                return red(key, getValue(), black(parent.key, parent.getValue(), parent.left(), left), right.blacken());
             else if (left instanceof Red)
-                return red(left.key, left.val(), black(parent.key, parent.val(), parent.left(), left.left()),
-                        black(key, val(), left.right(), right));
+                return red(left.key, left.getValue(), black(parent.key, parent.getValue(), parent.left(), left.left()),
+                        black(key, getValue(), left.right(), right));
             else
                 return super.balanceRight(parent);
         }
@@ -654,7 +627,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
             this.val = val;
         }
 
-        public V val() {
+        public V getValue() {
             return val;
         }
 
