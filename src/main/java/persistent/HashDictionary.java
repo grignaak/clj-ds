@@ -1268,7 +1268,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         }
     };
     
-    private EntrySet entrySet;
+    private transient EntrySet entrySet;
     @Override
     public FiniteSet<Map.Entry<K, V>> entrySet() {
         if (entrySet == null);

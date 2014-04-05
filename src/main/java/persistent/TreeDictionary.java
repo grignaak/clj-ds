@@ -18,6 +18,8 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Stack;
 
+import persistent.Containers.IteratorCursor;
+
 import com.github.krukow.clj_lang.Util;
 
 /**
@@ -689,42 +691,36 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         }
     }
     
+    
     class EntrySet extends AbstractSet<Map.Entry<K,V>> implements FiniteSet<Map.Entry<K,V>> {
-
         @Override
         public Cursor<Map.Entry<K, V>> cursor() {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: Container<Entry<K,V>>.cursor");
+            return IteratorCursor.create(iterator());
         }
 
         @Override
         public FiniteSet<Map.Entry<K, V>> plus(Map.Entry<K, V> e) {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: FiniteSet<Entry<K,V>>.plus");
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public FiniteSet<Map.Entry<K, V>> plusAll(Collection<? extends Map.Entry<K, V>> more) {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: FiniteSet<Entry<K,V>>.plusAll");
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public FiniteSet<Map.Entry<K, V>> minus(Map.Entry<K, V> value) {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: FiniteSet<Entry<K,V>>.minus");
+            throw new UnsupportedOperationException();
         }
 
         @Override
         public FiniteSet<Map.Entry<K, V>> zero() {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: FiniteSet<Entry<K,V>>.zero");
+            throw new UnsupportedOperationException();
         }
 
         @Override
-        public persistent.FiniteSet.FiniteSetBuilder<Map.Entry<K, V>> asBuilder() {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: FiniteSet<Entry<K,V>>.asBuilder");
+        public FiniteSet.FiniteSetBuilder<Map.Entry<K, V>> asBuilder() {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -734,37 +730,19 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
 
         @Override
         public int size() {
-            // TODO unimplemented
-            throw new RuntimeException("Unimplemented: AbstractCollection<Entry<K,V>>.size");
+            return _count;
         }
-        
     }
     
+    private transient EntrySet entrySet;
     @Override
     public FiniteSet<Entry<K, V>> entrySet() {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: Dictionary<K,V>.keySet");
-//        return new AbstractSet<Map.Entry<K, V>>() {
-//            @Override
-//            public Iterator<Map.Entry<K, V>> iterator() {
-//                return new NodeIterator(tree, true);
-//            }
-//
-//            @Override
-//            public int size() {
-//                return _count;
-//            }
-//        };
+        this.entrySet = new EntrySet();
+        return entrySet;
     }
 
     @Override
     public DictionaryBuilder<K, V> asBuilder() {
         return Containers.wrappedBuilder(this);
-    }
-
-    @Override
-    public FiniteSet<K> keySet() {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: Dictionary<K,V>.keySet");
     }
 }
