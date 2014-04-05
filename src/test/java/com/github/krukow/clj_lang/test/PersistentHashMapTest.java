@@ -17,7 +17,7 @@ import java.util.TreeMap;
 
 import org.junit.Test;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_lang.PersistentHashMap;
 
 /**
@@ -150,7 +150,7 @@ public class PersistentHashMapTest {
 	 */
 	@Test
 	public final void testIterator() {
-		PersistentMap<Integer, Integer> dsMap = PersistentHashMap.emptyMap();
+		Dictionary<Integer, Integer> dsMap = PersistentHashMap.emptyMap();
 		HashSet<Integer> hs = null;
 		for (int i = 0; i < 33000; i++) {
 			hs = new HashSet<Integer>();
@@ -168,7 +168,7 @@ public class PersistentHashMapTest {
 	@Test
 	public final void testRandomIterator() {
 		final int N = 33000;
-		PersistentMap<Double, Double> genMap = PersistentHashMap.emptyMap();
+		Dictionary<Double, Double> genMap = PersistentHashMap.emptyMap();
 		for (int i=0;i<N;i++) {
 			double random = Math.random();
 			genMap = genMap.plus(random, random);
@@ -185,7 +185,7 @@ public class PersistentHashMapTest {
 	@Test
 	public final void testRandomReverseIterator() {
 		final int N = 33000;
-		PersistentMap<Double, String> genMap = PersistentHashMap.emptyMap();
+		Dictionary<Double, String> genMap = PersistentHashMap.emptyMap();
 		for (int i=0;i<N;i++) {
 			double random = Math.random();
 			genMap = genMap.plus(random, ""+random);

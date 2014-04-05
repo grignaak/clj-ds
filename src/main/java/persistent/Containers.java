@@ -1,11 +1,14 @@
 package persistent;
 
+import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import persistent.AbstractBuilder.Owner;
 import persistent.AbstractDictionary.AbstractDictionaryBuilder;
 import persistent.Dictionary.DictionaryBuilder;
+import persistent.FiniteSet.FiniteSetBuilder;
 import persistent.Sequence.AbstractSequenceBuilder;
 import persistent.Sequence.SequenceBuilder;
 import persistent.Series.SeriesBuilder;
@@ -146,8 +149,135 @@ public class Containers {
             return result.isEmpty() ? this : new WrappedSeriesBuilder<>(owner, result.minus());
         }
     }
+    
+    private static class WrappedDictionarySet<K> extends AbstractSet<K> implements FiniteSet<K> {
+        private final Dictionary<K, Object> impl;
+        
+        public WrappedDictionarySet(Dictionary<K, Object> impl) {
+            this.impl = impl;
+        }
 
-    private static final Cursor<?> EMPTY = new AbstractCursor<Object>() {
+        @Override
+        public Cursor<K> cursor() {
+            return new KeyCursor<>(impl.cursor());
+        }
+        
+        @Override
+        public boolean contains(Object o) {
+            return impl.containsKey(o);
+        }
+
+        @Override
+        public FiniteSet<K> plus(K e) {
+            return new WrappedDictionarySet<K>(impl.plusIfAbsent(e, Boolean.TRUE));
+        }
+
+        @Override
+        public FiniteSet<K> plusAll(Collection<? extends K> more) {
+            return asBuilder().plusAll(more).build();
+        }
+
+        @Override
+        public FiniteSet<K> minus(K value) {
+            return new WrappedDictionarySet<K>(impl.minus(value));
+        }
+
+        @Override
+        public FiniteSet<K> zero() {
+            return new WrappedDictionarySet<>(impl.zero());
+        }
+
+        @Override
+        public FiniteSetBuilder<K> asBuilder() {
+            return new WrappedDictionarySetBuilder<>(impl.asBuilder());
+        }
+
+        @Override
+        public ImmutableIterator<K> iterator() {
+            return new KeyIterator<>(impl.entrySet().iterator());
+        }
+
+        @Override
+        public int size() {
+            return impl.size();
+        }
+    }
+    
+    private static class WrappedDictionarySetBuilder<K> implements FiniteSet.FiniteSetBuilder<K> {
+        private final DictionaryBuilder<K, Object> impl;
+        
+        public WrappedDictionarySetBuilder(DictionaryBuilder<K, Object> impl) {
+            this.impl = impl;
+        }
+
+        @Override
+        public FiniteSetBuilder<K> plus(K e) {
+            return new WrappedDictionarySetBuilder<K>(impl.plusIfAbsent(e, Boolean.TRUE));
+        }
+
+        @Override
+        public FiniteSetBuilder<K> plusAll(Collection<? extends K> more) {
+            DictionaryBuilder<K, Object> current = impl;
+            for (K k : more) {
+                current = impl.plus(k, Boolean.TRUE);
+            }
+            return new WrappedDictionarySetBuilder<>(current);
+        }
+
+        @Override
+        public FiniteSetBuilder<K> minus(K value) {
+            return new WrappedDictionarySetBuilder<K>(impl.minus(value));
+        }
+
+        @Override
+        public FiniteSetBuilder<K> zero() {
+            return new WrappedDictionarySetBuilder<>(impl.zero());
+        }
+
+        @Override
+        public FiniteSet<K> build() {
+            return new WrappedDictionarySet<>(impl.build());
+        }
+    }
+    
+    private static class IteratorCursor<E> extends AbstractCursor<E> {
+        private Iterator<E> backend;
+        private Cursor<E> next;
+        private final E current;
+        
+        private IteratorCursor(E current, Iterator<E> backend) {
+            synchronized (this) {
+                this.backend = backend;
+                this.current = current;
+            }
+        }
+        
+        static <E> Cursor<E> create(Iterator<E> backend) {
+            return backend.hasNext() ? new IteratorCursor<E>(backend.next(), backend) : Containers.<E>emptyCursor();
+        }
+
+        @Override
+        public boolean isDone() {
+            return false;
+        }
+
+        @Override
+        public synchronized Cursor<E> tail() {
+            if (next == null) {
+                next = create(backend);
+                backend = null; // let the thing be garbage collected.
+            }
+            return next;
+        }
+
+        @Override
+        public E head() {
+            return current;
+        }
+        
+    }
+
+    private static final Cursor<?> EMPTY_CURSOR = new AbstractCursor<Object>() {
         @Override public boolean isDone() { return true; }
         @Override public Cursor<Object> tail() { return this; }
         @Override public Object head() { throw new NoSuchElementException("Empty cursor"); }
@@ -182,8 +312,21 @@ public class Containers {
         return new WrappedDictionaryBuilder<>(new Owner(), dict);
     }
 
+    /**
+     * An empty cursor.
+     */
     @SuppressWarnings("unchecked")
     public static <E> Cursor<E> emptyCursor() {
-        return (Cursor<E>) EMPTY;
+        return (Cursor<E>) EMPTY_CURSOR;
+    }
+    
+    
+    /**
+     * Return a set that is backed by the underlying dictionary. The dictionary
+     * type <em>must</em> allow adding any value type.
+     */
+    @SuppressWarnings("unchecked")
+    /*package*/static <K> FiniteSet<K> setFromDictionary(final Dictionary<K, ?> dictionary) {
+        return new WrappedDictionarySet<K>((Dictionary<K, Object>)dictionary);
     }
 }

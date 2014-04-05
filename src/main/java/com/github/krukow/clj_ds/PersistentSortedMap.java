@@ -3,7 +3,7 @@ package com.github.krukow.clj_ds;
 import java.util.Comparator;
 
 
-public interface PersistentSortedMap<K, V> extends PersistentMap<K, V> /* , SortedMap<K, V> */{
+public interface PersistentSortedMap<K, V> extends Dictionary<K, V> /* , SortedMap<K, V> */{
 
     @Override PersistentSortedMap<K, V> zero();
 

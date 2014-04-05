@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.TransientMap;
 
 /**
@@ -31,7 +31,7 @@ import com.github.krukow.clj_ds.TransientMap;
  * value via valAt - use contains/entryAt
  */
 
-public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements PersistentMap<K, V> {
+public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Dictionary<K, V> {
     private static final int HASHTABLE_THRESHOLD = 16;
     private static final PersistentArrayMap EMPTY = new PersistentArrayMap();
 
@@ -43,13 +43,13 @@ public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Persi
     }
 
     @SuppressWarnings("unchecked")
-    public static <K, V> PersistentMap<K, V> create(Map<? extends K, ? extends V> other) {
-        TransientMap<K, V> ret = EMPTY.asTransient();
+    public static <K, V> Dictionary<K, V> create(Map<? extends K, ? extends V> other) {
+        TransientMap<K, V> ret = EMPTY.asBuilder();
         for (Map.Entry<? extends K, ? extends V> e : other.entrySet())
         {
             ret = ret.plus(e.getKey(), e.getValue());
         }
-        return (PersistentMap<K, V>) ret.persist();
+        return (Dictionary<K, V>) ret.persist();
     }
 
     protected PersistentArrayMap() {
@@ -91,7 +91,7 @@ public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Persi
     }
     
     @Override
-    public PersistentMap<K, V> zero() {
+    public Dictionary<K, V> zero() {
         return empty();
     }
 
@@ -100,7 +100,7 @@ public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Persi
         return indexOf(key) >= 0;
     }
 
-    public PersistentMap<K, V> plusEx(K key, V val) {
+    public Dictionary<K, V> plusEx(K key, V val) {
         int i = indexOf(key);
         Object[] newArray;
         if (i >= 0)
@@ -121,7 +121,7 @@ public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Persi
     }
 
     @Override
-    public PersistentMap<K, V> plus(K key, V val) {
+    public Dictionary<K, V> plus(K key, V val) {
         int i = indexOf(key);
         Object[] newArray;
         if (i >= 0) // already have key, same-sized replacement
@@ -192,7 +192,7 @@ public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Persi
         return Util.equals(k1, k2);
     }
 
-    public TransientArrayMap asTransient() {
+    public TransientArrayMap asBuilder() {
         return new TransientArrayMap(array);
     }
 
@@ -245,7 +245,7 @@ public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Persi
             else // didn't have key, grow
             {
                 if (len >= array.length)
-                    return PersistentHashMap.create(array).asTransient().plus(key, val);
+                    return PersistentHashMap.create(array).asBuilder().plus(key, val);
                 array[len++] = key;
                 array[len++] = val;
             }

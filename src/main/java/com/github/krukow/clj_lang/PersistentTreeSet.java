@@ -14,7 +14,7 @@ package com.github.krukow.clj_lang;
 
 import java.util.Comparator;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.PersistentSortedSet;
 import com.github.krukow.clj_ds.TransientSet;
 

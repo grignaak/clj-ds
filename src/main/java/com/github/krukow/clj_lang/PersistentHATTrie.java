@@ -15,7 +15,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.TransientMap;
 //
 ///*A persistent rendition of Nikolas Askitis' HAT Trie Uses path copying for

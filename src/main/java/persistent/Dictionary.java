@@ -2,7 +2,7 @@ package persistent;
 
 import java.util.Map;
 
-public interface Dictionary<K, V> extends Map<K,V>{
+public interface Dictionary<K, V> extends Map<K,V>, Traversable<Map.Entry<K,V>> {
 
     public interface DictionaryBuilder<K, V> {
         DictionaryBuilder<K, V> plus(K key, V value);

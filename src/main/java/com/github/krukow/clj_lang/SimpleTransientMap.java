@@ -3,17 +3,17 @@ package com.github.krukow.clj_lang;
 import java.util.AbstractMap;
 import java.util.Set;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.TransientMap;
 
 public class SimpleTransientMap<K, V> extends AbstractMap<K, V> implements TransientMap<K, V> {
-    protected final PersistentMap<K,V> impl;
+    protected final Dictionary<K,V> impl;
     
-    private SimpleTransientMap(PersistentMap<K, V> impl) {
+    private SimpleTransientMap(Dictionary<K, V> impl) {
         this.impl = impl;
     }
     
-    public static <K, V> SimpleTransientMap<K, V> wrap(PersistentMap<K, V> impl) {
+    public static <K, V> SimpleTransientMap<K, V> wrap(Dictionary<K, V> impl) {
         return new SimpleTransientMap<>(impl);
     }
     
@@ -33,7 +33,7 @@ public class SimpleTransientMap<K, V> extends AbstractMap<K, V> implements Trans
     }
 
     @Override
-    public PersistentMap<K, V> persist() {
+    public Dictionary<K, V> persist() {
         return impl;
     }
 }

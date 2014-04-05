@@ -8,20 +8,17 @@
  *   You must not remove this notice, or any other, from this software.
  **/
 
-package com.github.krukow.clj_lang;
+package persistent;
 
 import java.io.Serializable;
 import java.util.AbstractMap;
-import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Objects;
 
-import persistent.Box;
+import persistent.AbstractBuilder.Owner;
 
-import com.github.krukow.clj_ds.Dictionary;
-import com.github.krukow.clj_ds.TransientMap;
+import com.github.krukow.clj_lang.Util;
 
 /*A persistent rendition of Phil Bagwell's Hash Array Mapped Trie
  * 
@@ -29,56 +26,63 @@ import com.github.krukow.clj_ds.TransientMap;
  * Node polymorphism vs. conditionals No sub-tree pools or root-resizing Any
  * errors are my own */
 
-public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictionary<K, V> {
+public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Dictionary<K, V> {
 
+    private static final class Flag {
+        boolean val = false;
+    }
+    
     private final int count;
     private final INode root;
     private final boolean hasNull;
     private final V nullValue;
 
-    final private static PersistentHashMap EMPTY = new PersistentHashMap(0, null, false, null);
+    final private static HashDictionary<?,?> EMPTY = new HashDictionary<>(0, null, false, null);
     final private static Object NOT_FOUND = new Object();
 
     @SuppressWarnings("unchecked")
-    final public static <K, V> PersistentHashMap<K, V> emptyMap() {
-        return EMPTY;
+    final public static <K, V> HashDictionary<K, V> emptyDictionary() {
+        return (HashDictionary<K, V>) EMPTY;
     }
-
-    @SuppressWarnings("unchecked")
-    static public <K, V> PersistentHashMap<K, V> create(Map<? extends K, ? extends V> other) {
-        TransientMap<K, V> ret = EMPTY.asBuilder();
-        for (Map.Entry<? extends K, ? extends V> e : other.entrySet())
-        {
+    
+    public final static <K,V> HashDictionaryBuilder<K,V> newBuilder() {
+        return HashDictionary.<K,V>emptyDictionary().asBuilder();
+    }
+    
+    static public <K, V> HashDictionary<K, V> create(Map<? extends K, ? extends V> other) {
+        HashDictionaryBuilder<K, V> ret = newBuilder();
+        for (Map.Entry<? extends K, ? extends V> e : other.entrySet()) {
             ret = ret.plus(e.getKey(), e.getValue());
         }
-        return (PersistentHashMap<K, V>) ret.persist();
+
+        return ret.build();
     }
 
-    /* @param init {key1,val1,key2,val2,...} */
-    @SuppressWarnings("unchecked")
-    public static <K, V> PersistentHashMap<K, V> create(Object... init) {
-        TransientMap<K, V> ret = EMPTY.asBuilder();
-        for (int i = 0; i < init.length; i += 2)
-        {
-            K k = (K) init[i];
-            V v = (V) init[i + 1];
-            ret = ret.plus(k, v);
-        }
-        return (PersistentHashMap<K, V>) ret.persist();
-    }
+//    /* @param init {key1,val1,key2,val2,...} */
+//    @SuppressWarnings("unchecked")
+//    public static <K, V> HashDictionary<K, V> create(Object... init) {
+//        DictionaryBuilder<K, V> ret = EMPTY.asTransient();
+//        for (int i = 0; i < init.length; i += 2)
+//        {
+//            K k = (K) init[i];
+//            V v = (V) init[i + 1];
+//            ret = ret.plus(k, v);
+//        }
+//        return (HashDictionary<K, V>) ret.build();
+//    }
+//
+//    public static <K, V> HashDictionary<K, V> createWithCheck(Object... init) {
+//        DictionaryBuilder<K, V> ret = EMPTY.asTransient();
+//        for (int i = 0; i < init.length; i += 2)
+//        {
+//            ret = ret.plus((K) init[i], (V) init[i + 1]);
+//            if (ret.size() != i / 2 + 1)
+//                throw new IllegalArgumentException("Duplicate key: " + init[i]);
+//        }
+//        return (HashDictionary<K, V>) ret.build();
+//    }
 
-    public static <K, V> PersistentHashMap<K, V> createWithCheck(Object... init) {
-        TransientMap<K, V> ret = EMPTY.asBuilder();
-        for (int i = 0; i < init.length; i += 2)
-        {
-            ret = ret.plus((K) init[i], (V) init[i + 1]);
-            if (ret.size() != i / 2 + 1)
-                throw new IllegalArgumentException("Duplicate key: " + init[i]);
-        }
-        return (PersistentHashMap<K, V>) ret.persist();
-    }
-
-    PersistentHashMap(int count, INode root, boolean hasNull, V nullValue) {
+    HashDictionary(int count, INode root, boolean hasNull, V nullValue) {
         this.count = count;
         this.root = root;
         this.hasNull = hasNull;
@@ -86,7 +90,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
     }
 
     private static int hash(Object k) {
-        return Util.hash(k);
+        return Objects.hashCode(k);
     }
 
     @Override
@@ -97,18 +101,18 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
     }
 
     @Override
-    public Dictionary<K, V> plus(K key, V val) {
+    public HashDictionary<K, V> plus(K key, V val) {
         if (key == null) {
             if (hasNull && val == nullValue)
                 return this;
-            return new PersistentHashMap<K, V>(hasNull ? count : count + 1, root, true, val);
+            return new HashDictionary<K, V>(hasNull ? count : count + 1, root, true, val);
         }
-        Box addedLeaf = new Box(null);
+        Flag addedLeaf = new Flag();
         INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root)
                 .assoc(0, hash(key), key, val, addedLeaf);
         if (newroot == root)
             return this;
-        return new PersistentHashMap<K, V>(addedLeaf.val == null ? count : count + 1, newroot, hasNull, nullValue);
+        return new HashDictionary<K, V>(addedLeaf.val ? count : count + 1, newroot, hasNull, nullValue);
     }
 
     @Override
@@ -119,21 +123,33 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
     }
 
     @Override
-    public Dictionary<K, V> plusEx(K key, V val) {
+    public HashDictionary<K, V> plusIfAbsent(K key, V val) {
         if (containsKey(key))
             throw Util.runtimeException("Key already present");
         return plus(key, val);
     }
+    
+    @Override
+    public Dictionary<K, V> replace(K key, V expected, V actual) {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: HashDictionary.replace");
+    }
 
-    public Dictionary<K, V> minus(K key) {
+    public HashDictionary<K, V> minus(K key) {
         if (key == null)
-            return hasNull ? new PersistentHashMap<K, V>(count - 1, root, false, null) : this;
+            return hasNull ? new HashDictionary<K, V>(count - 1, root, false, null) : this;
         if (root == null)
             return this;
         INode newroot = root.without(0, hash(key), key);
         if (newroot == root)
             return this;
-        return new PersistentHashMap<K, V>(count - 1, newroot, hasNull, nullValue);
+        return new HashDictionary<K, V>(count - 1, newroot, hasNull, nullValue);
+    }
+    
+    @Override
+    public Dictionary<K, V> minus(K key, V expected) {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: HashDictionary.minus");
     }
 
     @Override
@@ -142,8 +158,8 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
     }
 
     @Override
-    public Dictionary<K,V> zero() {
-        return emptyMap();
+    public HashDictionary<K,V> zero() {
+        return emptyDictionary();
     }
 
     private static int mask(int hash, int shift) {
@@ -151,9 +167,9 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
         return (hash >>> shift) & 0x01f;
     }
 
-    // TODO pull this up into the API
-    public TransientHashMap asBuilder() {
-        return new TransientHashMap(this);
+    @Override
+    public HashDictionaryBuilder<K,V> asBuilder() {
+        return new HashDictionaryBuilder<K,V>(this);
     }
 
     private static class Iter<K,V> implements Iterator<Map.Entry<K, V>> {
@@ -186,18 +202,19 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
         }
     }
 
-    public static final class TransientHashMap<K, V> extends ATransientMap<K, V> implements TransientMap<K, V> {
+    public static final class HashDictionaryBuilder<K, V> extends AbstractDictionaryBuilder<K, V> implements DictionaryBuilder<K, V> {
         private INode root;
         private int count;
         private boolean hasNull;
         private V nullValue;
-        private final Box leafFlag = new Box(null);
+        private final Flag leafFlag = new Flag();
 
-        private TransientHashMap(PersistentHashMap<K, V> m) {
+        private HashDictionaryBuilder(HashDictionary<K, V> m) {
             this(m.root, m.count, m.hasNull, m.nullValue);
         }
 
-        private TransientHashMap(INode root, int count, boolean hasNull, V nullValue) {
+        private HashDictionaryBuilder(INode root, int count, boolean hasNull, V nullValue) {
+            super(new Owner());
             this.root = root;
             this.count = count;
             this.hasNull = hasNull;
@@ -205,7 +222,8 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
         }
 
         @Override
-        protected TransientHashMap<K, V> doAssoc(K key, V val) {
+        public HashDictionaryBuilder<K, V> plus(K key, V val) {
+            owner.ensureEditable();
             if (key == null) {
                 if (this.nullValue != val)
                     this.nullValue = (V) val;
@@ -216,16 +234,32 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                 return this;
             }
             // Box leafFlag = new Box(null);
-            leafFlag.val = null;
+            leafFlag.val = false;
             INode n = (root == null ? BitmapIndexedNode.EMPTY : root)
                     .assoc(owner, 0, hash(key), key, val, leafFlag);
             if (n != this.root)
                 this.root = n;
-            if (leafFlag.val != null) this.count++;
+            if (leafFlag.val) this.count++;
             return this;
         }
+        
+        @Override
+        public HashDictionaryBuilder<K, V> plusIfAbsent(K key, V value) {
+            owner.ensureEditable();
+            // TODO unimplemented
+            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.plusIfAbsent");
+        }
+        
+        @Override
+        public HashDictionaryBuilder<K, V> replace(K key, V expected, V actual) {
+            owner.ensureEditable();
+            // TODO unimplemented
+            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.replace");
+        }
 
-        protected TransientHashMap<K, V> doWithout(K key) {
+        @Override
+        public HashDictionaryBuilder<K, V> minus(K key) {
+            owner.ensureEditable();
             if (key == null) {
                 if (!hasNull) return this;
                 hasNull = false;
@@ -235,42 +269,36 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             }
             if (root == null) return this;
             // Box leafFlag = new Box(null);
-            leafFlag.val = null;
+            leafFlag.val = false;
             INode n = root.without(owner, 0, hash(key), key, leafFlag);
             if (n != root)
                 this.root = n;
-            if (leafFlag.val != null) this.count--;
+            if (leafFlag.val) this.count--;
             return this;
         }
-
-        protected PersistentHashMap<K, V> doPersistent() {
-            return new PersistentHashMap<K, V>(count, root, hasNull, nullValue);
+        
+        @Override
+        public HashDictionaryBuilder<K, V> minus(K key, V expected) {
+            // TODO unimplemented
+            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.minus");
         }
-
-        protected int doCount() {
-            return count;
+        
+        @Override
+        public HashDictionaryBuilder<K, V> zero() {
+            owner.ensureEditable();
+            // TODO unimplemented
+            throw new RuntimeException("Unimplemented: HashDictionaryBuilder.zero");
         }
 
         @Override
-        public Set<Map.Entry<K, V>> doEntrySet() {
-            return new AbstractSet<Map.Entry<K, V>>() {
-                @Override
-                public Iterator<Map.Entry<K, V>> iterator() {
-                    final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
-                    return hasNull ? new Iter(s, nullValue) : s;
-                }
-
-                @Override
-                public int size() {
-                    return count;
-                }
-            };
+        public HashDictionary<K, V> build() {
+            owner.ensureEditable();
+            return owner.built(new HashDictionary<K, V>(count, root, hasNull, nullValue));
         }
-
     }
 
     private static interface INode extends Serializable {
-        INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf);
+        INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf);
 
         Iterator nodeIt(boolean reverse);
 
@@ -284,17 +312,17 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
 
 //        ISeq nodeSeq();
 
-        INode assoc(AtomicReference<Thread> edit, int shift, int hash, Object key, Object val, Box addedLeaf);
+        INode assoc(Owner owner, int shift, int hash, Object key, Object val, Flag addedLeaf);
 
-        INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf);
+        INode without(Owner edit, int shift, int hash, Object key, Flag removedLeaf);
     }
 
     private final static class ArrayNode implements INode {
         int count;
         final INode[] array;
-        final AtomicReference<Thread> edit;
+        final Owner edit;
 
-        ArrayNode(AtomicReference<Thread> edit, int count, INode[] array) {
+        ArrayNode(Owner edit, int count, INode[] array) {
             this.array = array;
             this.edit = edit;
             this.count = count;
@@ -406,7 +434,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return reverse ? new ReverseArrayNodeIterator(this) : new ArrayNodeIterator(this);
         }
 
-        public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf) {
+        public INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf) {
             int idx = mask(hash, shift);
             INode node = array[idx];
             if (node == null)
@@ -450,19 +478,19 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return node.find(shift + 5, hash, key, notFound);
         }
 
-        private ArrayNode ensureEditable(AtomicReference<Thread> edit) {
+        private ArrayNode ensureEditable(Owner edit) {
             if (this.edit == edit)
                 return this;
             return new ArrayNode(edit, count, this.array.clone());
         }
 
-        private ArrayNode editAndSet(AtomicReference<Thread> edit, int i, INode n) {
+        private ArrayNode editAndSet(Owner edit, int i, INode n) {
             ArrayNode editable = ensureEditable(edit);
             editable.array[i] = n;
             return editable;
         }
 
-        private INode pack(AtomicReference<Thread> edit, int idx) {
+        private INode pack(Owner edit, int idx) {
             Object[] newArray = new Object[2 * (count - 1)];
             int j = 1;
             int bitmap = 0;
@@ -481,7 +509,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return new BitmapIndexedNode(edit, bitmap, newArray);
         }
 
-        public INode assoc(AtomicReference<Thread> edit, int shift, int hash, Object key, Object val, Box addedLeaf) {
+        public INode assoc(Owner edit, int shift, int hash, Object key, Object val, Flag addedLeaf) {
             int idx = mask(hash, shift);
             INode node = array[idx];
             if (node == null) {
@@ -496,7 +524,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return editAndSet(edit, idx, n);
         }
 
-        public INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf) {
+        public INode without(Owner edit, int shift, int hash, Object key, Flag removedLeaf) {
             int idx = mask(hash, shift);
             INode node = array[idx];
             if (node == null)
@@ -520,13 +548,13 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
 
         int bitmap;
         Object[] array;
-        final AtomicReference<Thread> edit;
+        final Owner edit;
 
         final int index(int bit) {
             return Integer.bitCount(bitmap & (bit - 1));
         }
 
-        BitmapIndexedNode(AtomicReference<Thread> edit, int bitmap, Object[] array) {
+        BitmapIndexedNode(Owner edit, int bitmap, Object[] array) {
             this.bitmap = bitmap;
             this.array = array;
             this.edit = edit;
@@ -699,7 +727,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             }
         }
 
-        public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf) {
+        public INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf) {
             int bit = bitpos(hash, shift);
             int idx = index(bit);
             if ((bitmap & bit) != 0) {
@@ -716,7 +744,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                         return this;
                     return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2 * idx + 1, val));
                 }
-                addedLeaf.val = addedLeaf;
+                addedLeaf.val = true;
                 return new BitmapIndexedNode(null, bitmap,
                         cloneAndSet(array,
                                 2 * idx, null,
@@ -741,7 +769,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                     Object[] newArray = new Object[2 * (n + 1)];
                     System.arraycopy(array, 0, newArray, 0, 2 * idx);
                     newArray[2 * idx] = key;
-                    addedLeaf.val = addedLeaf;
+                    addedLeaf.val = true;
                     newArray[2 * idx + 1] = val;
                     System.arraycopy(array, 2 * idx, newArray, 2 * (idx + 1), 2 * (n - idx));
                     return new BitmapIndexedNode(null, bitmap | bit, newArray);
@@ -800,7 +828,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return notFound;
         }
 
-        private BitmapIndexedNode ensureEditable(AtomicReference<Thread> edit) {
+        private BitmapIndexedNode ensureEditable(Owner edit) {
             if (this.edit == edit)
                 return this;
             int n = Integer.bitCount(bitmap);
@@ -813,20 +841,20 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return new BitmapIndexedNode(edit, bitmap, newArray);
         }
 
-        private BitmapIndexedNode editAndSet(AtomicReference<Thread> edit, int i, Object a) {
+        private BitmapIndexedNode editAndSet(Owner edit, int i, Object a) {
             BitmapIndexedNode editable = ensureEditable(edit);
             editable.array[i] = a;
             return editable;
         }
 
-        private BitmapIndexedNode editAndSet(AtomicReference<Thread> edit, int i, Object a, int j, Object b) {
+        private BitmapIndexedNode editAndSet(Owner edit, int i, Object a, int j, Object b) {
             BitmapIndexedNode editable = ensureEditable(edit);
             editable.array[i] = a;
             editable.array[j] = b;
             return editable;
         }
 
-        private BitmapIndexedNode editAndRemovePair(AtomicReference<Thread> edit, int bit, int i) {
+        private BitmapIndexedNode editAndRemovePair(Owner edit, int bit, int i) {
             if (bitmap == bit)
                 return null;
             BitmapIndexedNode editable = ensureEditable(edit);
@@ -837,7 +865,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return editable;
         }
 
-        public INode assoc(AtomicReference<Thread> edit, int shift, int hash, Object key, Object val, Box addedLeaf) {
+        public INode assoc(Owner edit, int shift, int hash, Object key, Object val, Flag addedLeaf) {
             int bit = bitpos(hash, shift);
             int idx = index(bit);
             if ((bitmap & bit) != 0) {
@@ -854,13 +882,13 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                         return this;
                     return editAndSet(edit, 2 * idx + 1, val);
                 }
-                addedLeaf.val = addedLeaf;
+                addedLeaf.val = true;
                 return editAndSet(edit, 2 * idx, null, 2 * idx + 1,
                         createNode(edit, shift + 5, keyOrNull, valOrNode, hash, key, val));
             } else {
                 int n = Integer.bitCount(bitmap);
                 if (n * 2 < array.length) {
-                    addedLeaf.val = addedLeaf;
+                    addedLeaf.val = true;
                     BitmapIndexedNode editable = ensureEditable(edit);
                     System.arraycopy(editable.array, 2 * idx, editable.array, 2 * (idx + 1), 2 * (n - idx));
                     editable.array[2 * idx] = key;
@@ -887,7 +915,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                     Object[] newArray = new Object[2 * (n + 4)];
                     System.arraycopy(array, 0, newArray, 0, 2 * idx);
                     newArray[2 * idx] = key;
-                    addedLeaf.val = addedLeaf;
+                    addedLeaf.val = true;
                     newArray[2 * idx + 1] = val;
                     System.arraycopy(array, 2 * idx, newArray, 2 * (idx + 1), 2 * (n - idx));
                     BitmapIndexedNode editable = ensureEditable(edit);
@@ -898,7 +926,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             }
         }
 
-        public INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf) {
+        public INode without(Owner edit, int shift, int hash, Object key, Flag removedLeaf) {
             int bit = bitpos(hash, shift);
             if ((bitmap & bit) == 0)
                 return this;
@@ -916,7 +944,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                 return editAndRemovePair(edit, bit, idx);
             }
             if (Util.equals(key, keyOrNull)) {
-                removedLeaf.val = removedLeaf;
+                removedLeaf.val = true;
                 // TODO: collapse
                 return editAndRemovePair(edit, bit, idx);
             }
@@ -929,9 +957,9 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
         final int hash;
         int count;
         Object[] array;
-        final AtomicReference<Thread> edit;
+        final Owner edit;
 
-        HashCollisionNode(AtomicReference<Thread> edit, int hash, int count, Object... array) {
+        HashCollisionNode(Owner edit, int hash, int count, Object... array) {
             this.edit = edit;
             this.hash = hash;
             this.count = count;
@@ -1011,7 +1039,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return reverse ? new ReverseHashCollisionNodeIterator(this) : new HashCollisionNodeIterator(this);
         }
 
-        public INode assoc(int shift, int hash, Object key, Object val, Box addedLeaf) {
+        public INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf) {
             if (hash == this.hash) {
                 int idx = findIndex(key);
                 if (idx != -1) {
@@ -1023,7 +1051,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                 System.arraycopy(array, 0, newArray, 0, array.length);
                 newArray[array.length] = key;
                 newArray[array.length + 1] = val;
-                addedLeaf.val = addedLeaf;
+                addedLeaf.val = true;
                 return new HashCollisionNode(edit, hash, count + 1, newArray);
             }
             // nest it in a bitmap node
@@ -1067,7 +1095,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return -1;
         }
 
-        private HashCollisionNode ensureEditable(AtomicReference<Thread> edit) {
+        private HashCollisionNode ensureEditable(Owner edit) {
             if (this.edit == edit)
                 return this;
             Object[] newArray = new Object[2 * (count + 1)]; // make room for
@@ -1076,7 +1104,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return new HashCollisionNode(edit, hash, count, newArray);
         }
 
-        private HashCollisionNode ensureEditable(AtomicReference<Thread> edit, int count, Object[] array) {
+        private HashCollisionNode ensureEditable(Owner edit, int count, Object[] array) {
             if (this.edit == edit) {
                 this.array = array;
                 this.count = count;
@@ -1085,20 +1113,20 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             return new HashCollisionNode(edit, hash, count, array);
         }
 
-        private HashCollisionNode editAndSet(AtomicReference<Thread> edit, int i, Object a) {
+        private HashCollisionNode editAndSet(Owner edit, int i, Object a) {
             HashCollisionNode editable = ensureEditable(edit);
             editable.array[i] = a;
             return editable;
         }
 
-        private HashCollisionNode editAndSet(AtomicReference<Thread> edit, int i, Object a, int j, Object b) {
+        private HashCollisionNode editAndSet(Owner edit, int i, Object a, int j, Object b) {
             HashCollisionNode editable = ensureEditable(edit);
             editable.array[i] = a;
             editable.array[j] = b;
             return editable;
         }
 
-        public INode assoc(AtomicReference<Thread> edit, int shift, int hash, Object key, Object val, Box addedLeaf) {
+        public INode assoc(Owner edit, int shift, int hash, Object key, Object val, Flag addedLeaf) {
             if (hash == this.hash) {
                 int idx = findIndex(key);
                 if (idx != -1) {
@@ -1107,7 +1135,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                     return editAndSet(edit, idx + 1, val);
                 }
                 if (array.length > 2 * count) {
-                    addedLeaf.val = addedLeaf;
+                    addedLeaf.val = true;
                     HashCollisionNode editable = editAndSet(edit, 2 * count, key, 2 * count + 1, val);
                     editable.count++;
                     return editable;
@@ -1116,7 +1144,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                 System.arraycopy(array, 0, newArray, 0, array.length);
                 newArray[array.length] = key;
                 newArray[array.length + 1] = val;
-                addedLeaf.val = addedLeaf;
+                addedLeaf.val = true;
                 return ensureEditable(edit, count + 1, newArray);
             }
             // nest it in a bitmap node
@@ -1124,11 +1152,11 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                     .assoc(edit, shift, hash, key, val, addedLeaf);
         }
 
-        public INode without(AtomicReference<Thread> edit, int shift, int hash, Object key, Box removedLeaf) {
+        public INode without(Owner edit, int shift, int hash, Object key, Flag removedLeaf) {
             int idx = findIndex(key);
             if (idx == -1)
                 return this;
-            removedLeaf.val = removedLeaf;
+            removedLeaf.val = true;
             if (count == 1)
                 return null;
             HashCollisionNode editable = ensureEditable(edit);
@@ -1170,19 +1198,19 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
         int key1hash = hash(key1);
         if (key1hash == key2hash)
             return new HashCollisionNode(null, key1hash, 2, new Object[] { key1, val1, key2, val2 });
-        Box _ = new Box(null);
-        AtomicReference<Thread> edit = new AtomicReference<Thread>();
+        Flag _ = new Flag();
+        Owner edit = new Owner();
         return BitmapIndexedNode.EMPTY
                 .assoc(edit, shift, key1hash, key1, val1, _)
                 .assoc(edit, shift, key2hash, key2, val2, _);
     }
 
-    private static INode createNode(AtomicReference<Thread> edit, int shift, Object key1, Object val1, int key2hash,
+    private static INode createNode(Owner edit, int shift, Object key1, Object val1, int key2hash,
             Object key2, Object val2) {
         int key1hash = hash(key1);
         if (key1hash == key2hash)
             return new HashCollisionNode(null, key1hash, 2, new Object[] { key1, val1, key2, val2 });
-        Box _ = new Box(null);
+        Flag _ = new Flag();
         return BitmapIndexedNode.EMPTY
                 .assoc(edit, shift, key1hash, key1, val1, _)
                 .assoc(edit, shift, key2hash, key2, val2, _);
@@ -1191,21 +1219,32 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
     private static int bitpos(int hash, int shift) {
         return 1 << mask(hash, shift);
     }
+//
+//    @Override
+//    public Set<Map.Entry<K, V>> entrySet() {
+//        return new AbstractSet<Map.Entry<K,V>>() {
+//            @Override
+//            public Iterator<Map.Entry<K, V>> iterator() {
+//                final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
+//                return hasNull ? new Iter(s, nullValue) : s;
+//            }
+//
+//            @Override
+//            public int size() {
+//                return count;
+//            }
+//        };
+//    }
 
     @Override
-    public Set<Map.Entry<K, V>> entrySet() {
-        return new AbstractSet<Map.Entry<K,V>>() {
-            @Override
-            public Iterator<Map.Entry<K, V>> iterator() {
-                final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
-                return hasNull ? new Iter(s, nullValue) : s;
-            }
-
-            @Override
-            public int size() {
-                return count;
-            }
-        };
+    public FiniteSet<Map.Entry<K, V>> entrySet() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: HashDictionary.entrySet");
     }
-
+    
+    @Override
+    public FiniteSet<K> keySet() {
+        // TODO unimplemented
+        throw new RuntimeException("Unimplemented: HashDictionary.keySet");
+    }
 }

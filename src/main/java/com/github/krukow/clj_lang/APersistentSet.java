@@ -15,7 +15,7 @@ package com.github.krukow.clj_lang;
 import java.util.AbstractSet;
 import java.util.Iterator;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.PersistentSet;
 import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_ds.TransientSet;
@@ -23,9 +23,9 @@ import com.github.krukow.clj_ds.TransientSet;
 // TODO not really abstract, is it?
 public class APersistentSet<T> extends AbstractSet<T> implements PersistentSet<T> {
 
-    protected final PersistentMap<T, Boolean> impl;
+    protected final Dictionary<T, Boolean> impl;
 
-    protected APersistentSet(PersistentMap<T, Boolean> impl) {
+    protected APersistentSet(Dictionary<T, Boolean> impl) {
         this.impl = impl;
     }
 
@@ -46,7 +46,7 @@ public class APersistentSet<T> extends AbstractSet<T> implements PersistentSet<T
 
     @Override
     public TransientSet<T> asTransient() {
-        return new ATransientSet<>(impl.asTransient());
+        return new ATransientSet<>(impl.asBuilder());
     }
 
     @Override

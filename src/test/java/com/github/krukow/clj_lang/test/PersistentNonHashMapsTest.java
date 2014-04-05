@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 
 import org.junit.Test;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_lang.PersistentArrayMap;
 
 public class PersistentNonHashMapsTest {
@@ -24,8 +24,8 @@ PersistentTreeMap.java
 */
 	@Test
 	public final void testArrayMap() {
-		PersistentMap<String, Integer> am = PersistentArrayMap.empty()
-		        .asTransient()
+		Dictionary<String, Integer> am = PersistentArrayMap.empty()
+		        .asBuilder()
 		        .plus("1", 1)
 		        .plus("2", 2)
 		        .plus("3", 3)

@@ -75,51 +75,51 @@ public final class Persistents {
 	}
 
 	/**
-	 * @return An empty {@link PersistentMap}; implemented as hash map.
+	 * @return An empty {@link Dictionary}; implemented as hash map.
 	 */
-	public static <K, V> PersistentMap<K, V> hashMap() {
+	public static <K, V> Dictionary<K, V> hashMap() {
 		return PersistentHashMap.emptyMap();
 	}
 
 	/**
-	 * @return A singleton {@link PersistentMap} associating the given key with
+	 * @return A singleton {@link Dictionary} associating the given key with
 	 *         the given value; implemented as hash map.
 	 */
-	public static <K, V> PersistentMap<K, V> hashMap(K key, V val) {
+	public static <K, V> Dictionary<K, V> hashMap(K key, V val) {
 		return Persistents.<K, V> hashMap().plus(key, val);
 	}
 
 	/**
 	 * @param keyValues
 	 *            An array containing key/value pairs; no type checking is made.
-	 * @return A {@link PersistentMap} with the given associations; implemented
+	 * @return A {@link Dictionary} with the given associations; implemented
 	 *         as hash map.
 	 */
-	public static <K, V> PersistentMap<K, V> hashMap(Object... keyValues) {
+	public static <K, V> Dictionary<K, V> hashMap(Object... keyValues) {
 		return PersistentHashMap.create(keyValues);
 	}
 
 	/**
-	 * @return A {@link PersistentMap} consisting of the associations of the map
+	 * @return A {@link Dictionary} consisting of the associations of the map
 	 *         init; implemented as hash map.
 	 */
-	public static <K, V> PersistentMap<K, V> hashMap(Map<? extends K, ? extends V> init) {
+	public static <K, V> Dictionary<K, V> hashMap(Map<? extends K, ? extends V> init) {
 		return PersistentHashMap.create(init);
 	}
 
 	/**
-	 * @return An empty {@link PersistentMap}; implemented as array map.
+	 * @return An empty {@link Dictionary}; implemented as array map.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <K, V> PersistentMap<K, V> arrayMap() {
+	public static <K, V> Dictionary<K, V> arrayMap() {
 		return PersistentArrayMap.empty();
 	}
 
 	/**
-	 * @return A {@link PersistentMap} consisting of the associations of the map
+	 * @return A {@link Dictionary} consisting of the associations of the map
 	 *         init; implemented as array map.
 	 */
-	public static <K, V> PersistentMap<K, V> arrayMap(Map<? extends K, ? extends V> init) {
+	public static <K, V> Dictionary<K, V> arrayMap(Map<? extends K, ? extends V> init) {
 		return PersistentArrayMap.create(init);
 	}
 

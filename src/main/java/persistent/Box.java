@@ -11,11 +11,11 @@
 
 package persistent;
 
-public class Box { // TODO: privatize
+public class Box<T> { // TODO: privatize
 
-    public Object val;
+    public T val;
 
-    public Box(Object val) {
+    public Box(T val) {
         this.val = val;
     }
 }

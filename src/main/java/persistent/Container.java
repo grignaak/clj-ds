@@ -30,7 +30,7 @@ import java.util.Collection;
  * <p>
  * Once a builder builds its Container, it may not be used anymore.
  */
-public interface Container<E> extends Collection<E> {
+public interface Container<E> extends Collection<E>, Traversable<E> {
 
     /**
      * A builder for a Container, which employs the same structure sharing and

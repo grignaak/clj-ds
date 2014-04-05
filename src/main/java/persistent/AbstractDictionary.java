@@ -30,29 +30,18 @@ public abstract class AbstractDictionary<K, V> extends AbstractMap<K,V> implemen
     public abstract FiniteSet<K> keySet();
     
     @Override
-    public boolean isEmpty() {
-        return size() == 0;
-    }
-    
-    @Override
-    public boolean containsValue(Object value) {
-        if (value == null) {
-            for (Map.Entry<K, V> kv : entrySet()) {
-                if (kv.getValue() == null)
-                    return true;
-            }
-        } else {
-            for (Map.Entry<K, V> kv : entrySet()) {
-                if (value.equals(kv.getValue()))
-                    return true;
-            }
-        }
-        return false;
-    }
-    
-    @Override
     public boolean containsKey(Object key) {
         return keySet().contains(key);
+    }
+    
+    @Override
+    public ImmutableIterator<Map.Entry<K, V>> iterator() {
+        return entrySet().iterator();
+    }
+    
+    @Override
+    public Cursor<Entry<K, V>> cursor() {
+        return entrySet().cursor();
     }
 }
 

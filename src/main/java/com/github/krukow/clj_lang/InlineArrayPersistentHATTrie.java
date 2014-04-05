@@ -16,13 +16,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.TransientMap;
 
 /*A persistent rendition of Nikolas Askitis' HAT Trie Uses path copying for
  * persistence Any errors are my own */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class InlineArrayPersistentHATTrie<T> extends AbstractMap<String, T> implements PersistentMap<String, T> {
+public class InlineArrayPersistentHATTrie<T> extends AbstractMap<String, T> implements Dictionary<String, T> {
     private static final long serialVersionUID = 6864541653381702688L;
     final HATTrieNode<T> root;
     final int count;
@@ -694,19 +694,19 @@ public class InlineArrayPersistentHATTrie<T> extends AbstractMap<String, T> impl
     }
 
     @Override
-    public PersistentMap<String, T> plusEx(String key, T val) {
+    public Dictionary<String, T> plusEx(String key, T val) {
         // TODO unimplemented
         throw new RuntimeException("Unimplemented: PersistentMap<String,T>.plusEx");
     }
 
     @Override
-    public PersistentMap<String, T> minus(String key) {
+    public Dictionary<String, T> minus(String key) {
         // TODO unimplemented
         throw new RuntimeException("Unimplemented: PersistentMap<String,T>.minus");
     }
 
     @Override
-    public TransientMap<String, T> asTransient() {
+    public TransientMap<String, T> asBuilder() {
         // TODO unimplemented
         throw new RuntimeException("Unimplemented: PersistentMap<String,T>.asTransient");
     }

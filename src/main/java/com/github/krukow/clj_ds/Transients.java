@@ -19,12 +19,12 @@ public final class Transients {
 	
 	@SuppressWarnings("unchecked")
 	public static final <K, V> TransientMap<K, V> transientHashMap() {
-		return PersistentHashMap.<K, V>emptyMap().asTransient();
+		return PersistentHashMap.<K, V>emptyMap().asBuilder();
 	}
 	
 	@SuppressWarnings("unchecked")
 	public static final <K, V> TransientMap<K, V> transientArrayMap() {
-		return PersistentArrayMap.empty().asTransient();
+		return PersistentArrayMap.empty().asBuilder();
 	}
 	
 	// Utilities

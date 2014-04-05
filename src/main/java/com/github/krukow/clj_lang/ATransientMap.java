@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.TransientMap;
 
 
@@ -100,12 +100,12 @@ abstract class ATransientMap<K, V> extends AbstractMap<K,V> implements Transient
     }
     protected abstract TransientMap<K, V> doWithout(K key);
 
-    public final PersistentMap<K, V> persist() {
+    public final Dictionary<K, V> persist() {
         ensureEditable();
         owner.set(null);
         return doPersistent();
     }
-    protected abstract PersistentMap<K, V> doPersistent();
+    protected abstract Dictionary<K, V> doPersistent();
 
     public final int size() {
         ensureEditable();

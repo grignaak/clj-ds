@@ -12,7 +12,7 @@
 
 package com.github.krukow.clj_lang;
 
-import com.github.krukow.clj_ds.PersistentMap;
+import com.github.krukow.clj_ds.Dictionary;
 import com.github.krukow.clj_ds.PersistentSet;
 
 public class PersistentHashSet<T> extends APersistentSet<T> implements PersistentSet<T> {
@@ -42,7 +42,7 @@ public class PersistentHashSet<T> extends APersistentSet<T> implements Persisten
         return ret;
     }
 
-    private PersistentHashSet(PersistentMap<T, Boolean> impl) {
+    private PersistentHashSet(Dictionary<T, Boolean> impl) {
         super(impl);
     }
 }
