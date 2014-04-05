@@ -10,15 +10,15 @@
 
 package persistent;
 
-import java.io.Serializable;
 import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 
 import persistent.AbstractBuilder.Owner;
-
-import com.github.krukow.clj_lang.Util;
+import persistent.Containers.IteratorCursor;
 
 /*A persistent rendition of Phil Bagwell's Hash Array Mapped Trie
  * 
@@ -89,15 +89,11 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         this.nullValue = nullValue;
     }
 
-    private static int hash(Object k) {
-        return Objects.hashCode(k);
-    }
-
     @Override
     public boolean containsKey(Object key) {
         if (key == null)
             return hasNull;
-        return (root != null) ? root.find(0, hash(key), key, NOT_FOUND) != NOT_FOUND : false;
+        return (root != null) ? root.find(0, Objects.hashCode(key), key, NOT_FOUND) != NOT_FOUND : false;
     }
 
     @Override
@@ -109,23 +105,24 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         }
         Flag addedLeaf = new Flag();
         INode newroot = (root == null ? BitmapIndexedNode.EMPTY : root)
-                .assoc(0, hash(key), key, val, addedLeaf);
+                .assoc(0, Objects.hashCode(key), key, val, addedLeaf);
         if (newroot == root)
             return this;
         return new HashDictionary<K, V>(addedLeaf.val ? count : count + 1, newroot, hasNull, nullValue);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public V get(Object key) {
         if (key == null)
             return hasNull ? nullValue : null;
-        return (V) (root != null ? root.find(0, hash(key), key, null) : null);
+        return (V) (root != null ? root.find(0, Objects.hashCode(key), key, null) : null);
     }
 
     @Override
     public HashDictionary<K, V> plusIfAbsent(K key, V val) {
         if (containsKey(key))
-            throw Util.runtimeException("Key already present");
+            throw new IllegalStateException("Key already present");
         return plus(key, val);
     }
     
@@ -140,7 +137,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             return hasNull ? new HashDictionary<K, V>(count - 1, root, false, null) : this;
         if (root == null)
             return this;
-        INode newroot = root.without(0, hash(key), key);
+        INode newroot = root.without(0, Objects.hashCode(key), key);
         if (newroot == root)
             return this;
         return new HashDictionary<K, V>(count - 1, newroot, hasNull, nullValue);
@@ -172,7 +169,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         return new HashDictionaryBuilder<K,V>(this);
     }
 
-    private static class Iter<K,V> implements Iterator<Map.Entry<K, V>> {
+    private static class Iter<K,V> implements ImmutableIterator<Map.Entry<K, V>> {
         private final Iterator<Map.Entry<K, V>> i;
         private final V nullValue;
         private boolean nullReady = true;
@@ -196,7 +193,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             return i.next();
         }
 
-        @Override
+        @Override @Deprecated
         public void remove() {
             throw new UnsupportedOperationException();
         }
@@ -236,7 +233,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             // Box leafFlag = new Box(null);
             leafFlag.val = false;
             INode n = (root == null ? BitmapIndexedNode.EMPTY : root)
-                    .assoc(owner, 0, hash(key), key, val, leafFlag);
+                    .assoc(owner, 0, Objects.hashCode(key), key, val, leafFlag);
             if (n != this.root)
                 this.root = n;
             if (leafFlag.val) this.count++;
@@ -268,9 +265,9 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                 return this;
             }
             if (root == null) return this;
-            // Box leafFlag = new Box(null);
+
             leafFlag.val = false;
-            INode n = root.without(owner, 0, hash(key), key, leafFlag);
+            INode n = root.without(owner, 0, Objects.hashCode(key), key, leafFlag);
             if (n != root)
                 this.root = n;
             if (leafFlag.val) this.count--;
@@ -297,16 +294,16 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         }
     }
 
-    private static interface INode extends Serializable {
+    private static interface INode {
         INode assoc(int shift, int hash, Object key, Object val, Flag addedLeaf);
 
-        Iterator nodeIt(boolean reverse);
+        ImmutableIterator<?> nodeIt(boolean reverse);
 
-        Iterator nodeItFrom(int shift, int hash, Object key);
+        ImmutableIterator<?> nodeItFrom(int shift, int hash, Object key);
 
         INode without(int shift, int hash, Object key);
 
-        java.util.Map.Entry find(int shift, int hash, Object key);
+        Map.Entry<?,?> find(int shift, int hash, Object key);
 
         Object find(int shift, int hash, Object key, Object notFound);
 
@@ -328,13 +325,13 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             this.count = count;
         }
 
-        public Iterator nodeItFrom(int shift, int hash, Object key) {
+        public ImmutableIterator<?> nodeItFrom(int shift, int hash, Object key) {
             return new ArrayNodeIterator(this, shift, hash, key);
         }
 
-        private static class ArrayNodeIterator implements Iterator {
+        private static class ArrayNodeIterator implements ImmutableIterator<Object> {
             int index;
-            Iterator current;
+            Iterator<?> current;
             INode[] array;
             int shift, hash;
             Object key;
@@ -390,12 +387,10 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
         }
 
-        private static final class ReverseArrayNodeIterator implements Iterator {
+        private static final class ReverseArrayNodeIterator implements ImmutableIterator<Object> {
             int index;
-            Iterator current;
+            Iterator<?> current;
             INode[] array;
-            int shift, hash;
-            Object key;
 
             public ReverseArrayNodeIterator(ArrayNode an) {
                 this.array = an.array;
@@ -430,7 +425,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             }
         }
 
-        public Iterator nodeIt(boolean reverse) {
+        public ImmutableIterator<?> nodeIt(boolean reverse) {
             return reverse ? new ReverseArrayNodeIterator(this) : new ArrayNodeIterator(this);
         }
 
@@ -462,7 +457,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                 return new ArrayNode(null, count, cloneAndSet(array, idx, n));
         }
 
-        public Map.Entry find(int shift, int hash, Object key) {
+        public Map.Entry<?,?> find(int shift, int hash, Object key) {
             int idx = mask(hash, shift);
             INode node = array[idx];
             if (node == null)
@@ -560,20 +555,20 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             this.edit = edit;
         }
 
-        public Iterator nodeItFrom(int shift, int hash, Object key) {
+        public ImmutableIterator<?> nodeItFrom(int shift, int hash, Object key) {
             return new BitmapIndexedNodeIterator(this, shift, hash, key);
         }
 
-        public Iterator nodeIt(boolean reverse) {
+        public ImmutableIterator<?> nodeIt(boolean reverse) {
             return reverse ? new ReverseBitmapIndexedNodeIterator(this) : new BitmapIndexedNodeIterator(this);
         }
 
-        private static class BitmapIndexedNodeIterator implements Iterator {
+        private static class BitmapIndexedNodeIterator implements ImmutableIterator<Object> {
             BitmapIndexedNode node;
 
             int index;
             int N;
-            Iterator current;
+            Iterator<?> current;
 
             public BitmapIndexedNodeIterator(BitmapIndexedNode node) {
                 this.node = node;
@@ -599,14 +594,14 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                     index += 2;
                     INode val = ((INode) valOrNode);
                     if (val != null) {
-                        Iterator nodeIt = val.nodeItFrom(shift + 5, hash, key);
+                        Iterator<?> nodeIt = val.nodeItFrom(shift + 5, hash, key);
                         if (nodeIt.hasNext()) {
                             current = nodeIt;
                             return;
                         }
                     }
                 } else {
-                    if (Util.equals(key, keyOrNull)) {
+                    if (Objects.equals(key, keyOrNull)) {
                         return;// OK index points to key
                     } else {
                         throw new IllegalArgumentException("Key not found: " + key);
@@ -635,7 +630,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                         index += 2;
                         INode val = ((INode) valOrNode);
                         if (val != null) {
-                            Iterator nodeIt = val.nodeIt(false);
+                            Iterator<?> nodeIt = val.nodeIt(false);
                             if (nodeIt.hasNext()) {
                                 current = nodeIt;
                                 return;
@@ -666,11 +661,11 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
         }
 
-        static final class ReverseBitmapIndexedNodeIterator implements Iterator {
+        static final class ReverseBitmapIndexedNodeIterator implements ImmutableIterator<Object> {
             BitmapIndexedNode node;
 
             int index;
-            Iterator current;
+            Iterator<?> current;
 
             public ReverseBitmapIndexedNodeIterator(BitmapIndexedNode node) {
                 this.node = node;
@@ -697,7 +692,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                         index -= 2;
                         INode val = ((INode) valOrNode);
                         if (val != null) {
-                            Iterator nodeIt = val.nodeIt(true);
+                            Iterator<?> nodeIt = val.nodeIt(true);
                             if (nodeIt.hasNext()) {
                                 current = nodeIt;
                                 return;
@@ -739,7 +734,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                         return this;
                     return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2 * idx + 1, n));
                 }
-                if (Util.equals(key, keyOrNull)) {
+                if (Objects.equals(key, keyOrNull)) {
                     if (val == valOrNode)
                         return this;
                     return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2 * idx + 1, val));
@@ -761,7 +756,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                             if (array[j] == null)
                                 nodes[i] = (INode) array[j + 1];
                             else
-                                nodes[i] = EMPTY.assoc(shift + 5, hash(array[j]), array[j], array[j + 1], addedLeaf);
+                                nodes[i] = EMPTY.assoc(shift + 5, Objects.hashCode(array[j]), array[j], array[j + 1], addedLeaf);
                             j += 2;
                         }
                     return new ArrayNode(null, n + 1, nodes);
@@ -794,13 +789,13 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                     return null;
                 return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
             }
-            if (Util.equals(key, keyOrNull))
+            if (Objects.equals(key, keyOrNull))
                 // TODO: collapse
                 return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
             return this;
         }
 
-        public Map.Entry find(int shift, int hash, Object key) {
+        public Map.Entry<?,?> find(int shift, int hash, Object key) {
             int bit = bitpos(hash, shift);
             if ((bitmap & bit) == 0)
                 return null;
@@ -809,7 +804,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             Object valOrNode = array[2 * idx + 1];
             if (keyOrNull == null)
                 return ((INode) valOrNode).find(shift + 5, hash, key);
-            if (Util.equals(key, keyOrNull))
+            if (Objects.equals(key, keyOrNull))
                 return new AbstractMap.SimpleImmutableEntry<>(keyOrNull, valOrNode);
             return null;
         }
@@ -823,7 +818,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             Object valOrNode = array[2 * idx + 1];
             if (keyOrNull == null)
                 return ((INode) valOrNode).find(shift + 5, hash, key, notFound);
-            if (Util.equals(key, keyOrNull))
+            if (Objects.equals(key, keyOrNull))
                 return valOrNode;
             return notFound;
         }
@@ -832,11 +827,8 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             if (this.edit == edit)
                 return this;
             int n = Integer.bitCount(bitmap);
-            Object[] newArray = new Object[n >= 0 ? 2 * (n + 1) : 4]; // make
-                                                                      // room
-                                                                      // for
-                                                                      // next
-                                                                      // assoc
+            // make room for next assoc
+            Object[] newArray = new Object[n >= 0 ? 2 * (n + 1) : 4];
             System.arraycopy(array, 0, newArray, 0, 2 * n);
             return new BitmapIndexedNode(edit, bitmap, newArray);
         }
@@ -877,7 +869,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                         return this;
                     return editAndSet(edit, 2 * idx + 1, n);
                 }
-                if (Util.equals(key, keyOrNull)) {
+                if (Objects.equals(key, keyOrNull)) {
                     if (val == valOrNode)
                         return this;
                     return editAndSet(edit, 2 * idx + 1, val);
@@ -906,7 +898,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                             if (array[j] == null)
                                 nodes[i] = (INode) array[j + 1];
                             else
-                                nodes[i] = EMPTY.assoc(edit, shift + 5, hash(array[j]), array[j], array[j + 1],
+                                nodes[i] = EMPTY.assoc(edit, shift + 5, Objects.hashCode(array[j]), array[j], array[j + 1],
                                         addedLeaf);
                             j += 2;
                         }
@@ -943,7 +935,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                     return null;
                 return editAndRemovePair(edit, bit, idx);
             }
-            if (Util.equals(key, keyOrNull)) {
+            if (Objects.equals(key, keyOrNull)) {
                 removedLeaf.val = true;
                 // TODO: collapse
                 return editAndRemovePair(edit, bit, idx);
@@ -966,7 +958,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             this.array = array;
         }
 
-        static final class HashCollisionNodeIterator implements Iterator {
+        static final class HashCollisionNodeIterator implements ImmutableIterator<Object> {
             Object[] array;
             int index;
             int count;
@@ -1003,7 +995,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
         }
 
-        static final class ReverseHashCollisionNodeIterator implements Iterator {
+        static final class ReverseHashCollisionNodeIterator implements ImmutableIterator<Object> {
             Object[] array;
             int index;
             int count;
@@ -1031,11 +1023,11 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
         }
 
-        public Iterator nodeItFrom(int shift, int hash, Object key) {
+        public ImmutableIterator<?> nodeItFrom(int shift, int hash, Object key) {
             return new HashCollisionNodeIterator(this, shift, hash, key);
         }
 
-        public Iterator nodeIt(boolean reverse) {
+        public ImmutableIterator<?> nodeIt(boolean reverse) {
             return reverse ? new ReverseHashCollisionNodeIterator(this) : new HashCollisionNodeIterator(this);
         }
 
@@ -1068,11 +1060,11 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             return new HashCollisionNode(null, hash, count - 1, removePair(array, idx / 2));
         }
 
-        public Map.Entry find(int shift, int hash, Object key) {
+        public Map.Entry<?,?> find(int shift, int hash, Object key) {
             int idx = findIndex(key);
             if (idx < 0)
                 return null;
-            if (Util.equals(key, array[idx]))
+            if (Objects.equals(key, array[idx]))
                 return new AbstractMap.SimpleImmutableEntry<>(array[idx], array[idx + 1]);
             return null;
         }
@@ -1081,7 +1073,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             int idx = findIndex(key);
             if (idx < 0)
                 return notFound;
-            if (Util.equals(key, array[idx]))
+            if (Objects.equals(key, array[idx]))
                 return array[idx + 1];
             return notFound;
         }
@@ -1089,7 +1081,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
         public int findIndex(Object key) {
             for (int i = 0; i < 2 * count; i += 2)
             {
-                if (Util.equals(key, array[i]))
+                if (Objects.equals(key, array[i]))
                     return i;
             }
             return -1;
@@ -1195,7 +1187,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
     }
 
     private static INode createNode(int shift, Object key1, Object val1, int key2hash, Object key2, Object val2) {
-        int key1hash = hash(key1);
+        int key1hash = Objects.hashCode(key1);
         if (key1hash == key2hash)
             return new HashCollisionNode(null, key1hash, 2, new Object[] { key1, val1, key2, val2 });
         Flag _ = new Flag();
@@ -1207,7 +1199,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
     private static INode createNode(Owner edit, int shift, Object key1, Object val1, int key2hash,
             Object key2, Object val2) {
-        int key1hash = hash(key1);
+        int key1hash = Objects.hashCode(key1);
         if (key1hash == key2hash)
             return new HashCollisionNode(null, key1hash, 2, new Object[] { key1, val1, key2, val2 });
         Flag _ = new Flag();
@@ -1219,32 +1211,68 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
     private static int bitpos(int hash, int shift) {
         return 1 << mask(hash, shift);
     }
-//
-//    @Override
-//    public Set<Map.Entry<K, V>> entrySet() {
-//        return new AbstractSet<Map.Entry<K,V>>() {
-//            @Override
-//            public Iterator<Map.Entry<K, V>> iterator() {
-//                final Iterator<Map.Entry<K, V>> s = root != null ? root.nodeIt(false) : new EmptyIterator();
-//                return hasNull ? new Iter(s, nullValue) : s;
-//            }
-//
-//            @Override
-//            public int size() {
-//                return count;
-//            }
-//        };
-//    }
 
+    class EntrySet extends AbstractSet<Map.Entry<K, V>> implements FiniteSet<Map.Entry<K, V>> {
+        @Override
+        public ImmutableIterator<Map.Entry<K, V>> iterator() {
+            @SuppressWarnings("unchecked")
+            final ImmutableIterator<Map.Entry<K, V>> s =
+                root != null ? (ImmutableIterator<Map.Entry<K, V>>)root.nodeIt(false) : new EmptyIterator<Map.Entry<K, V>>();
+            return hasNull ? new Iter<K,V>(s, nullValue) : s;
+        }
+        
+        @Override
+        public boolean contains(Object o) {
+            if (!(o instanceof Map.Entry<?, ?>))
+                return false;
+            Map.Entry<?,?> entry = (Map.Entry<?, ?>)o;
+            Object key = entry.getKey();
+            V value = get(key);
+            
+            return (value != null || containsKey(key) && Objects.equals(value, entry.getValue()));
+        }
+        
+        @Override
+        public int size() {
+            return count;
+        }
+
+        @Override
+        public Cursor<Map.Entry<K, V>> cursor() {
+            return IteratorCursor.create(iterator());
+        }
+
+        @Override
+        public FiniteSet<Map.Entry<K, V>> plus(Map.Entry<K, V> e) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public FiniteSet<Map.Entry<K, V>> plusAll(Collection<? extends java.util.Map.Entry<K, V>> more) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public FiniteSet<Map.Entry<K, V>> minus(Map.Entry<K, V> value) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public FiniteSet<Map.Entry<K, V>> zero() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public FiniteSet.FiniteSetBuilder<Map.Entry<K, V>> asBuilder() {
+            throw new UnsupportedOperationException();
+        }
+    };
+    
+    private EntrySet entrySet;
     @Override
     public FiniteSet<Map.Entry<K, V>> entrySet() {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: HashDictionary.entrySet");
-    }
-    
-    @Override
-    public FiniteSet<K> keySet() {
-        // TODO unimplemented
-        throw new RuntimeException("Unimplemented: HashDictionary.keySet");
+        if (entrySet == null);
+            this.entrySet = new EntrySet();
+        return this.entrySet;
     }
 }

@@ -240,7 +240,7 @@ public class Containers {
         }
     }
     
-    private static class IteratorCursor<E> extends AbstractCursor<E> {
+    static class IteratorCursor<E> extends AbstractCursor<E> {
         private Iterator<E> backend;
         private Cursor<E> next;
         private final E current;

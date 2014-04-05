@@ -14,6 +14,7 @@ import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.github.krukow.clj_ds.Dictionary;
@@ -189,7 +190,7 @@ public class PersistentArrayMap<K, V> extends AbstractMap<K, V> implements Dicti
     }
 
     private static boolean equalKey(Object k1, Object k2) {
-        return Util.equals(k1, k2);
+        return Objects.equals(k1, k2);
     }
 
     public TransientArrayMap asBuilder() {

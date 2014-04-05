@@ -15,6 +15,7 @@ import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -86,7 +87,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
     }
 
     private static int hash(Object k) {
-        return Util.hash(k);
+        return Objects.hashCode(k);
     }
 
     @Override
@@ -578,7 +579,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                         }
                     }
                 } else {
-                    if (Util.equals(key, keyOrNull)) {
+                    if (Objects.equals(key, keyOrNull)) {
                         return;// OK index points to key
                     } else {
                         throw new IllegalArgumentException("Key not found: " + key);
@@ -711,7 +712,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                         return this;
                     return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2 * idx + 1, n));
                 }
-                if (Util.equals(key, keyOrNull)) {
+                if (Objects.equals(key, keyOrNull)) {
                     if (val == valOrNode)
                         return this;
                     return new BitmapIndexedNode(null, bitmap, cloneAndSet(array, 2 * idx + 1, val));
@@ -766,7 +767,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                     return null;
                 return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
             }
-            if (Util.equals(key, keyOrNull))
+            if (Objects.equals(key, keyOrNull))
                 // TODO: collapse
                 return new BitmapIndexedNode(null, bitmap ^ bit, removePair(array, idx));
             return this;
@@ -781,7 +782,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             Object valOrNode = array[2 * idx + 1];
             if (keyOrNull == null)
                 return ((INode) valOrNode).find(shift + 5, hash, key);
-            if (Util.equals(key, keyOrNull))
+            if (Objects.equals(key, keyOrNull))
                 return new AbstractMap.SimpleImmutableEntry<>(keyOrNull, valOrNode);
             return null;
         }
@@ -795,7 +796,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             Object valOrNode = array[2 * idx + 1];
             if (keyOrNull == null)
                 return ((INode) valOrNode).find(shift + 5, hash, key, notFound);
-            if (Util.equals(key, keyOrNull))
+            if (Objects.equals(key, keyOrNull))
                 return valOrNode;
             return notFound;
         }
@@ -849,7 +850,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                         return this;
                     return editAndSet(edit, 2 * idx + 1, n);
                 }
-                if (Util.equals(key, keyOrNull)) {
+                if (Objects.equals(key, keyOrNull)) {
                     if (val == valOrNode)
                         return this;
                     return editAndSet(edit, 2 * idx + 1, val);
@@ -915,7 +916,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
                     return null;
                 return editAndRemovePair(edit, bit, idx);
             }
-            if (Util.equals(key, keyOrNull)) {
+            if (Objects.equals(key, keyOrNull)) {
                 removedLeaf.val = removedLeaf;
                 // TODO: collapse
                 return editAndRemovePair(edit, bit, idx);
@@ -1044,7 +1045,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             int idx = findIndex(key);
             if (idx < 0)
                 return null;
-            if (Util.equals(key, array[idx]))
+            if (Objects.equals(key, array[idx]))
                 return new AbstractMap.SimpleImmutableEntry<>(array[idx], array[idx + 1]);
             return null;
         }
@@ -1053,7 +1054,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
             int idx = findIndex(key);
             if (idx < 0)
                 return notFound;
-            if (Util.equals(key, array[idx]))
+            if (Objects.equals(key, array[idx]))
                 return array[idx + 1];
             return notFound;
         }
@@ -1061,7 +1062,7 @@ public class PersistentHashMap<K, V> extends AbstractMap<K, V> implements Dictio
         public int findIndex(Object key) {
             for (int i = 0; i < 2 * count; i += 2)
             {
-                if (Util.equals(key, array[i]))
+                if (Objects.equals(key, array[i]))
                     return i;
             }
             return -1;

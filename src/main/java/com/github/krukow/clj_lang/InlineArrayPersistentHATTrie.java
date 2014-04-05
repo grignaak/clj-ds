@@ -13,6 +13,7 @@ package com.github.krukow.clj_lang;
 import java.util.AbstractMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 
@@ -288,7 +289,7 @@ public class InlineArrayPersistentHATTrie<T> extends AbstractMap<String, T> impl
         @Override
         public HATTrieNode add(RandomAccessChars s, int start, int end, T t) {
             int id = getIndex(s, start, end);
-            if (Util.equals(values[id], t)) {
+            if (Objects.equals(values[id], t)) {
                 return this;
             }
             if (shouldBurst()) {

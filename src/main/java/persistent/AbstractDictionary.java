@@ -10,7 +10,6 @@ import persistent.AbstractBuilder.Owner;
 public abstract class AbstractDictionary<K, V> extends AbstractMap<K,V> implements Dictionary<K, V> {
     
     public static abstract class AbstractDictionaryBuilder<K, V> extends AbstractBuilder implements DictionaryBuilder<K,V> {
-        
         public AbstractDictionaryBuilder(Owner owner) {
             super(owner);
         }
@@ -27,7 +26,9 @@ public abstract class AbstractDictionary<K, V> extends AbstractMap<K,V> implemen
     }
     
     @Override()
-    public abstract FiniteSet<K> keySet();
+    public FiniteSet<K> keySet() {
+        return Containers.setFromDictionary(this);
+    }
     
     @Override
     public boolean containsKey(Object key) {
@@ -64,7 +65,7 @@ class DefaultValueContainer<V> extends AbstractContainer<V> {
     }
 
     @Override
-    public persistent.Container.ContainerBuilder<V> asBuilder() {
+    public Container.ContainerBuilder<V> asBuilder() {
         return new WrappedContainerBuilder<V>(new Owner(), this);
     }
 
