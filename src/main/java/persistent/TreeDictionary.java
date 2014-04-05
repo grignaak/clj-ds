@@ -20,8 +20,6 @@ import java.util.Stack;
 
 import persistent.Containers.IteratorCursor;
 
-import com.github.krukow.clj_lang.Util;
-
 /**
  * Persistent Red Black Tree Note that instances of this class are constant
  * values i.e. add/remove etc return new values
@@ -35,10 +33,10 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
     private final Node<K,V> tree;
     private final int _count;
 
-    final static private TreeDictionary<? extends Comparable<?>, ?> EMPTY = new TreeDictionary<>(Util.DEFAULT_COMPARATOR);
+    final static private TreeDictionary<? extends Comparable<?>, ?> EMPTY = new TreeDictionary<>(DefaultComparator.DEFAULT_COMPARATOR);
 
     public static <K extends Comparable<K>, V> TreeDictionary<K, V> create(Map<? extends K, ? extends V> other) {
-        TreeDictionary<K, V> ret = TreeDictionary.<K,V>emptyMap();
+        TreeDictionary<K, V> ret = TreeDictionary.<K,V>emptyDictionary();
         for (Map.Entry<? extends K, ? extends V> o : other.entrySet())
         {
             ret = ret.plus(o.getKey(), o.getValue());
@@ -47,8 +45,12 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
     }
     
     @SuppressWarnings("unchecked")
-    public static <K extends Comparable<K>, V> TreeDictionary<K, V> emptyMap() {
+    public static <K extends Comparable<K>, V> TreeDictionary<K, V> emptyDictionary() {
         return (TreeDictionary<K, V>) EMPTY;
+    }
+    
+    public static <K, V> TreeDictionary<K, V> emptyDictionary(Comparator<K> comparator) {
+        return new TreeDictionary<K, V>(comparator);
     }
 
     private TreeDictionary(Comparator<K> comp) {

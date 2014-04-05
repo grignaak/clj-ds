@@ -1,9 +1,10 @@
 /**
  * 
  */
-package com.github.krukow.clj_lang.test;
+package persistent;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -11,21 +12,21 @@ import java.util.ListIterator;
 
 import org.junit.Test;
 
-import com.github.krukow.clj_lang.PersistentVector;
+import persistent.TrieVector;
 
 /**
  * @author krukow
  *
  */
-public class PersistentVectorTest {
+public class TrieVectorTest {
 
 	@Test
 	public final void testEmptyVector() {
-		PersistentVector<Integer> vecI = PersistentVector.emptyVector();
+		TrieVector<Integer> vecI = TrieVector.emptyVector();
 		assertEquals(0, vecI.size());
-		PersistentVector<String> vecS = PersistentVector.emptyVector();
+		TrieVector<String> vecS = TrieVector.emptyVector();
 		assertEquals(0, vecS.size());
-		assert(vecI == (PersistentVector) vecS);
+		assertSame(vecI, vecS);
 		
 		ListIterator<Integer> abc = Arrays.asList(1, 2, 3).listIterator(1);
 		System.out.println(abc.previous());
@@ -37,7 +38,7 @@ public class PersistentVectorTest {
 	 */
 	@Test
 	public final void testIterator() {
-		PersistentVector<Integer> vec = PersistentVector.emptyVector();
+		TrieVector<Integer> vec = TrieVector.emptyVector();
 		HashSet<Integer> hs = null;
 		int N = 32*32*32+33;
 		//Checking all states up to: N

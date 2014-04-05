@@ -2,6 +2,7 @@ package persistent;
 
 import java.util.AbstractSet;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -328,5 +329,17 @@ public class Containers {
     @SuppressWarnings("unchecked")
     /*package*/static <K> FiniteSet<K> setFromDictionary(final Dictionary<K, ?> dictionary) {
         return new WrappedDictionarySet<K>((Dictionary<K, Object>)dictionary);
+    }
+
+    public static <E> FiniteSet<E> emptyHashSet() {
+        return setFromDictionary(HashDictionary.<E,Object>emptyDictionary());
+    }
+    
+    public static <E extends Comparable<E>> FiniteSet<E> emptyTreeSet() {
+        return setFromDictionary(TreeDictionary.<E,Object>emptyDictionary());
+    }
+    
+    public static <E> FiniteSet<E> emptyTreeSet(Comparator<E> comparator) {
+        return setFromDictionary(TreeDictionary.<E,Object>emptyDictionary(comparator));
     }
 }
