@@ -4,14 +4,10 @@
 package persistent;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 
 import java.util.HashSet;
 
 import org.junit.Test;
-
-import persistent.Containers;
-import persistent.FiniteSet;
 
 /**
  * @author krukow
@@ -25,7 +21,7 @@ public class FiniteHashSetTest {
         assertEquals(0, vecI.size());
         FiniteSet<String> vecS = Containers.emptyHashSet();
         assertEquals(0, vecS.size());
-        assertSame(vecI, vecS);
+        assertEquals(vecI, vecS);
     }
 
     /**

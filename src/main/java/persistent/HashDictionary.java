@@ -15,6 +15,7 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import persistent.AbstractBuilder.Owner;
@@ -85,7 +86,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
                 .assoc(0, key.hashCode(), key, val, addedLeaf);
         if (newroot == root)
             return this;
-        return new HashDictionary<K, V>(addedLeaf.val ? count : count + 1, newroot, hasNull, nullValue);
+        return new HashDictionary<K, V>(addedLeaf.val ? count + 1 : count, newroot, hasNull, nullValue);
     }
 
     @Override
@@ -161,7 +162,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             return this;
         
         int hash = key.hashCode();
-        if (expected != root.find(0, hash, NOT_FOUND))
+        if (expected != root.find(0, hash, key, NOT_FOUND))
             return this;
         
         INode newroot = root.without(0, hash, key);
@@ -286,8 +287,7 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             
             if (key == null) {
                 if (hasNull && nullValue == expected && nullValue != replacemnt) {
-                    count++;
-                    hasNull = true;
+                    nullValue = replacemnt;
                 }
                 return this;
             }
@@ -295,7 +295,6 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
             int hash = key.hashCode();
             if (root != null && root.find(0, hash, key, NOT_FOUND) == expected) {
                 root = root.assoc(owner, 0, hash, key, replacemnt, DONT_CARE);
-                count++;
             }
             return this;
         }
@@ -436,7 +435,11 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
             @Override
             public Object next() {
-                return current.next();
+                moveCurIfNeeded();
+                if (current != null)
+                    return current.next();
+                else
+                    throw new NoSuchElementException();
             }
 
             @Override
@@ -665,12 +668,15 @@ public class HashDictionary<K, V> extends AbstractDictionary<K, V> implements Di
 
             @Override
             public Object next() {
+                moveCurIfNeeded();
                 if (current != null) {
                     return current.next();
-                } else {
+                } else if (index < N) {
                     Object keyOrNull = node.array[index++];
                     Object valOrNode = node.array[index++];
                     return new AbstractMap.SimpleImmutableEntry<>(keyOrNull, valOrNode);
+                } else {
+                    throw new NoSuchElementException();
                 }
 
             }

@@ -28,12 +28,11 @@ import persistent.Containers.IteratorCursor;
  */
 
 public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
+    private static final TreeDictionary<? extends Comparable<?>, ?> EMPTY = new TreeDictionary<>(DefaultComparator.DEFAULT_COMPARATOR);
 
     private final Comparator<K> comp;
     private final Node<K,V> tree;
     private final int _count;
-
-    final static private TreeDictionary<? extends Comparable<?>, ?> EMPTY = new TreeDictionary<>(DefaultComparator.DEFAULT_COMPARATOR);
 
     public static <K extends Comparable<K>, V> TreeDictionary<K, V> create(Map<? extends K, ? extends V> other) {
         TreeDictionary<K, V> ret = TreeDictionary.<K,V>emptyDictionary();
@@ -62,7 +61,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         this.tree = tree;
         this._count = _count;
     }
-
+    
     @Override
     @SuppressWarnings("unchecked")
     public boolean containsKey(Object key) {
@@ -104,7 +103,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         {
             Node<K,V> foundNode = (Node<K,V>) found.val;
             Object foundValue = foundNode.getValue();
-            if (foundValue == expected || foundValue == actual)
+            if (foundValue != expected || foundValue == actual)
                 /* note: only get same collection on identity of val, not
                  * equals() */
                 return this;
@@ -133,7 +132,7 @@ public class TreeDictionary<K, V> extends AbstractDictionary<K, V> {
         Node<K,V> t = remove(tree, key, found);
         if (t == null) // either not found, or empty tree
         {
-            if (found.val == null) // null == doesn't contain key
+            if (found.val == null || found.val.getValue() != expected) // null == doesn't contain key
                 return this;
             // empty
             return new TreeDictionary<K, V>(comp);

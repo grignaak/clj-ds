@@ -11,8 +11,7 @@
 
 package persistent;
 
-public class Box<T> { // TODO: privatize
-
+class Box<T> {
     public T val;
 
     public Box(T val) {
